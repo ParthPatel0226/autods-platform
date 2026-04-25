@@ -24,6 +24,207 @@ _SUGGESTED_QUESTIONS: list[str] = [
 
 
 # ---------------------------------------------------------------------------
+# Design tokens
+# ---------------------------------------------------------------------------
+
+_CSS = """
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+
+section[data-testid="stMain"] { background: #0a0a0f; }
+.stApp { background: #0a0a0f; color: #f1f5f9; font-family: 'Inter', sans-serif; }
+header[data-testid="stHeader"] { background: transparent; }
+.stDeployButton, #MainMenu { display: none; }
+
+/* Page title */
+.page-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #f1f5f9;
+    margin-bottom: 0.25rem;
+}
+.page-subtitle {
+    font-size: 0.9rem;
+    color: #64748b;
+    margin-bottom: 1.5rem;
+}
+
+/* Section headers */
+.section-header {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #94a3b8;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    position: relative;
+}
+.section-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 48px;
+    height: 2px;
+    background: linear-gradient(135deg, #6366f1, #0ea5e9);
+    border-radius: 1px;
+}
+
+/* Chat container */
+.chat-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem 0;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+/* Message bubbles */
+.msg-row {
+    display: flex;
+    width: 100%;
+    animation: msgFadeIn 0.3s ease;
+}
+@keyframes msgFadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.msg-row.user { justify-content: flex-end; }
+.msg-row.assistant { justify-content: flex-start; }
+
+.msg-bubble {
+    max-width: 75%;
+    padding: 0.875rem 1.125rem;
+    border-radius: 12px;
+    font-size: 0.88rem;
+    line-height: 1.6;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+}
+.msg-bubble.user {
+    background: rgba(99,102,241,0.12);
+    border: 1px solid rgba(99,102,241,0.25);
+    color: #f1f5f9;
+    border-bottom-right-radius: 4px;
+}
+.msg-bubble.assistant {
+    background: rgba(18, 18, 26, 0.8);
+    border: 1px solid rgba(99,102,241,0.1);
+    color: #e2e8f0;
+    border-bottom-left-radius: 4px;
+}
+
+.msg-role {
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.35rem;
+}
+.msg-role.user { color: #6366f1; }
+.msg-role.assistant { color: #64748b; }
+
+/* Suggestion pills */
+.suggestion-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+.suggestion-pill {
+    background: rgba(18, 18, 26, 0.6);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(99,102,241,0.12);
+    border-radius: 10px;
+    padding: 0.625rem 1rem;
+    font-size: 0.8rem;
+    color: #94a3b8;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+}
+.suggestion-pill:hover {
+    border-color: rgba(99,102,241,0.35);
+    color: #f1f5f9;
+    background: rgba(99,102,241,0.06);
+}
+
+/* Input area card */
+.input-area {
+    background: rgba(18, 18, 26, 0.8);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(99,102,241,0.12);
+    border-radius: 12px;
+    padding: 0.75rem;
+    margin-top: 1rem;
+    box-shadow: 0 -2px 16px rgba(0,0,0,0.15);
+    position: sticky;
+    bottom: 0;
+}
+
+/* Override Streamlit chat input */
+div[data-testid="stChatInput"] {
+    background: rgba(18, 18, 26, 0.6) !important;
+    border: 1px solid rgba(99,102,241,0.15) !important;
+    border-radius: 10px !important;
+}
+div[data-testid="stChatInput"] textarea {
+    color: #f1f5f9 !important;
+    background: transparent !important;
+}
+
+/* Override Streamlit chat message */
+div[data-testid="stChatMessage"] {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+}
+
+/* Context sidebar */
+.context-card {
+    background: rgba(18, 18, 26, 0.7);
+    border: 1px solid rgba(99,102,241,0.1);
+    border-radius: 10px;
+    padding: 0.875rem;
+    margin-bottom: 0.75rem;
+}
+.context-label {
+    font-size: 0.65rem;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.2rem;
+}
+.context-value {
+    font-size: 0.82rem;
+    color: #f1f5f9;
+    font-weight: 500;
+}
+
+/* Alert overrides */
+div[data-testid="stAlert"] {
+    background: rgba(18, 18, 26, 0.6) !important;
+    border: 1px solid rgba(99,102,241,0.15) !important;
+    border-radius: 10px !important;
+    color: #f1f5f9 !important;
+}
+
+.glass-caption {
+    font-size: 0.78rem;
+    color: #64748b;
+}
+</style>
+"""
+
+
+# ---------------------------------------------------------------------------
 # Guard
 # ---------------------------------------------------------------------------
 
@@ -58,23 +259,41 @@ def _render_progress() -> None:
 def _render_context_summary() -> None:
     """Show a collapsible summary of available context."""
     with st.sidebar:
-        st.markdown("##### Analysis Context")
+        st.markdown(
+            '<div class="section-header">Analysis Context</div>',
+            unsafe_allow_html=True,
+        )
         domain = st.session_state.get("detected_domain", "generic")
         best = st.session_state.get("best_model_name", "")
         problem = st.session_state.get("problem_type", "")
         n_rows = st.session_state.get("row_count", 0)
 
-        st.caption(f"Domain: {domain}")
-        st.caption(f"Problem: {problem}")
+        ctx_items = [
+            ("Domain", domain),
+            ("Problem", problem),
+        ]
         if best:
-            st.caption(f"Model: {best}")
+            ctx_items.append(("Model", best))
         if n_rows:
-            st.caption(f"Rows: {n_rows:,}")
+            ctx_items.append(("Rows", f"{n_rows:,}"))
+
+        for label, value in ctx_items:
+            st.markdown(
+                f'<div class="context-card">'
+                f'<div class="context-label">{label}</div>'
+                f'<div class="context-value">{value}</div>'
+                f'</div>',
+                unsafe_allow_html=True,
+            )
 
 
 def _render_suggestions() -> None:
-    """Show clickable suggested questions."""
-    st.caption("Suggested questions:")
+    """Show clickable suggested questions as glass pills."""
+    st.markdown(
+        '<p class="glass-caption" style="margin-bottom:0.75rem;">Suggested questions to get started:</p>',
+        unsafe_allow_html=True,
+    )
+
     cols = st.columns(3)
     for i, q in enumerate(_SUGGESTED_QUESTIONS):
         col = cols[i % 3]
@@ -181,10 +400,28 @@ def _local_response(question: str) -> str:
 
 
 def _render_chat_history() -> None:
-    """Render all messages in chat history."""
-    for msg in st.session_state.get("chat_messages", []):
-        with st.chat_message(msg["role"]):
-            st.markdown(msg["content"])
+    """Render all messages as styled glass bubbles."""
+    messages = st.session_state.get("chat_messages", [])
+    if not messages:
+        return
+
+    chat_html = ""
+    for msg in messages:
+        role = msg["role"]
+        content = msg["content"].replace("\n", "<br>")
+        role_label = "You" if role == "user" else "AutoDS"
+        chat_html += (
+            f'<div class="msg-row {role}">'
+            f'<div class="msg-bubble {role}">'
+            f'<div class="msg-role {role}">{role_label}</div>'
+            f'{content}'
+            f'</div></div>'
+        )
+
+    st.markdown(
+        f'<div class="chat-container">{chat_html}</div>',
+        unsafe_allow_html=True,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -194,7 +431,10 @@ def _render_chat_history() -> None:
 def _page() -> None:
     _guard()
     _init_chat()
-    st.header("Ask Anything")
+    st.markdown(_CSS, unsafe_allow_html=True)
+
+    st.markdown('<div class="page-title">Ask Anything</div>', unsafe_allow_html=True)
+    st.markdown('<div class="page-subtitle">Ask questions about your data, models, and analysis results</div>', unsafe_allow_html=True)
     _render_progress()
     _render_context_summary()
 
@@ -209,7 +449,8 @@ def _page() -> None:
         st.rerun()
 
     # Navigation
-    st.divider()
+    st.markdown('<div style="height:2rem;"></div>', unsafe_allow_html=True)
+    st.markdown('<div style="height:1px; background:rgba(99,102,241,0.1); margin:0.5rem 0 1.5rem;"></div>', unsafe_allow_html=True)
     col_back, col_next = st.columns(2)
     with col_back:
         if st.button("Back to Predictions", use_container_width=True):

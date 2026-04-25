@@ -2,6 +2,8 @@
 
 Algorithm selection, training progress, evaluation metrics, model comparison,
 and best-model selection.
+
+Premium dark luxury UI with glass morphism cards and gradient accents.
 """
 
 from __future__ import annotations
@@ -80,6 +82,354 @@ _TUNING_STRATEGIES: dict[str, str] = {
 
 
 # ---------------------------------------------------------------------------
+# Design tokens
+# ---------------------------------------------------------------------------
+
+_DARK_LUXURY_CSS = """
+<style>
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+:root {
+    --bg-primary: #0a0a0f;
+    --bg-card: #12121a;
+    --bg-elevated: #16161f;
+    --border-subtle: rgba(99,102,241,0.12);
+    --text-primary: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --accent-primary: #6366f1;
+    --accent-secondary: #0ea5e9;
+    --accent-success: #22c55e;
+    --accent-warning: #f59e0b;
+    --accent-danger: #ef4444;
+    --gradient-primary: linear-gradient(135deg, #6366f1, #0ea5e9);
+    --radius-md: 12px;
+    --shadow-card: 0 4px 24px rgba(0,0,0,0.25);
+}
+
+.stApp {
+    background-color: var(--bg-primary) !important;
+}
+
+/* --- Page header --- */
+.model-page-header {
+    padding: 32px 0 24px 0;
+}
+.model-page-header h1 {
+    font-size: 2.25rem;
+    font-weight: 700;
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin: 0;
+    letter-spacing: -0.02em;
+}
+.model-page-header .subtitle {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    margin-top: 4px;
+}
+
+/* --- Section headers --- */
+.section-header {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    position: relative;
+}
+.section-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 48px;
+    height: 2px;
+    background: var(--gradient-primary);
+    border-radius: 1px;
+}
+
+/* --- Algorithm cards grid --- */
+.algo-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+}
+@media (max-width: 768px) {
+    .algo-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+.algo-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 20px;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: var(--shadow-card);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    position: relative;
+}
+.algo-card:hover {
+    border-color: rgba(99,102,241,0.25);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+}
+.algo-card.recommended {
+    border-color: rgba(99,102,241,0.35);
+    box-shadow: 0 0 20px rgba(99,102,241,0.1), var(--shadow-card);
+}
+.algo-card .algo-name {
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+.algo-card .algo-tag {
+    display: inline-block;
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: rgba(99,102,241,0.15);
+    color: #818cf8;
+}
+
+/* --- Glass card --- */
+.glass-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 24px;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: var(--shadow-card);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    margin-bottom: 16px;
+}
+.glass-card:hover {
+    border-color: rgba(99,102,241,0.25);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+}
+
+/* --- Training progress container --- */
+.training-progress-container {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 24px;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: var(--shadow-card);
+    margin-bottom: 24px;
+}
+
+.progress-step {
+    display: flex;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(99,102,241,0.06);
+}
+.progress-step:last-child { border-bottom: none; }
+
+.progress-step .step-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 12px;
+    flex-shrink: 0;
+}
+.step-dot.complete { background-color: var(--accent-success); }
+.step-dot.training {
+    background-color: var(--accent-secondary);
+    animation: pulse-dot 1.5s ease-in-out infinite;
+}
+.step-dot.queued { background-color: var(--text-muted); }
+.step-dot.error { background-color: var(--accent-danger); }
+
+@keyframes pulse-dot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+
+.progress-step .step-name {
+    color: var(--text-primary);
+    font-size: 0.85rem;
+    font-weight: 500;
+    flex: 1;
+}
+.progress-step .step-status {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+.step-status.complete { color: var(--accent-success); }
+.step-status.training { color: var(--accent-secondary); }
+.step-status.queued { color: var(--text-muted); }
+.step-status.error { color: var(--accent-danger); }
+
+/* --- Animated progress bar --- */
+.progress-bar-wrapper {
+    background: var(--bg-elevated);
+    border-radius: 6px;
+    height: 6px;
+    overflow: hidden;
+    margin-top: 16px;
+}
+.progress-bar-fill {
+    height: 100%;
+    border-radius: 6px;
+    background: var(--gradient-primary);
+    transition: width 0.5s ease;
+}
+
+/* --- Results table --- */
+.results-table-wrapper {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    box-shadow: var(--shadow-card);
+    margin-bottom: 24px;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+/* --- Metric cards 4-col --- */
+.metric-cards-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+}
+@media (max-width: 768px) {
+    .metric-cards-row { grid-template-columns: repeat(2, 1fr); }
+}
+.metric-glass-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 20px;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: var(--shadow-card);
+    text-align: center;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.metric-glass-card:hover {
+    border-color: rgba(99,102,241,0.25);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+}
+.metric-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+.metric-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+}
+
+/* --- Model comparison chart --- */
+.comparison-chart-container {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 24px;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: var(--shadow-card);
+    margin-bottom: 24px;
+}
+.comparison-chart-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 16px;
+}
+
+/* --- Best model banner --- */
+.best-model-banner {
+    background: var(--bg-card);
+    border: 1px solid rgba(34,197,94,0.25);
+    border-left: 3px solid var(--accent-success);
+    border-radius: var(--radius-md);
+    padding: 20px 24px;
+    margin-bottom: 24px;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+.best-model-banner .banner-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--accent-success);
+    margin-bottom: 4px;
+}
+.best-model-banner .banner-name {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+/* --- Divider --- */
+.model-divider {
+    border: none;
+    border-top: 1px solid var(--border-subtle);
+    margin: 32px 0;
+}
+
+/* --- Status dot --- */
+.status-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 6px;
+    vertical-align: middle;
+}
+.status-dot.info { background-color: var(--accent-secondary); }
+
+/* --- Info placeholder --- */
+.info-placeholder {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 24px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+/* --- Streamlit input overrides --- */
+.stSelectbox > div > div,
+.stMultiSelect > div > div,
+.stTextInput > div > div {
+    background-color: var(--bg-elevated) !important;
+    border-color: var(--border-subtle) !important;
+    color: var(--text-primary) !important;
+}
+</style>
+"""
+
+
+# ---------------------------------------------------------------------------
 # Guard
 # ---------------------------------------------------------------------------
 
@@ -106,21 +456,52 @@ def _render_progress() -> None:
 
 
 def _render_algorithm_selection() -> list[str]:
-    """Render algorithm checkboxes based on problem type."""
+    """Render algorithm checkboxes as glass cards in a grid."""
     problem = st.session_state.get("problem_type", PROBLEM_CLASSIFICATION)
     mode = st.session_state.get("user_mode", MODE_GUIDED)
     algos = _ALGORITHMS.get(problem, _ALGORITHMS[PROBLEM_CLASSIFICATION])
 
-    st.subheader("Algorithm Selection")
+    st.markdown('<div class="section-header">Algorithm Selection</div>', unsafe_allow_html=True)
+
     if mode == MODE_AUTO:
-        st.caption("Auto mode -- system selects optimal algorithms.")
+        st.markdown(
+            '<div class="info-placeholder">'
+            '<span class="status-dot info"></span>'
+            'Auto mode -- system selects optimal algorithms.'
+            '</div>',
+            unsafe_allow_html=True,
+        )
         return [k for k, v in algos.items() if v.get("recommended")]
 
     if mode == MODE_GUIDED:
-        st.caption("Recommended algorithms are pre-selected. Adjust as needed.")
+        st.markdown(
+            '<p style="color: var(--text-muted); font-size: 0.8rem;">'
+            'Recommended algorithms are pre-selected. Adjust as needed.</p>',
+            unsafe_allow_html=True,
+        )
     else:
-        st.caption("Expert mode -- select any combination.")
+        st.markdown(
+            '<p style="color: var(--text-muted); font-size: 0.8rem;">'
+            'Expert mode -- select any combination.</p>',
+            unsafe_allow_html=True,
+        )
 
+    # Render visual algo cards (informational)
+    cards_html = '<div class="algo-grid">'
+    for key, meta in algos.items():
+        rec = meta.get("recommended", False)
+        rec_class = " recommended" if rec else ""
+        tag_html = '<span class="algo-tag">Recommended</span>' if rec else ""
+        cards_html += f"""
+            <div class="algo-card{rec_class}">
+                <div class="algo-name">{meta["label"]}</div>
+                {tag_html}
+            </div>
+        """
+    cards_html += '</div>'
+    st.markdown(cards_html, unsafe_allow_html=True)
+
+    # Actual checkboxes for selection
     selected: list[str] = []
     cols_per_row = 4
     items = list(algos.items())
@@ -139,7 +520,7 @@ def _render_validation_config() -> dict[str, str]:
     mode = st.session_state.get("user_mode", MODE_GUIDED)
     problem = st.session_state.get("problem_type", PROBLEM_CLASSIFICATION)
 
-    st.subheader("Validation & Tuning")
+    st.markdown('<div class="section-header">Validation and Tuning</div>', unsafe_allow_html=True)
 
     col_val, col_tune = st.columns(2)
 
@@ -213,16 +594,35 @@ def _render_training_status() -> None:
     if not training_progress:
         return
 
-    st.subheader("Training Progress")
+    st.markdown('<div class="section-header">Training Progress</div>', unsafe_allow_html=True)
+
+    total = len(training_progress)
+    completed = sum(1 for s in training_progress.values() if s == "complete")
+    pct = int((completed / total) * 100) if total > 0 else 0
+
+    steps_html = '<div class="training-progress-container">'
     for model_name, status in training_progress.items():
-        if status == "complete":
-            st.success(f"{model_name}: Complete")
-        elif status == "training":
-            st.info(f"{model_name}: Training...")
-        elif status == "queued":
-            st.caption(f"{model_name}: Queued")
-        else:
-            st.error(f"{model_name}: {status}")
+        dot_class = status if status in ("complete", "training", "queued") else "error"
+        status_label = status.upper() if status != "error" else status.upper()
+        steps_html += f"""
+            <div class="progress-step">
+                <div class="step-dot {dot_class}"></div>
+                <div class="step-name">{model_name}</div>
+                <div class="step-status {dot_class}">{status_label}</div>
+            </div>
+        """
+
+    # Progress bar
+    steps_html += f"""
+        <div class="progress-bar-wrapper">
+            <div class="progress-bar-fill" style="width: {pct}%;"></div>
+        </div>
+        <div style="text-align: right; margin-top: 8px; font-size: 0.75rem; color: var(--text-muted);">
+            {completed} / {total} models complete
+        </div>
+    """
+    steps_html += '</div>'
+    st.markdown(steps_html, unsafe_allow_html=True)
 
 
 def _render_results() -> None:
@@ -231,8 +631,9 @@ def _render_results() -> None:
     if not model_results:
         return
 
-    st.subheader("Model Results")
+    st.markdown('<div class="section-header">Model Results</div>', unsafe_allow_html=True)
 
+    # Results table
     rows: list[dict[str, Any]] = []
     for name, result in model_results.items():
         row: dict[str, Any] = {"Model": name}
@@ -241,17 +642,48 @@ def _render_results() -> None:
 
     if rows:
         results_df = pd.DataFrame(rows).set_index("Model")
-        st.dataframe(results_df.style.highlight_max(axis=0), use_container_width=True)
+        best_name = st.session_state.get("best_model_name", "")
+
+        # Highlight best model row
+        def _highlight_best(row: pd.Series) -> list[str]:
+            if row.name == best_name:
+                return ["background-color: rgba(99,102,241,0.12); color: #f1f5f9; font-weight: 600"] * len(row)
+            return [""] * len(row)
+
+        styled = results_df.style.apply(_highlight_best, axis=1).highlight_max(axis=0)
+        st.dataframe(styled, use_container_width=True)
 
     _render_comparison_chart(model_results)
 
+    # Best model banner
     best_name = st.session_state.get("best_model_name", "")
     best_metrics = st.session_state.get("best_model_metrics", {})
     if best_name:
-        st.success(f"Best Model: **{best_name}**")
-        from dashboard.components.metric_cards import render_metric_cards
+        st.markdown(
+            f"""
+            <div class="best-model-banner">
+                <div class="banner-label">Best Model</div>
+                <div class="banner-name">{best_name}</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
-        render_metric_cards(best_metrics, columns=4, title="Best Model Metrics")
+        # Metric cards (4-column)
+        if best_metrics:
+            metric_items = list(best_metrics.items())[:8]
+            cards_html = '<div class="metric-cards-row">'
+            for metric_name, metric_val in metric_items:
+                display_val = f"{metric_val:.4f}" if isinstance(metric_val, float) else str(metric_val)
+                display_label = metric_name.replace("_", " ").title()
+                cards_html += f"""
+                    <div class="metric-glass-card">
+                        <div class="metric-value">{display_val}</div>
+                        <div class="metric-label">{display_label}</div>
+                    </div>
+                """
+            cards_html += '</div>'
+            st.markdown(cards_html, unsafe_allow_html=True)
 
     _render_feature_importance()
     _render_cv_scores(model_results)
@@ -276,9 +708,25 @@ def _render_comparison_chart(model_results: dict[str, dict]) -> None:
         values = [model_results[m].get("metrics", {}).get(primary, 0) for m in model_names]
 
         fig = go.Figure(
-            data=[go.Bar(x=model_names, y=values, marker_color="steelblue")],
+            data=[go.Bar(
+                x=model_names,
+                y=values,
+                marker_color="#6366f1",
+                marker_line_color="rgba(99,102,241,0.5)",
+                marker_line_width=1,
+            )],
         )
-        fig.update_layout(yaxis_title=primary.replace("_", " ").title(), height=350)
+        fig.update_layout(
+            yaxis_title=primary.replace("_", " ").title(),
+            height=350,
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(18,18,26,0.8)",
+            font=dict(color="#94a3b8"),
+            xaxis=dict(gridcolor="rgba(99,102,241,0.08)"),
+            yaxis=dict(gridcolor="rgba(99,102,241,0.08)"),
+        )
+
+        st.markdown('<div class="section-header">Model Comparison</div>', unsafe_allow_html=True)
         render_chart(fig, title=f"Model Comparison -- {primary}", key="model_comparison")
     except ImportError:
         st.warning("Install plotly for comparison charts.")
@@ -302,7 +750,18 @@ def _render_feature_importance() -> None:
             orientation="h",
             labels={"x": "Importance", "y": "Feature"},
         )
-        fig.update_layout(yaxis=dict(autorange="reversed"), height=400)
+        fig.update_layout(
+            yaxis=dict(autorange="reversed"),
+            height=400,
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(18,18,26,0.8)",
+            font=dict(color="#94a3b8"),
+            xaxis=dict(gridcolor="rgba(99,102,241,0.08)"),
+            yaxis_gridcolor="rgba(99,102,241,0.08)",
+        )
+        fig.update_traces(marker_color="#6366f1")
+
+        st.markdown('<div class="section-header">Feature Importance (Top 20)</div>', unsafe_allow_html=True)
         render_chart(fig, title="Feature Importance (Top 20)", key="model_feat_imp")
     except ImportError:
         st.warning("Install plotly for feature importance chart.")
@@ -321,11 +780,23 @@ def _render_cv_scores(model_results: dict[str, dict]) -> None:
             import plotly.graph_objects as go
 
             fig = go.Figure()
-            for name, result in model_results.items():
+            colors = ["#6366f1", "#0ea5e9", "#22c55e", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#14b8a6"]
+            for idx, (name, result) in enumerate(model_results.items()):
                 cv = result.get("cv_scores", [])
                 if cv:
-                    fig.add_trace(go.Box(y=cv, name=name))
-            fig.update_layout(yaxis_title="Score", height=350)
+                    fig.add_trace(go.Box(
+                        y=cv,
+                        name=name,
+                        marker_color=colors[idx % len(colors)],
+                    ))
+            fig.update_layout(
+                yaxis_title="Score",
+                height=350,
+                paper_bgcolor="rgba(0,0,0,0)",
+                plot_bgcolor="rgba(18,18,26,0.8)",
+                font=dict(color="#94a3b8"),
+                yaxis=dict(gridcolor="rgba(99,102,241,0.08)"),
+            )
             render_chart(fig, title="CV Score Distribution", key="cv_box")
         except ImportError:
             st.warning("Install plotly for CV charts.")
@@ -351,9 +822,16 @@ def _render_confusion_matrix() -> None:
 
             labels = ["Negative", "Positive"]
             fig = ff.create_annotated_heatmap(
-                z=cm, x=labels, y=labels, colorscale="Blues",
+                z=cm, x=labels, y=labels, colorscale=[[0, "#12121a"], [1, "#6366f1"]],
             )
-            fig.update_layout(xaxis_title="Predicted", yaxis_title="Actual", height=350)
+            fig.update_layout(
+                xaxis_title="Predicted",
+                yaxis_title="Actual",
+                height=350,
+                paper_bgcolor="rgba(0,0,0,0)",
+                plot_bgcolor="rgba(18,18,26,0.8)",
+                font=dict(color="#94a3b8"),
+            )
             render_chart(fig, title="Confusion Matrix", key="conf_matrix")
         except ImportError:
             st.table(cm)
@@ -365,14 +843,28 @@ def _render_confusion_matrix() -> None:
 
 def _page() -> None:
     _guard()
-    st.header("Model Training & Evaluation")
+
+    # Inject CSS
+    st.markdown(_DARK_LUXURY_CSS, unsafe_allow_html=True)
+
+    # Page header
+    st.markdown(
+        """
+        <div class="model-page-header">
+            <h1>Model Training and Evaluation</h1>
+            <div class="subtitle">Algorithm selection, hyperparameter tuning, and performance analysis</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
     _render_progress()
 
     selected_algos = _render_algorithm_selection()
-    st.divider()
+    st.markdown('<hr class="model-divider">', unsafe_allow_html=True)
     val_config = _render_validation_config()
     adv_opts = _render_advanced_options()
-    st.divider()
+    st.markdown('<hr class="model-divider">', unsafe_allow_html=True)
 
     already_trained = bool(st.session_state.get("model_results"))
 
@@ -388,18 +880,24 @@ def _page() -> None:
             st.session_state["tuning_strategy"] = val_config["tuning_strategy"]
             st.session_state.update(adv_opts)
             st.session_state["training_submitted"] = True
-            st.info(
-                "Training configuration saved. Connect the Modeling Agent "
-                "to execute training. Results will appear below."
+            st.markdown(
+                """
+                <div class="info-placeholder">
+                    <span class="status-dot info"></span>
+                    Training configuration saved. Connect the Modeling Agent
+                    to execute training. Results will appear below.
+                </div>
+                """,
+                unsafe_allow_html=True,
             )
 
     _render_training_status()
-    st.divider()
+    st.markdown('<hr class="model-divider">', unsafe_allow_html=True)
     _render_results()
     _render_confusion_matrix()
 
     # Navigation
-    st.divider()
+    st.markdown('<hr class="model-divider">', unsafe_allow_html=True)
     col_back, col_next = st.columns(2)
     with col_back:
         if st.button("Back to Feature Engineering", use_container_width=True):

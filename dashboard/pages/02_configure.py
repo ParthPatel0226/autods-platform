@@ -2,7 +2,7 @@
 
 Lets the user confirm the detected domain, select analysis mode, choose the
 target column, problem type, and describe their analysis goal.
-Premium dark-luxury redesign for the AutoDS platform.
+Premium dark-luxury redesign with glass card design system.
 """
 
 from __future__ import annotations
@@ -25,198 +25,256 @@ from core.constants import (
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
-# CSS
+# CSS -- design-system tokens from app.py
 # ---------------------------------------------------------------------------
 
 _CSS = """
 <style>
-/* ---- Page base ---- */
-[data-testid="stAppViewContainer"] {
-    background: #0f0f14;
-}
-[data-testid="stSidebar"] {
-    background: #13131a;
+/* ---- Tokens ---- */
+:root {
+  --bg-primary: #0a0a0f;
+  --bg-card: #12121a;
+  --bg-card-hover: #1a1a25;
+  --bg-elevated: #16161f;
+  --border-subtle: rgba(99,102,241,0.12);
+  --border-active: rgba(99,102,241,0.4);
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --accent-primary: #6366f1;
+  --accent-secondary: #0ea5e9;
+  --accent-success: #22c55e;
+  --accent-warning: #f59e0b;
+  --gradient-primary: linear-gradient(135deg, #6366f1, #0ea5e9);
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --shadow-card: 0 4px 24px rgba(0,0,0,0.25);
+  --shadow-glow: 0 0 20px rgba(99,102,241,0.15);
 }
 
-/* ---- Section card ---- */
-.cfg-card {
-    background: #16161f;
-    border: 1px solid #2a2a3a;
-    border-radius: 14px;
-    padding: 1.5rem 1.75rem;
-    margin-bottom: 1.25rem;
+/* ---- Page base ---- */
+[data-testid="stAppViewContainer"] { background: var(--bg-primary); }
+[data-testid="stSidebar"] { background: #0d0d14; }
+
+/* ---- Section header ---- */
+.cfg-section-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent-primary);
+  margin-bottom: 0.15rem;
 }
-.cfg-card-title {
-    font-size: 0.68rem;
-    font-weight: 700;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: #6366f1;
-    margin-bottom: 1rem;
+.cfg-section-label::after {
+  content: "";
+  display: block;
+  width: 40px;
+  height: 2px;
+  margin-top: 6px;
+  margin-bottom: 1rem;
+  background: var(--gradient-primary);
+  border-radius: 1px;
+}
+
+/* ---- Glass card ---- */
+.glass-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem 1.75rem;
+  margin-bottom: 1.25rem;
+  box-shadow: var(--shadow-card);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 /* ---- Domain badge ---- */
-.domain-badge-wrap {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.6rem;
-    padding: 0.55rem 1.25rem;
-    border-radius: 2rem;
-    border: 2px solid var(--badge-color, #6366f1);
-    box-shadow: 0 0 14px -2px var(--badge-color, #6366f1);
-    background: color-mix(in srgb, var(--badge-color, #6366f1) 12%, transparent);
-    margin-bottom: 0.75rem;
+.domain-badge {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem 1.5rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-left: 4px solid var(--domain-color, var(--accent-primary));
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  margin-bottom: 0.75rem;
 }
-.domain-badge-label {
-    font-size: 1rem;
-    font-weight: 700;
-    color: var(--badge-color, #6366f1);
-    letter-spacing: 0.02em;
+.domain-icon-circle {
+  width: 48px; height: 48px; min-width: 48px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.85rem; font-weight: 800; letter-spacing: 0.04em;
+  color: #fff;
+  background: var(--domain-color, var(--accent-primary));
+  box-shadow: 0 0 14px -2px var(--domain-color, var(--accent-primary));
+}
+.domain-info { flex: 1; }
+.domain-label {
+  font-size: 1.1rem; font-weight: 700;
+  color: var(--text-primary); margin-bottom: 0.15rem;
+}
+.domain-confidence-track {
+  height: 6px; border-radius: 3px;
+  background: rgba(255,255,255,0.06);
+  overflow: hidden; margin-top: 0.5rem; max-width: 200px;
+}
+.domain-confidence-fill {
+  height: 100%; border-radius: 3px;
+  background: var(--gradient-primary);
+  transition: width 0.6s cubic-bezier(0.16,1,0.3,1);
+}
+.domain-confidence-text {
+  font-size: 0.7rem; color: var(--text-muted);
+  margin-top: 0.25rem;
 }
 
 /* ---- Mode cards ---- */
+.mode-row { display: flex; gap: 0.75rem; margin-bottom: 0.5rem; }
 .mode-card {
-    background: #1c1c28;
-    border: 1px solid #2e2e42;
-    border-radius: 12px;
-    padding: 1.1rem 1rem;
-    text-align: center;
-    cursor: pointer;
-    transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
-    height: 100%;
-    min-height: 110px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 0.35rem;
+  flex: 1;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 1.15rem 1rem;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s, background 0.2s;
+  min-height: 110px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 0.3rem;
 }
-.mode-card.selected {
-    border: 2px solid var(--mode-color, #6366f1);
-    box-shadow: 0 0 18px -4px var(--mode-color, #6366f1);
-    background: color-mix(in srgb, var(--mode-color, #6366f1) 10%, #1c1c28);
+.mode-card:hover {
+  background: var(--bg-card-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-card);
 }
-.mode-card-icon {
-    font-size: 1.5rem;
-    line-height: 1;
+.mode-card.active {
+  border: 2px solid var(--mode-accent, var(--accent-primary));
+  box-shadow: 0 0 20px -4px var(--mode-accent, var(--accent-primary));
+  background: color-mix(in srgb, var(--mode-accent, var(--accent-primary)) 8%, var(--bg-card));
 }
-.mode-card-name {
-    font-size: 0.92rem;
-    font-weight: 700;
-    color: var(--mode-color, #6366f1);
-    letter-spacing: 0.04em;
+.mode-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  border: 2px solid var(--text-muted);
+  margin-bottom: 0.2rem;
+  transition: background 0.2s, border-color 0.2s;
 }
-.mode-card-desc {
-    font-size: 0.72rem;
-    color: #8888aa;
-    line-height: 1.35;
-    max-width: 130px;
+.mode-card.active .mode-dot {
+  background: var(--mode-accent, var(--accent-primary));
+  border-color: var(--mode-accent, var(--accent-primary));
+}
+.mode-name {
+  font-size: 0.92rem; font-weight: 700;
+  color: var(--text-primary); letter-spacing: 0.03em;
+}
+.mode-card.active .mode-name { color: var(--mode-accent, var(--accent-primary)); }
+.mode-desc {
+  font-size: 0.72rem; color: var(--text-muted);
+  line-height: 1.35; max-width: 150px;
+}
+
+/* ---- Pill badge ---- */
+.pill-badge {
+  display: inline-block;
+  font-size: 0.65rem; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  padding: 0.2rem 0.6rem; border-radius: 4px;
+  color: var(--accent-success);
+  background: rgba(34,197,94,0.1);
+  border: 1px solid rgba(34,197,94,0.25);
 }
 
 /* ---- Validation alert ---- */
 .alert-warn {
-    background: #2a1f0a;
-    border: 1px solid #f59e0b55;
-    border-left: 3px solid #f59e0b;
-    border-radius: 8px;
-    padding: 0.7rem 1rem;
-    color: #f59e0b;
-    font-size: 0.84rem;
-    margin-top: 0.5rem;
+  background: rgba(245,158,11,0.08);
+  border: 1px solid rgba(245,158,11,0.2);
+  border-left: 3px solid var(--accent-warning);
+  border-radius: var(--radius-sm);
+  padding: 0.7rem 1rem;
+  color: var(--accent-warning);
+  font-size: 0.84rem;
+  margin-top: 0.5rem;
 }
 
 /* ---- Summary bar ---- */
 .summary-bar {
-    background: #16161f;
-    border: 1px solid #2a2a3a;
-    border-radius: 14px;
-    padding: 1rem 1.5rem;
-    display: flex;
-    align-items: stretch;
-    margin-bottom: 1.25rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 1rem 0;
+  display: flex; align-items: stretch;
+  margin-bottom: 1.25rem;
+  box-shadow: var(--shadow-card);
 }
 .summary-item {
-    flex: 1;
-    text-align: center;
-    padding: 0.25rem 0.5rem;
+  flex: 1; text-align: center;
+  padding: 0.25rem 0.75rem;
 }
 .summary-item + .summary-item {
-    border-left: 1px solid #2a2a3a;
+  border-left: 1px solid var(--border-subtle);
 }
 .summary-label {
-    font-size: 0.62rem;
-    font-weight: 700;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: #55556a;
-    margin-bottom: 0.2rem;
+  font-size: 0.6rem; font-weight: 700;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--text-muted); margin-bottom: 0.2rem;
 }
 .summary-value {
-    font-size: 0.95rem;
-    font-weight: 700;
-    color: #e2e2f0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+  font-size: 0.92rem; font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 
 /* ---- Start button ---- */
-.start-btn-wrap {
-    display: flex;
-    justify-content: center;
-}
 [data-testid="stButton"] > button[kind="primary"] {
-    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-    border: none;
-    border-radius: 10px;
-    color: #fff;
-    font-weight: 700;
-    font-size: 1rem;
-    letter-spacing: 0.05em;
-    padding: 0.75rem 2.5rem;
-    box-shadow: 0 0 22px -4px #6366f188;
-    transition: box-shadow 0.2s, transform 0.15s;
-    animation: pulse-btn 2.4s ease-in-out infinite;
+  background: var(--gradient-primary);
+  border: none;
+  border-radius: var(--radius-md);
+  color: #fff;
+  font-weight: 700; font-size: 1rem;
+  letter-spacing: 0.05em;
+  padding: 0.8rem 2.5rem;
+  min-height: 48px;
+  box-shadow: 0 0 22px -4px rgba(99,102,241,0.5);
+  transition: box-shadow 0.2s, transform 0.15s;
+  animation: pulse-start 2.4s ease-in-out infinite;
 }
 [data-testid="stButton"] > button[kind="primary"]:hover {
-    box-shadow: 0 0 32px -2px #6366f1cc;
-    transform: translateY(-1px);
+  box-shadow: 0 0 32px -2px rgba(99,102,241,0.7);
+  transform: translateY(-1px);
 }
-@keyframes pulse-btn {
-    0%, 100% { box-shadow: 0 0 18px -4px #6366f188; }
-    50%       { box-shadow: 0 0 30px -2px #8b5cf6bb; }
+[data-testid="stButton"] > button[kind="primary"]:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
 }
-
-/* ---- Streamlit selectbox tweaks ---- */
-[data-testid="stSelectbox"] label {
-    color: #9999bb !important;
-    font-size: 0.8rem !important;
-}
-[data-testid="stTextArea"] label {
-    color: #9999bb !important;
-    font-size: 0.8rem !important;
+@keyframes pulse-start {
+  0%, 100% { box-shadow: 0 0 18px -4px rgba(99,102,241,0.45); }
+  50%      { box-shadow: 0 0 30px -2px rgba(99,102,241,0.65); }
 }
 
-/* ---- Progress bar ---- */
-[data-testid="stProgressBar"] > div {
-    background: #6366f1 !important;
-}
+/* ---- Streamlit overrides ---- */
+[data-testid="stSelectbox"] label { color: var(--text-secondary) !important; font-size: 0.8rem !important; }
+[data-testid="stTextArea"] label { color: var(--text-secondary) !important; font-size: 0.8rem !important; }
+[data-testid="stRadio"] label { min-height: 44px; display: flex; align-items: center; }
+[data-testid="stRadio"] [role="radiogroup"] label { min-height: 44px; }
 
 /* ---- Page header ---- */
-.page-header {
-    margin-bottom: 1.75rem;
-}
+.page-header { margin-bottom: 1.75rem; }
 .page-title {
-    font-size: 1.65rem;
-    font-weight: 800;
-    color: #e8e8f8;
-    letter-spacing: -0.01em;
-    margin: 0;
+  font-size: 1.65rem; font-weight: 800;
+  color: var(--text-primary); letter-spacing: -0.01em; margin: 0;
 }
 .page-subtitle {
-    font-size: 0.85rem;
-    color: #66667a;
-    margin-top: 0.3rem;
+  font-size: 0.85rem; color: var(--text-muted); margin-top: 0.3rem;
+}
+
+/* ---- Reduced motion ---- */
+@media (prefers-reduced-motion: reduce) {
+  [data-testid="stButton"] > button[kind="primary"] { animation: none; }
+  .mode-card { transition: none; }
+  .domain-confidence-fill { transition: none; }
 }
 </style>
 """
@@ -226,19 +284,19 @@ _CSS = """
 # ---------------------------------------------------------------------------
 
 _DOMAIN_META: dict[str, dict[str, str]] = {
-    "healthcare":    {"icon": "🏥", "color": "#ef4444", "label": "Healthcare"},
-    "finance":       {"icon": "🏦", "color": "#eab308", "label": "Finance"},
-    "ecommerce":     {"icon": "🛒", "color": "#22c55e", "label": "E-Commerce"},
-    "marketing":     {"icon": "📊", "color": "#3b82f6", "label": "Marketing"},
-    "hr":            {"icon": "👥", "color": "#8b5cf6", "label": "Human Resources"},
-    "manufacturing": {"icon": "🏭", "color": "#f97316", "label": "Manufacturing"},
-    "generic":       {"icon": "📈", "color": "#6b7280", "label": "General Analytics"},
+    "healthcare":    {"abbr": "HC", "color": "#ef4444", "label": "Healthcare"},
+    "finance":       {"abbr": "FN", "color": "#eab308", "label": "Finance"},
+    "ecommerce":     {"abbr": "EC", "color": "#22c55e", "label": "E-Commerce"},
+    "marketing":     {"abbr": "MK", "color": "#3b82f6", "label": "Marketing"},
+    "hr":            {"abbr": "HR", "color": "#8b5cf6", "label": "Human Resources"},
+    "manufacturing": {"abbr": "MF", "color": "#f97316", "label": "Manufacturing"},
+    "generic":       {"abbr": "GA", "color": "#6b7280", "label": "General Analytics"},
 }
 
 _MODE_META: dict[str, dict[str, str]] = {
-    "auto":    {"icon": "⚡", "label": "Auto",    "desc": "Fully autonomous — system makes all decisions.", "color": "#6366f1"},
-    "guided":  {"icon": "🎚️", "label": "Guided",  "desc": "Interactive — system recommends, you approve.",   "color": "#0ea5e9"},
-    "expert":  {"icon": "🔧", "label": "Expert",  "desc": "Full control — you specify every parameter.",     "color": "#f59e0b"},
+    "auto":   {"label": "Auto",   "desc": "Fully autonomous -- system makes all decisions.", "color": "#6366f1"},
+    "guided": {"label": "Guided", "desc": "Interactive -- system recommends, you approve.",  "color": "#0ea5e9"},
+    "expert": {"label": "Expert", "desc": "Full control -- you specify every parameter.",    "color": "#a855f7"},
 }
 
 _PROBLEM_LABELS: dict[str, str] = {
@@ -287,7 +345,6 @@ def _detect_time_columns(df: pd.DataFrame) -> list[str]:
 
 def _render_domain_section(df: pd.DataFrame) -> str:
     """Render domain detection card and return the final domain string."""
-    from dashboard.components.domain_badge import render_domain_badge
     from domains.domain_registry import detect_domain
 
     col_names = list(df.columns)
@@ -303,32 +360,42 @@ def _render_domain_section(df: pd.DataFrame) -> str:
         confidence = st.session_state.get("domain_detection_confidence", 0.0)
 
     meta = _DOMAIN_META.get(detected, _DOMAIN_META["generic"])
+    conf_pct = int(confidence * 100) if confidence > 0 else 0
 
     st.markdown(
-        f"""
-        <div class="cfg-card">
-            <div class="cfg-card-title">Domain Detection</div>
-            <div class="domain-badge-wrap" style="--badge-color:{meta['color']}">
-                <span style="font-size:1.3rem">{meta['icon']}</span>
-                <span class="domain-badge-label">{meta['label']}</span>
-            </div>
-        </div>
-        """,
+        f'<div class="cfg-section-label">Domain Detection</div>'
+        f'<div class="domain-badge" style="--domain-color:{meta["color"]}">'
+        f'  <div class="domain-icon-circle" style="background:{meta["color"]};'
+        f'       box-shadow:0 0 14px -2px {meta["color"]}">{meta["abbr"]}</div>'
+        f'  <div class="domain-info">'
+        f'    <div class="domain-label">{meta["label"]}</div>'
+        + (
+            f'    <div class="domain-confidence-track">'
+            f'      <div class="domain-confidence-fill" style="width:{conf_pct}%"></div>'
+            f'    </div>'
+            f'    <div class="domain-confidence-text">Confidence: {confidence:.0%}</div>'
+            if confidence > 0 else ""
+        )
+        + f'  </div>'
+        f'</div>',
         unsafe_allow_html=True,
     )
 
-    if confidence > 0:
-        st.progress(confidence, text=f"Detection confidence: {confidence:.0%}")
-
     from core.constants import VALID_DOMAINS
-    domain_label_list = [_DOMAIN_META.get(d, _DOMAIN_META["generic"])["label"] for d in VALID_DOMAINS]
+    domain_label_list = [
+        _DOMAIN_META.get(d, _DOMAIN_META["generic"])["label"] for d in VALID_DOMAINS
+    ]
     label_to_key = dict(zip(domain_label_list, VALID_DOMAINS))
     current_label = meta["label"]
 
     override = st.selectbox(
         "Override domain (optional)",
         options=domain_label_list,
-        index=domain_label_list.index(current_label) if current_label in domain_label_list else len(domain_label_list) - 1,
+        index=(
+            domain_label_list.index(current_label)
+            if current_label in domain_label_list
+            else len(domain_label_list) - 1
+        ),
         key="domain_override_select",
         help="Change the detected domain if the auto-detection is incorrect.",
     )
@@ -339,29 +406,25 @@ def _render_domain_section(df: pd.DataFrame) -> str:
 
 
 def _render_mode_section() -> str:
-    """Render the premium mode-card selector and return the chosen mode string."""
+    """Render the mode-card selector and return the chosen mode string."""
     current_mode: str = st.session_state.get("user_mode", MODE_GUIDED)
 
-    st.markdown('<div class="cfg-card"><div class="cfg-card-title">Analysis Mode</div>', unsafe_allow_html=True)
+    st.markdown('<div class="cfg-section-label">Analysis Mode</div>', unsafe_allow_html=True)
 
     ordered = ["auto", "guided", "expert"]
-    cols = st.columns(3, gap="small")
-
-    for col, mode_key in zip(cols, ordered):
+    cards_html = '<div class="mode-row">'
+    for mode_key in ordered:
         meta = _MODE_META[mode_key]
-        is_selected = mode_key == current_mode
-        selected_class = "selected" if is_selected else ""
-        with col:
-            st.markdown(
-                f"""
-                <div class="mode-card {selected_class}" style="--mode-color:{meta['color']}">
-                    <div class="mode-card-icon">{meta['icon']}</div>
-                    <div class="mode-card-name">{meta['label']}</div>
-                    <div class="mode-card-desc">{meta['desc']}</div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
+        active = "active" if mode_key == current_mode else ""
+        cards_html += (
+            f'<div class="mode-card {active}" style="--mode-accent:{meta["color"]}">'
+            f'  <div class="mode-dot"></div>'
+            f'  <div class="mode-name">{meta["label"]}</div>'
+            f'  <div class="mode-desc">{meta["desc"]}</div>'
+            f'</div>'
+        )
+    cards_html += '</div>'
+    st.markdown(cards_html, unsafe_allow_html=True)
 
     radio_labels = [_MODE_META[m]["label"] for m in ordered]
     selected_label = st.radio(
@@ -372,16 +435,21 @@ def _render_mode_section() -> str:
         label_visibility="collapsed",
         key="mode_selector_radio",
     )
-    st.markdown("</div>", unsafe_allow_html=True)
 
-    chosen_mode = {_MODE_META[m]["label"]: m for m in ordered}.get(selected_label, MODE_GUIDED)
+    chosen_mode = {_MODE_META[m]["label"]: m for m in ordered}.get(
+        selected_label, MODE_GUIDED
+    )
     st.session_state["user_mode"] = chosen_mode
     return chosen_mode
 
 
 def _render_target_section(df: pd.DataFrame) -> tuple[str | None, str]:
     """Render target + problem type selectors. Return (target_column, problem_type)."""
-    st.markdown('<div class="cfg-card"><div class="cfg-card-title">Target & Problem Type</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="cfg-section-label">Target &amp; Problem Type</div>'
+        '<div class="glass-card">',
+        unsafe_allow_html=True,
+    )
 
     col_options = ["(none -- unsupervised)"] + list(df.columns)
     target_idx = 0
@@ -395,13 +463,17 @@ def _render_target_section(df: pd.DataFrame) -> tuple[str | None, str]:
         help="Select the column you want to predict. Leave as 'none' for clustering or EDA-only.",
         key="target_col_select",
     )
-    target_column: str | None = None if target_selection.startswith("(none") else target_selection
+    target_column: str | None = (
+        None if target_selection.startswith("(none") else target_selection
+    )
     st.session_state["target_column"] = target_column
 
     inferred = _infer_problem_type(df, target_column)
     label_to_key = {v: k for k, v in _PROBLEM_LABELS.items()}
     display_options = [_PROBLEM_LABELS[pt] for pt in VALID_PROBLEM_TYPES]
-    default_idx = display_options.index(_PROBLEM_LABELS.get(inferred, "Classification"))
+    default_idx = display_options.index(
+        _PROBLEM_LABELS.get(inferred, "Classification")
+    )
 
     left, right = st.columns([3, 1])
     with left:
@@ -415,9 +487,7 @@ def _render_target_section(df: pd.DataFrame) -> tuple[str | None, str]:
     with right:
         st.markdown("<div style='height:1.9rem'></div>", unsafe_allow_html=True)
         st.markdown(
-            "<span style='font-size:0.68rem;font-weight:700;letter-spacing:0.1em;"
-            "text-transform:uppercase;color:#22c55e;padding:0.25rem 0.6rem;"
-            "background:#22c55e1a;border-radius:4px;border:1px solid #22c55e44'>Auto-detected</span>",
+            '<span class="pill-badge">Auto-detected</span>',
             unsafe_allow_html=True,
         )
 
@@ -437,10 +507,13 @@ def _render_target_section(df: pd.DataFrame) -> tuple[str | None, str]:
     else:
         st.session_state["time_column"] = None
 
-    if target_column is None and problem_type in (PROBLEM_CLASSIFICATION, PROBLEM_REGRESSION):
+    if target_column is None and problem_type in (
+        PROBLEM_CLASSIFICATION,
+        PROBLEM_REGRESSION,
+    ):
         st.markdown(
             "<div class='alert-warn'>"
-            "⚠ You selected a supervised problem type but no target column. "
+            "Warning: You selected a supervised problem type but no target column. "
             "Please select a target or switch to Clustering / Time Series."
             "</div>",
             unsafe_allow_html=True,
@@ -452,7 +525,11 @@ def _render_target_section(df: pd.DataFrame) -> tuple[str | None, str]:
 
 def _render_goal_section() -> str:
     """Render the analysis goal text area and return the current value."""
-    st.markdown('<div class="cfg-card"><div class="cfg-card-title">Analysis Goal</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="cfg-section-label">Analysis Goal</div>'
+        '<div class="glass-card">',
+        unsafe_allow_html=True,
+    )
     user_goal = st.text_area(
         "Describe your goal in plain language (optional)",
         value=st.session_state.get("user_goal", ""),
@@ -465,27 +542,30 @@ def _render_goal_section() -> str:
     return user_goal
 
 
-def _render_summary_bar(final_domain: str, selected_mode: str, problem_type: str, target_column: str | None) -> None:
+def _render_summary_bar(
+    final_domain: str,
+    selected_mode: str,
+    problem_type: str,
+    target_column: str | None,
+) -> None:
     """Render the 4-metric summary bar above the Start button."""
     domain_meta = _DOMAIN_META.get(final_domain, _DOMAIN_META["generic"])
-    mode_meta   = _MODE_META.get(selected_mode, _MODE_META["guided"])
+    mode_meta = _MODE_META.get(selected_mode, _MODE_META["guided"])
     problem_disp = _PROBLEM_LABELS.get(problem_type, problem_type.title())
-    target_disp  = target_column if target_column else "None"
+    target_disp = target_column if target_column else "None"
 
     items = [
-        ("Domain",  f"{domain_meta['icon']} {domain_meta['label']}"),
-        ("Mode",    f"{mode_meta['icon']} {mode_meta['label']}"),
+        ("Domain", domain_meta["label"]),
+        ("Mode", mode_meta["label"]),
         ("Problem", problem_disp),
-        ("Target",  target_disp),
+        ("Target", target_disp),
     ]
 
     cells = "".join(
-        f"""
-        <div class="summary-item">
-            <div class="summary-label">{label}</div>
-            <div class="summary-value">{value}</div>
-        </div>
-        """
+        f'<div class="summary-item">'
+        f'  <div class="summary-label">{label}</div>'
+        f'  <div class="summary-value">{value}</div>'
+        f'</div>'
         for label, value in items
     )
 
@@ -497,7 +577,9 @@ def _render_summary_bar(final_domain: str, selected_mode: str, problem_type: str
 # ---------------------------------------------------------------------------
 
 def _page() -> None:
-    st.set_page_config(page_title="Configure — AutoDS", layout="wide", page_icon="⚙️")
+    st.set_page_config(
+        page_title="Configure -- AutoDS", layout="wide", page_icon="+"
+    )
     st.markdown(_CSS, unsafe_allow_html=True)
 
     if "uploaded_data" not in st.session_state:
@@ -508,20 +590,18 @@ def _page() -> None:
 
     # Page header
     st.markdown(
-        """
-        <div class="page-header">
-            <div class="page-title">⚙️ Configure Analysis</div>
-            <div class="page-subtitle">
-                Review auto-detected settings and customise before starting the pipeline.
-            </div>
-        </div>
-        """,
+        '<div class="page-header">'
+        '  <div class="page-title">Configure Analysis</div>'
+        '  <div class="page-subtitle">'
+        "    Review auto-detected settings and customise before starting the pipeline."
+        "  </div>"
+        "</div>",
         unsafe_allow_html=True,
     )
 
     # Sections
-    final_domain   = _render_domain_section(df)
-    selected_mode  = _render_mode_section()
+    final_domain = _render_domain_section(df)
+    selected_mode = _render_mode_section()
     target_column, problem_type = _render_target_section(df)
     _render_goal_section()
 
@@ -529,13 +609,17 @@ def _page() -> None:
     _render_summary_bar(final_domain, selected_mode, problem_type, target_column)
 
     # Start button
-    if st.button("Start Analysis →", type="primary", use_container_width=True):
+    if st.button("Start Analysis", type="primary", use_container_width=True):
         st.session_state["pipeline_started"] = True
-        st.session_state["current_step"]     = "data_profiling"
+        st.session_state["current_step"] = "data_profiling"
         # Bug fix: preserve "upload" in completed_steps, clear everything else
-        existing = [s for s in st.session_state.get("completed_steps", []) if s == "upload"]
-        st.session_state["completed_steps"]  = existing
-        st.session_state["workflow_status"]  = "running"
+        existing = [
+            s
+            for s in st.session_state.get("completed_steps", [])
+            if s == "upload"
+        ]
+        st.session_state["completed_steps"] = existing
+        st.session_state["workflow_status"] = "running"
         st.success("Pipeline started. Navigating to EDA...")
         st.switch_page("pages/03_eda_interactive.py")
 
