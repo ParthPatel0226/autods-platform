@@ -32,6 +32,9 @@ logger = logging.getLogger(__name__)
 # Simple in-memory cache for LLM responses
 _response_cache: dict[str, str] = {}
 
+# Runtime override — set by dashboard sidebar toggle
+_runtime_provider: str | None = None
+
 # Provider-specific cost per 1K tokens (for tracking)
 PROVIDER_COSTS = {
     "gemini": {"input": 0.00013, "output": 0.00038},       # Gemma 4 31B via Gemini API
@@ -39,6 +42,42 @@ PROVIDER_COSTS = {
     "anthropic": {"input": 0.003, "output": 0.015},          # Claude Sonnet
     "openai": {"input": 0.005, "output": 0.015},             # GPT-4o
 }
+
+# Display info for dashboard UI
+PROVIDER_INFO = {
+    "ollama": {"label": "Gemma (Local)", "icon": "🏠", "desc": "Free, runs on your machine via Ollama", "needs_key": False},
+    "gemini": {"label": "Gemma (Google)", "icon": "🌐", "desc": "Cheapest hosted API via Google AI Studio", "needs_key": True, "key_env": "GOOGLE_API_KEY"},
+    "anthropic": {"label": "Claude (Anthropic)", "icon": "🧠", "desc": "Best quality, Anthropic API", "needs_key": True, "key_env": "ANTHROPIC_API_KEY"},
+    "openai": {"label": "GPT (OpenAI)", "icon": "💬", "desc": "OpenAI GPT models", "needs_key": True, "key_env": "OPENAI_API_KEY"},
+}
+
+
+def set_runtime_provider(provider: str) -> None:
+    """Override LLM provider at runtime (from dashboard toggle)."""
+    global _runtime_provider
+    _runtime_provider = provider.lower()
+    clear_cache()  # Clear cache when switching providers
+    logger.info("LLM provider switched to: %s", provider)
+
+
+def get_available_providers() -> list[dict[str, Any]]:
+    """Return list of available providers with status (key configured or not)."""
+    result = []
+    for key, info in PROVIDER_INFO.items():
+        available = True
+        if info.get("needs_key"):
+            env_key = info.get("key_env", "")
+            available = bool(os.getenv(env_key))
+        result.append({
+            "id": key,
+            "label": info["label"],
+            "icon": info["icon"],
+            "desc": info["desc"],
+            "available": available,
+            "needs_key": info.get("needs_key", False),
+            "key_env": info.get("key_env", ""),
+        })
+    return result
 
 
 def get_llm():
@@ -57,7 +96,7 @@ def get_llm():
     """
     from core.exceptions import LLMAPIError
 
-    provider = os.getenv("AUTODS_LLM_PROVIDER", "gemini").lower()
+    provider = _runtime_provider or os.getenv("AUTODS_LLM_PROVIDER", "ollama").lower()
     temperature = float(os.getenv("AUTODS_LLM_TEMPERATURE", "0"))
     max_tokens = int(os.getenv("AUTODS_LLM_MAX_TOKENS", "4096"))
 
@@ -197,7 +236,7 @@ def _get_openai_llm(temperature: float, max_tokens: int):
 
 def get_provider_name() -> str:
     """Get the current LLM provider name."""
-    return os.getenv("AUTODS_LLM_PROVIDER", "gemini").lower()
+    return _runtime_provider or os.getenv("AUTODS_LLM_PROVIDER", "ollama").lower()
 
 
 def get_cost_per_1k_tokens() -> dict[str, float]:
@@ -261,8 +300,9 @@ def invoke_llm(
                 output_tokens = len(response.content) // 4
                 state["api_token_count"] = state.get("api_token_count", 0) + input_tokens + output_tokens
                 # Estimate cost
-                from core.constants import get_token_costs
-                input_cost, output_cost = get_token_costs()
+                costs = get_cost_per_1k_tokens()
+                input_cost = costs["input"]
+                output_cost = costs["output"]
                 cost = (input_tokens / 1000 * input_cost +
                         output_tokens / 1000 * output_cost)
                 state["estimated_cost_usd"] = state.get("estimated_cost_usd", 0.0) + cost
