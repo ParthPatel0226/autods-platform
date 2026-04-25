@@ -199,7 +199,11 @@ def generate_executive_summary(state: dict, output_dir: str) -> str:
     model_results = state.get("model_results") or {}
     best_metrics = {}
     if isinstance(model_results.get(best_model_name), dict):
-        best_metrics = model_results[best_model_name]
+        raw = model_results[best_model_name]
+        # model_results may nest metrics under a "metrics" key or be flat
+        best_metrics = raw.get("metrics", raw) if isinstance(raw, dict) else raw
+        # Filter to only numeric values for display
+        best_metrics = {k: v for k, v in best_metrics.items() if isinstance(v, (int, float))}
 
     # Build top metrics for the summary boxes (max 4)
     top_metrics = [

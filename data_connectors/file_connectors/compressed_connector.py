@@ -82,7 +82,7 @@ class CompressedConnector(BaseConnector):
         """Extract archive and return paths to tabular files."""
         suffix = "".join(fp.suffixes).lower()
 
-        if suffix == ".gz" and ".tar" not in suffix:
+        if suffix.endswith(".gz") and ".tar" not in suffix:
             # Single gzipped file
             out_path = Path(tmpdir) / fp.stem
             with gzip.open(fp, "rb") as f_in, open(out_path, "wb") as f_out:

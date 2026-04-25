@@ -45,17 +45,22 @@ class XMLConnector(BaseConnector):
         encoding = config.get("encoding", "utf-8")
 
         try:
-            # Use a hardened parser to prevent XXE (XML External Entity) attacks
+            # Pre-parse with hardened lxml parser to prevent XXE attacks,
+            # then pass the sanitised tree to pandas via a BytesIO buffer.
             safe_parser = etree.XMLParser(
                 resolve_entities=False,
                 no_network=True,
                 dtd_validation=False,
                 load_dtd=False,
             )
+            tree = etree.parse(fp, safe_parser)
+            from io import BytesIO
+
+            buf = BytesIO(etree.tostring(tree, encoding="utf-8", xml_declaration=True))
             if xpath:
-                df = pd.read_xml(fp, xpath=xpath, encoding=encoding, parser=safe_parser)
+                df = pd.read_xml(buf, xpath=xpath, parser="lxml")
             else:
-                df = pd.read_xml(fp, encoding=encoding, parser=safe_parser)
+                df = pd.read_xml(buf, parser="lxml")
 
             nrows = config.get("nrows")
             if nrows:

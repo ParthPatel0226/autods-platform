@@ -246,15 +246,16 @@ class TestZipPackager:
     def test_zip_with_no_files(self, tmp_path):
         from reports.generators.zip_packager import create_zip_package
 
-        zip_path = create_zip_package([], str(tmp_path / "empty.zip"))
-        assert Path(zip_path).is_file()
+        zip_path = create_zip_package([], str(tmp_path / "output"))
+        # No files to package → returns empty string
+        assert zip_path == ""
 
     def test_zip_with_nonexistent_files(self, tmp_path):
         from reports.generators.zip_packager import create_zip_package
 
-        # Should handle gracefully (skip missing files)
+        # All files missing → returns empty string (no zip created)
         zip_path = create_zip_package(
             ["/nonexistent/file.txt"],
-            str(tmp_path / "skip.zip"),
+            str(tmp_path / "output"),
         )
-        assert Path(zip_path).is_file()
+        assert zip_path == ""

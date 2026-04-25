@@ -175,7 +175,12 @@ def t_test_paired(
         b = clean[col2].values
         diffs = a - b
 
-        t_stat, p_value = stats.ttest_rel(a, b)
+        # If all differences are zero, ttest_rel returns nan; handle explicitly
+        if np.all(diffs == 0):
+            t_stat = 0.0
+            p_value = 1.0
+        else:
+            t_stat, p_value = stats.ttest_rel(a, b)
 
         mean_diff = float(diffs.mean())
         std_diff = float(diffs.std(ddof=1))
@@ -1073,7 +1078,7 @@ def cox_ph(
 
         required = [duration_col, event_col] + list(covariates)
         clean = df[required].dropna()
-        if len(clean) < len(covariates) + 2:
+        if len(clean) <= len(covariates) + 2:
             raise ToolExecutionError(
                 "Insufficient observations for Cox PH model."
             )

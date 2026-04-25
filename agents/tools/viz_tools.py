@@ -584,7 +584,8 @@ def pdp_plot(model: Any, X: pd.DataFrame, feature: str, feature_name: str) -> di
 
     result = partial_dependence(model, X, features=[feature], kind="average")
     pd_values = result["average"][0]
-    feature_values = result["values"][0]
+    # sklearn >= 1.3 renamed "values" to "grid_values"
+    feature_values = result.get("grid_values", result.get("values"))[0]
 
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=feature_values, y=pd_values, mode="lines+markers", name=feature_name))

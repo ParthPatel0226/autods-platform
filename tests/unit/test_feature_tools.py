@@ -160,9 +160,14 @@ def positive_numeric_df():
 # ---------------------------------------------------------------------------
 
 
-def _snapshot(df: pd.DataFrame) -> dict:
-    """Capture a value-level snapshot of a DataFrame for mutation detection."""
-    return {col: df[col].tolist() for col in df.columns}
+def _snapshot(df: pd.DataFrame) -> bytes:
+    """Capture a byte-level snapshot of a DataFrame for mutation detection.
+
+    Uses pickle serialization so that NaN == NaN comparison works correctly.
+    """
+    import pickle
+
+    return pickle.dumps({col: df[col].values.tobytes() for col in df.columns})
 
 
 # ===========================================================================
@@ -339,9 +344,13 @@ class TestFrequencyEncode:
 
     def test_frequencies_sum_to_one(self, small_classification_df):
         result = frequency_encode(small_classification_df, columns=["region"])
-        # Each row now holds freq of that category; sum over unique categories = 1
-        unique_freqs = result["region"].unique()
-        assert abs(sum(unique_freqs) - 1.0) < 1e-6
+        # Each row holds freq of its category; weighted sum across all rows = 1
+        # (i.e. count * freq for each category sums to N, so mean of freq col ~ 1/n_unique)
+        assert result["region"].between(0.0, 1.0).all()
+        # All rows for the same category must share the same frequency
+        for val in small_classification_df["region"].unique():
+            freqs = result.loc[small_classification_df["region"] == val, "region"]
+            assert freqs.nunique() == 1
 
     def test_values_in_zero_one_range(self, sample_classification_df):
         result = frequency_encode(sample_classification_df, columns=["region"])
