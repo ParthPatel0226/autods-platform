@@ -1,0 +1,207 @@
+# Domain Configurations (YAML companion to Python domain classes)
+# These can be edited without modifying code.
+# Python domain classes in domains/ take priority; this file is for reference/override.
+
+healthcare:
+  display_name: "Healthcare"
+  icon: "🏥"
+  detection_keywords:
+    strong:
+      - patient_id
+      - diagnosis
+      - icd
+      - admission
+      - discharge
+      - readmission
+      - hemoglobin
+      - creatinine
+      - mortality
+      - diagnosis_code
+      - procedure_code
+      - drg
+      - ndc
+    moderate:
+      - age
+      - gender
+      - bmi
+      - blood_pressure
+      - heart_rate
+      - medication
+      - lab
+      - vitals
+      - insurance
+      - length_of_stay
+      - comorbidity
+    weak:
+      - id
+      - date
+      - status
+      - type
+      - code
+  primary_metrics:
+    classification: [sensitivity, specificity, auc_roc, ppv, npv]
+    regression: [mae, rmse, r2]
+    survival: [concordance_index, brier_score]
+  cost_matrix:
+    false_negative: 10
+    false_positive: 1
+  fairness:
+    required: true
+    protected_attributes: [race, gender, age_group, insurance_type]
+  compliance_notes:
+    - "Check for PHI (Protected Health Information)"
+    - "HIPAA considerations for data handling"
+    - "Model decisions must be explainable for clinical use"
+
+finance:
+  display_name: "Finance"
+  icon: "💰"
+  detection_keywords:
+    strong:
+      - transaction_amount
+      - credit_score
+      - account_balance
+      - default
+      - delinquency
+      - fraud
+      - loan
+      - credit_limit
+      - interest_rate
+      - payment
+    moderate:
+      - amount
+      - balance
+      - account
+      - merchant
+      - currency
+      - risk
+      - score
+      - income
+      - debt
+    weak:
+      - id
+      - date
+      - status
+      - type
+  primary_metrics:
+    classification: [ks_statistic, gini_coefficient, auc_roc, precision, recall]
+    regression: [rmse, mae, r2]
+  cost_matrix:
+    false_negative: 100
+    false_positive: 1
+  compliance_notes:
+    - "Fair lending regulations (ECOA, FCRA)"
+    - "Adverse action reason codes may be required"
+    - "Check for disparate impact on protected classes"
+
+ecommerce:
+  display_name: "E-commerce"
+  icon: "🛒"
+  detection_keywords:
+    strong:
+      - product_id
+      - cart_value
+      - order_id
+      - purchase
+      - add_to_cart
+      - checkout
+      - sku
+      - customer_id
+      - session_id
+    moderate:
+      - price
+      - quantity
+      - category
+      - brand
+      - discount
+      - shipping
+      - return
+      - review
+      - rating
+    weak:
+      - id
+      - date
+      - name
+      - value
+  primary_metrics:
+    classification: [f1, precision, recall, auc_roc]
+    regression: [rmse, mae, mape]
+
+marketing:
+  display_name: "Marketing"
+  icon: "📢"
+  detection_keywords:
+    strong:
+      - campaign_id
+      - impressions
+      - clicks
+      - conversions
+      - ad_spend
+      - ctr
+      - cpc
+      - roas
+    moderate:
+      - channel
+      - audience
+      - creative
+      - landing_page
+      - bounce_rate
+      - engagement
+    weak:
+      - date
+      - source
+      - medium
+
+hr:
+  display_name: "Human Resources"
+  icon: "👥"
+  detection_keywords:
+    strong:
+      - employee_id
+      - department
+      - hire_date
+      - termination
+      - attrition
+      - salary
+      - performance_rating
+      - job_title
+    moderate:
+      - tenure
+      - manager
+      - promotion
+      - satisfaction
+      - engagement_score
+      - overtime
+    weak:
+      - name
+      - age
+      - gender
+  fairness:
+    required: true
+    protected_attributes: [gender, race, age_group]
+
+manufacturing:
+  display_name: "Manufacturing"
+  icon: "🏭"
+  detection_keywords:
+    strong:
+      - machine_id
+      - sensor
+      - defect
+      - yield
+      - oee
+      - downtime
+      - production_line
+      - batch_id
+    moderate:
+      - temperature
+      - pressure
+      - vibration
+      - cycle_time
+      - quality
+      - maintenance
+      - failure
+    weak:
+      - timestamp
+      - reading
+      - value

@@ -1,0 +1,30 @@
+<!-- Healthcare-specific report sections (extends base_report.html) -->
+{% extends "base_report.html" %}
+
+{% block domain_sections %}
+<!-- Clinical Outcomes -->
+<h2>🏥 Clinical Outcomes Analysis</h2>
+{% if survival_curves %}
+<h3>Survival Analysis</h3>
+<div class="chart-container">{{ survival_curves }}</div>
+{% endif %}
+
+{% if comorbidity_analysis %}
+<h3>Comorbidity Burden</h3>
+{{ comorbidity_analysis }}
+{% endif %}
+
+{% if disparity_analysis %}
+<h3>Demographic Disparity Analysis</h3>
+<div class="warning-box">
+    <strong>Fairness Note:</strong> The following analysis examines outcome disparities
+    across demographic groups. Disparities may reflect systemic factors beyond model scope.
+</div>
+{{ disparity_analysis }}
+{% endif %}
+
+{% if fairness_report %}
+<h3>Model Fairness Audit</h3>
+{{ fairness_report }}
+{% endif %}
+{% endblock %}

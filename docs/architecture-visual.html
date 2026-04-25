@@ -1,0 +1,1106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AutoDS — Application Architecture</title>
+<style>
+  :root {
+    --bg: #0f111a;
+    --surface: #1a1d2e;
+    --surface-2: #232740;
+    --border: #2e3348;
+    --text: #e2e8f0;
+    --text-muted: #8892b0;
+    --primary: #818cf8;
+    --primary-dim: rgba(129,140,248,0.15);
+    --accent-cyan: #22d3ee;
+    --accent-emerald: #34d399;
+    --accent-amber: #fbbf24;
+    --accent-rose: #fb7185;
+    --accent-violet: #a78bfa;
+    --accent-orange: #fb923c;
+    --accent-blue: #60a5fa;
+    --accent-yellow: #facc15;
+    --gradient-1: linear-gradient(135deg, #818cf8 0%, #6366f1 100%);
+    --gradient-2: linear-gradient(135deg, #22d3ee 0%, #06b6d4 100%);
+    --gradient-3: linear-gradient(135deg, #34d399 0%, #059669 100%);
+    --gradient-4: linear-gradient(135deg, #fb7185 0%, #e11d48 100%);
+    --gradient-5: linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%);
+    --radius: 12px;
+    --radius-sm: 8px;
+    --shadow: 0 4px 24px rgba(0,0,0,0.3);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* ─── NAV ─── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(15,17,26,0.85);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 56px;
+  }
+  nav .logo { font-size: 1.1rem; font-weight: 700; letter-spacing: -0.02em; }
+  nav .logo span { color: var(--primary); }
+  nav .links { display: flex; gap: 1.5rem; }
+  nav .links a {
+    color: var(--text-muted); text-decoration: none; font-size: 0.85rem;
+    font-weight: 500; transition: color 0.2s;
+  }
+  nav .links a:hover { color: var(--primary); }
+
+  /* ─── HERO ─── */
+  .hero {
+    padding: 7rem 2rem 4rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+    background: radial-gradient(ellipse at 50% 30%, rgba(99,102,241,0.12) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .hero h1 {
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    font-weight: 800; letter-spacing: -0.03em;
+    background: linear-gradient(135deg, #e2e8f0, #818cf8);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    margin-bottom: 1rem;
+  }
+  .hero p { color: var(--text-muted); font-size: 1.15rem; max-width: 700px; margin: 0 auto; }
+  .badge-row { display: flex; gap: 0.5rem; justify-content: center; margin-top: 1.5rem; flex-wrap: wrap; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 0.35rem;
+    padding: 0.3rem 0.75rem; border-radius: 999px; font-size: 0.78rem; font-weight: 600;
+    background: var(--surface); border: 1px solid var(--border);
+  }
+
+  /* ─── SECTIONS ─── */
+  section { padding: 4rem 2rem; max-width: 1280px; margin: 0 auto; }
+  .section-label {
+    font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em;
+    color: var(--primary); margin-bottom: 0.5rem;
+  }
+  section > h2 {
+    font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem; letter-spacing: -0.02em;
+  }
+  section > .subtitle { color: var(--text-muted); margin-bottom: 2.5rem; font-size: 1rem; }
+
+  /* ─── LAYER DIAGRAM ─── */
+  .layers { display: flex; flex-direction: column; gap: 0px; }
+  .layer {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 1.5rem 2rem;
+    position: relative;
+  }
+  .layer:first-child { border-radius: var(--radius) var(--radius) 0 0; }
+  .layer:last-child { border-radius: 0 0 var(--radius) var(--radius); }
+  .layer-header {
+    display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;
+  }
+  .layer-num {
+    width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 0.75rem; font-weight: 700; color: #fff; flex-shrink: 0;
+  }
+  .layer-title { font-weight: 700; font-size: 1rem; }
+  .layer-desc { font-size: 0.82rem; color: var(--text-muted); }
+  .layer-items {
+    display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem;
+  }
+  .layer-chip {
+    padding: 0.25rem 0.65rem; border-radius: 6px; font-size: 0.75rem; font-weight: 500;
+    background: var(--surface-2); border: 1px solid var(--border);
+  }
+  .connector-arrow {
+    display: flex; justify-content: center; padding: 0;
+    color: var(--text-muted); font-size: 1.2rem;
+  }
+
+  /* ─── AGENT FLOW ─── */
+  .agent-flow {
+    display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center;
+    position: relative; padding: 1rem 0;
+  }
+  .agent-card {
+    width: 150px; padding: 1.25rem 1rem;
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    text-align: center; position: relative; transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .agent-card:hover { transform: translateY(-4px); box-shadow: var(--shadow); }
+  .agent-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+  .agent-name { font-weight: 700; font-size: 0.85rem; margin-bottom: 0.25rem; }
+  .agent-role { font-size: 0.72rem; color: var(--text-muted); line-height: 1.4; }
+  .agent-card .step-badge {
+    position: absolute; top: -8px; right: -8px;
+    width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 0.65rem; font-weight: 700; color: #fff;
+  }
+
+  /* Flow arrows between agents */
+  .flow-row { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 0; }
+  .flow-arrow {
+    color: var(--text-muted); font-size: 1.5rem; padding: 0 0.25rem;
+    display: flex; align-items: center;
+  }
+
+  /* ─── PAGE FLOW ─── */
+  .page-flow {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+  }
+  .page-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 1.25rem; position: relative; overflow: hidden;
+    transition: transform 0.2s, border-color 0.2s;
+  }
+  .page-card:hover { transform: translateY(-2px); border-color: var(--primary); }
+  .page-card .page-num {
+    position: absolute; top: 0; right: 0;
+    padding: 0.2rem 0.6rem; border-radius: 0 var(--radius-sm) 0 var(--radius-sm);
+    font-size: 0.7rem; font-weight: 700; color: #fff;
+  }
+  .page-card .page-icon { font-size: 1.5rem; margin-bottom: 0.5rem; }
+  .page-card h4 { font-size: 0.9rem; font-weight: 700; margin-bottom: 0.35rem; }
+  .page-card ul {
+    list-style: none; padding: 0;
+    font-size: 0.75rem; color: var(--text-muted);
+  }
+  .page-card li::before { content: ''; display: inline-block; width: 4px; height: 4px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+  .page-card .status {
+    display: inline-block; margin-top: 0.5rem;
+    padding: 0.15rem 0.5rem; border-radius: 999px; font-size: 0.65rem; font-weight: 600;
+  }
+  .status-stub { background: rgba(251,191,36,0.15); color: var(--accent-amber); }
+  .status-partial { background: rgba(96,165,250,0.15); color: var(--accent-blue); }
+  .status-done { background: rgba(52,211,153,0.15); color: var(--accent-emerald); }
+
+  /* ─── DOMAIN GRID ─── */
+  .domain-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 1rem;
+  }
+  .domain-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 1.25rem; text-align: center;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .domain-card:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
+  .domain-card .d-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+  .domain-card h4 { font-size: 0.9rem; font-weight: 700; margin-bottom: 0.25rem; }
+  .domain-card .d-metrics { font-size: 0.72rem; color: var(--text-muted); }
+  .domain-card .d-color {
+    width: 100%; height: 3px; border-radius: 2px; margin-top: 0.75rem;
+  }
+
+  /* ─── DATA PIPELINE ─── */
+  .pipeline {
+    display: flex; align-items: stretch; gap: 0; overflow-x: auto;
+    padding-bottom: 1rem;
+  }
+  .pipeline-stage {
+    flex: 1; min-width: 160px; padding: 1.25rem 1rem;
+    background: var(--surface); border: 1px solid var(--border);
+    position: relative; text-align: center;
+  }
+  .pipeline-stage:first-child { border-radius: var(--radius) 0 0 var(--radius); }
+  .pipeline-stage:last-child { border-radius: 0 var(--radius) var(--radius) 0; }
+  .pipeline-stage .p-icon { font-size: 1.5rem; margin-bottom: 0.5rem; }
+  .pipeline-stage h4 { font-size: 0.82rem; font-weight: 700; margin-bottom: 0.2rem; }
+  .pipeline-stage p { font-size: 0.7rem; color: var(--text-muted); }
+  .pipeline-arrow {
+    display: flex; align-items: center; color: var(--primary); font-size: 1.2rem;
+    background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+    padding: 0 0.35rem;
+  }
+
+  /* ─── TECH STACK ─── */
+  .stack-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem;
+  }
+  .stack-category {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 1.25rem;
+  }
+  .stack-category h4 {
+    font-size: 0.85rem; font-weight: 700; margin-bottom: 0.75rem;
+    display: flex; align-items: center; gap: 0.4rem;
+  }
+  .stack-category .tech-list { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+  .tech-tag {
+    padding: 0.2rem 0.55rem; border-radius: 6px; font-size: 0.72rem; font-weight: 600;
+    display: inline-flex; align-items: center; gap: 0.3rem;
+  }
+
+  /* ─── COMPONENT TREE ─── */
+  .comp-tree {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 2rem; overflow-x: auto;
+  }
+  .tree-node {
+    padding: 0.4rem 0.8rem; border-radius: 6px; font-size: 0.78rem; font-weight: 600;
+    display: inline-block; margin: 0.2rem 0;
+  }
+  .tree-level { margin-left: 2rem; border-left: 2px solid var(--border); padding-left: 1rem; }
+  .tree-connector { color: var(--text-muted); font-size: 0.7rem; margin: 0.1rem 0; }
+
+  /* ─── STATE DIAGRAM ─── */
+  .state-flow {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 2rem; overflow-x: auto;
+  }
+  .state-row {
+    display: flex; align-items: center; gap: 0.5rem; margin: 0.5rem 0;
+    flex-wrap: wrap;
+  }
+  .state-node {
+    padding: 0.5rem 1rem; border-radius: var(--radius-sm); font-size: 0.8rem; font-weight: 600;
+    border: 2px solid; min-width: 120px; text-align: center;
+  }
+  .state-arrow { color: var(--text-muted); font-size: 1.2rem; }
+  .state-condition {
+    padding: 0.25rem 0.6rem; border-radius: 999px; font-size: 0.68rem;
+    background: var(--surface-2); border: 1px dashed var(--border); color: var(--text-muted);
+  }
+  .state-interrupt {
+    padding: 0.3rem 0.7rem; border-radius: 6px; font-size: 0.72rem; font-weight: 600;
+    background: rgba(251,113,133,0.12); color: var(--accent-rose); border: 1px solid rgba(251,113,133,0.3);
+  }
+
+  /* ─── DEPLOY ─── */
+  .deploy-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+  }
+  .deploy-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 1.5rem; position: relative;
+  }
+  .deploy-card h4 { font-size: 1rem; font-weight: 700; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; }
+  .deploy-card p { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0.75rem; }
+  .deploy-card code {
+    display: block; background: var(--bg); padding: 0.75rem 1rem; border-radius: var(--radius-sm);
+    font-size: 0.75rem; font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    color: var(--accent-emerald); overflow-x: auto; white-space: pre;
+  }
+
+  /* ─── UTIL ─── */
+  .divider { height: 1px; background: var(--border); margin: 3rem 0; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+  @media (max-width: 768px) { .grid-2 { grid-template-columns: 1fr; } }
+  .glow { box-shadow: 0 0 30px rgba(129,140,248,0.08); }
+
+  /* Color utils */
+  .bg-indigo { background: var(--gradient-1); }
+  .bg-cyan { background: var(--gradient-2); }
+  .bg-emerald { background: var(--gradient-3); }
+  .bg-rose { background: var(--gradient-4); }
+  .bg-violet { background: var(--gradient-5); }
+  .bg-amber { background: linear-gradient(135deg, #fbbf24, #d97706); }
+  .bg-orange { background: linear-gradient(135deg, #fb923c, #ea580c); }
+  .bg-blue { background: linear-gradient(135deg, #60a5fa, #2563eb); }
+
+  .border-cyan { border-color: var(--accent-cyan); color: var(--accent-cyan); }
+  .border-emerald { border-color: var(--accent-emerald); color: var(--accent-emerald); }
+  .border-amber { border-color: var(--accent-amber); color: var(--accent-amber); }
+  .border-rose { border-color: var(--accent-rose); color: var(--accent-rose); }
+  .border-violet { border-color: var(--accent-violet); color: var(--accent-violet); }
+  .border-blue { border-color: var(--accent-blue); color: var(--accent-blue); }
+  .border-indigo { border-color: var(--primary); color: var(--primary); }
+
+  .tag-cyan { background: rgba(34,211,238,0.12); color: var(--accent-cyan); }
+  .tag-emerald { background: rgba(52,211,153,0.12); color: var(--accent-emerald); }
+  .tag-amber { background: rgba(251,191,36,0.12); color: var(--accent-amber); }
+  .tag-rose { background: rgba(251,113,133,0.12); color: var(--accent-rose); }
+  .tag-violet { background: rgba(167,139,250,0.12); color: var(--accent-violet); }
+  .tag-blue { background: rgba(96,165,250,0.12); color: var(--accent-blue); }
+  .tag-indigo { background: rgba(129,140,248,0.12); color: var(--primary); }
+  .tag-orange { background: rgba(251,146,60,0.12); color: var(--accent-orange); }
+
+  .li-dot-cyan li::before { background: var(--accent-cyan); }
+  .li-dot-emerald li::before { background: var(--accent-emerald); }
+  .li-dot-amber li::before { background: var(--accent-amber); }
+  .li-dot-rose li::before { background: var(--accent-rose); }
+  .li-dot-violet li::before { background: var(--accent-violet); }
+  .li-dot-blue li::before { background: var(--accent-blue); }
+  .li-dot-indigo li::before { background: var(--primary); }
+  .li-dot-orange li::before { background: var(--accent-orange); }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="logo"><span>AutoDS</span> Architecture</div>
+  <div class="links">
+    <a href="#layers">Layers</a>
+    <a href="#agents">Agents</a>
+    <a href="#state">State Machine</a>
+    <a href="#pages">Frontend</a>
+    <a href="#data">Data</a>
+    <a href="#domains">Domains</a>
+    <a href="#stack">Stack</a>
+    <a href="#deploy">Deploy</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <h1>AutoDS Architecture</h1>
+  <p>Multi-agent autonomous data science platform. 8 AI agents, 7 industry domains, 30+ data connectors, 100+ analytical tools.</p>
+  <div class="badge-row">
+    <span class="badge"><span style="color:var(--accent-cyan)">&#9679;</span> LangGraph</span>
+    <span class="badge"><span style="color:var(--accent-emerald)">&#9679;</span> Claude API</span>
+    <span class="badge"><span style="color:var(--accent-amber)">&#9679;</span> DuckDB</span>
+    <span class="badge"><span style="color:var(--accent-violet)">&#9679;</span> Streamlit</span>
+    <span class="badge"><span style="color:var(--accent-rose)">&#9679;</span> MLflow</span>
+    <span class="badge"><span style="color:var(--accent-blue)">&#9679;</span> FastAPI</span>
+  </div>
+</div>
+
+<!-- ═══════════ SECTION 1: LAYERED ARCHITECTURE ═══════════ -->
+<section id="layers">
+  <div class="section-label">System Overview</div>
+  <h2>Layered Architecture</h2>
+  <p class="subtitle">Four distinct layers with clear separation of concerns</p>
+
+  <div class="layers">
+    <!-- Layer 1 -->
+    <div class="layer" style="border-left: 3px solid var(--accent-cyan);">
+      <div class="layer-header">
+        <div class="layer-num bg-cyan">1</div>
+        <div>
+          <div class="layer-title">Presentation Layer</div>
+          <div class="layer-desc">User interfaces and API endpoints</div>
+        </div>
+      </div>
+      <div class="layer-items">
+        <span class="layer-chip" style="border-color: var(--accent-cyan);">Streamlit Dashboard (9 pages)</span>
+        <span class="layer-chip">FastAPI Prediction API</span>
+        <span class="layer-chip">8 Reusable Components</span>
+        <span class="layer-chip">Session State Management</span>
+      </div>
+    </div>
+
+    <div class="connector-arrow">&#9660;</div>
+
+    <!-- Layer 2 -->
+    <div class="layer" style="border-left: 3px solid var(--primary);">
+      <div class="layer-header">
+        <div class="layer-num bg-indigo">2</div>
+        <div>
+          <div class="layer-title">Orchestration Layer</div>
+          <div class="layer-desc">LangGraph state machine with conditional routing</div>
+        </div>
+      </div>
+      <div class="layer-items">
+        <span class="layer-chip" style="border-color: var(--primary);">StateGraph (10 nodes)</span>
+        <span class="layer-chip">Conditional Edges (5 routers)</span>
+        <span class="layer-chip">Interrupt Mechanism</span>
+        <span class="layer-chip">SQLite Checkpointing</span>
+        <span class="layer-chip">AutoDSState (35+ fields)</span>
+      </div>
+    </div>
+
+    <div class="connector-arrow">&#9660;</div>
+
+    <!-- Layer 3 -->
+    <div class="layer" style="border-left: 3px solid var(--accent-emerald);">
+      <div class="layer-header">
+        <div class="layer-num bg-emerald">3</div>
+        <div>
+          <div class="layer-title">Intelligence Layer</div>
+          <div class="layer-desc">AI agents, tool registry, domain configs, Claude API</div>
+        </div>
+      </div>
+      <div class="layer-items">
+        <span class="layer-chip" style="border-color: var(--accent-emerald);">8 AI Agents</span>
+        <span class="layer-chip">Tool Registry (100+ tools)</span>
+        <span class="layer-chip">7 Domain Configs</span>
+        <span class="layer-chip">Claude LLM (decisions)</span>
+        <span class="layer-chip">20+ Stat Tests</span>
+        <span class="layer-chip">25+ Charts</span>
+        <span class="layer-chip">20+ ML Algorithms</span>
+      </div>
+    </div>
+
+    <div class="connector-arrow">&#9660;</div>
+
+    <!-- Layer 4 -->
+    <div class="layer" style="border-left: 3px solid var(--accent-amber);">
+      <div class="layer-header">
+        <div class="layer-num bg-amber">4</div>
+        <div>
+          <div class="layer-title">Data Layer</div>
+          <div class="layer-desc">Storage engines, connectors, persistence</div>
+        </div>
+      </div>
+      <div class="layer-items">
+        <span class="layer-chip" style="border-color: var(--accent-amber);">DuckDB (warehouse)</span>
+        <span class="layer-chip">SQLite (checkpoints)</span>
+        <span class="layer-chip">ChromaDB (vectors)</span>
+        <span class="layer-chip">MLflow (experiments)</span>
+        <span class="layer-chip">30+ Data Connectors</span>
+        <span class="layer-chip">File System (reports)</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ SECTION 2: AGENT PIPELINE ═══════════ -->
+<section id="agents">
+  <div class="section-label">Core Pipeline</div>
+  <h2>Agent Orchestration Flow</h2>
+  <p class="subtitle">8 specialized agents pass shared state through LangGraph. LLM decides what to do. Python tools do it.</p>
+
+  <div class="flow-row">
+    <div class="agent-card glow">
+      <div class="step-badge bg-cyan">1</div>
+      <div class="agent-icon">&#128270;</div>
+      <div class="agent-name">Domain Detector</div>
+      <div class="agent-role">Identifies industry from column names</div>
+    </div>
+    <div class="flow-arrow">&#8594;</div>
+
+    <div class="agent-card">
+      <div class="step-badge bg-indigo">2</div>
+      <div class="agent-icon">&#128203;</div>
+      <div class="agent-name">Data Profiler</div>
+      <div class="agent-role">Schema, quality, cleaning recommendations</div>
+    </div>
+    <div class="flow-arrow">&#8594;</div>
+
+    <div class="agent-card">
+      <div class="step-badge bg-emerald">3</div>
+      <div class="agent-icon">&#128202;</div>
+      <div class="agent-name">EDA Agent</div>
+      <div class="agent-role">Domain-aware exploratory analysis + charts</div>
+    </div>
+    <div class="flow-arrow">&#8594;</div>
+
+    <div class="agent-card">
+      <div class="step-badge bg-amber">4</div>
+      <div class="agent-icon">&#9881;&#65039;</div>
+      <div class="agent-name">Feature Engineer</div>
+      <div class="agent-role">Per-column feature creation + domain features</div>
+    </div>
+  </div>
+
+  <div style="text-align:center; padding: 0.5rem 0;">
+    <span class="flow-arrow" style="font-size:2rem;">&#8595;</span>
+  </div>
+
+  <div class="flow-row">
+    <div class="agent-card">
+      <div class="step-badge bg-rose">8</div>
+      <div class="agent-icon">&#128172;</div>
+      <div class="agent-name">Follow-Up Agent</div>
+      <div class="agent-role">Post-pipeline "ask anything" chat</div>
+    </div>
+    <div class="flow-arrow">&#8592;</div>
+
+    <div class="agent-card">
+      <div class="step-badge bg-orange">7</div>
+      <div class="agent-icon">&#128196;</div>
+      <div class="agent-name">Report Agent</div>
+      <div class="agent-role">HTML, PDF, executive summary, notebook</div>
+    </div>
+    <div class="flow-arrow">&#8592;</div>
+
+    <div class="agent-card">
+      <div class="step-badge bg-blue">6</div>
+      <div class="agent-icon">&#128300;</div>
+      <div class="agent-name">Explainability</div>
+      <div class="agent-role">SHAP, fairness, model cards, what-if</div>
+    </div>
+    <div class="flow-arrow">&#8592;</div>
+
+    <div class="agent-card">
+      <div class="step-badge bg-violet">5</div>
+      <div class="agent-icon">&#129302;</div>
+      <div class="agent-name">Modeling Agent</div>
+      <div class="agent-role">Train, evaluate, compare, select best</div>
+    </div>
+  </div>
+
+  <!-- Key principle -->
+  <div style="margin-top: 2rem; padding: 1.25rem 1.5rem; background: var(--primary-dim); border: 1px solid rgba(129,140,248,0.3); border-radius: var(--radius); text-align: center;">
+    <strong style="color: var(--primary);">Core Principle:</strong>
+    <span style="color: var(--text-muted);"> Claude decides <em>what</em> analyses to run &rarr; Registered Python tools <em>execute</em> them deterministically</span>
+  </div>
+</section>
+
+<!-- ═══════════ SECTION 3: STATE MACHINE ═══════════ -->
+<section id="state">
+  <div class="section-label">Orchestration</div>
+  <h2>LangGraph State Machine</h2>
+  <p class="subtitle">Conditional routing based on user mode, domain context, and data characteristics</p>
+
+  <div class="state-flow">
+    <!-- Row 1 -->
+    <div class="state-row">
+      <div class="state-node border-cyan" style="background: rgba(34,211,238,0.08);">START</div>
+      <div class="state-arrow">&#8594;</div>
+      <div class="state-node border-cyan">Domain Detection</div>
+      <div class="state-arrow">&#8594;</div>
+      <div class="state-node border-indigo">Data Profiling</div>
+      <div class="state-arrow">&#8594;</div>
+      <div class="state-condition">mode check</div>
+    </div>
+
+    <!-- Branch -->
+    <div style="display: flex; gap: 2rem; margin: 1rem 0 1rem 2rem; flex-wrap: wrap;">
+      <div style="flex:1; min-width:280px;">
+        <div style="font-size:0.75rem; font-weight:600; color:var(--accent-amber); margin-bottom:0.5rem;">Guided / Expert Mode</div>
+        <div class="state-row">
+          <div class="state-node border-amber">EDA Questions</div>
+          <div class="state-arrow">&#8594;</div>
+          <div class="state-interrupt">&#9208; INTERRUPT</div>
+          <div class="state-arrow">&#8594;</div>
+          <div class="state-node border-emerald">EDA Execute</div>
+        </div>
+      </div>
+      <div style="flex:1; min-width:200px;">
+        <div style="font-size:0.75rem; font-weight:600; color:var(--accent-emerald); margin-bottom:0.5rem;">Auto Mode</div>
+        <div class="state-row">
+          <div class="state-node border-emerald">EDA Execute</div>
+          <div style="font-size:0.72rem; color:var(--text-muted);">(skip questions)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Row 2 -->
+    <div class="state-row">
+      <div class="state-condition">has target?</div>
+    </div>
+
+    <div style="display: flex; gap: 2rem; margin: 0.5rem 0 1rem 2rem; flex-wrap: wrap;">
+      <div style="flex:1; min-width:280px;">
+        <div style="font-size:0.75rem; font-weight:600; color:var(--accent-emerald); margin-bottom:0.5rem;">Yes &rarr; Full Pipeline</div>
+        <div class="state-row">
+          <div class="state-node border-amber">FE Questions</div>
+          <div class="state-arrow">&#8594;</div>
+          <div class="state-interrupt">&#9208; INTERRUPT</div>
+          <div class="state-arrow">&#8594;</div>
+          <div class="state-node border-emerald">FE Execute</div>
+        </div>
+        <div class="state-row" style="margin-top:0.5rem;">
+          <div class="state-arrow">&#8594;</div>
+          <div class="state-node border-violet">Model Train</div>
+          <div class="state-arrow">&#8594;</div>
+          <div class="state-node border-blue">Explainability</div>
+          <div class="state-arrow">&#8594;</div>
+          <div class="state-node border-orange">Report</div>
+          <div class="state-arrow">&#8594;</div>
+          <div class="state-node border-rose" style="background:rgba(251,113,133,0.08);">END</div>
+        </div>
+      </div>
+      <div style="flex:1; min-width:200px;">
+        <div style="font-size:0.75rem; font-weight:600; color:var(--accent-rose); margin-bottom:0.5rem;">No &rarr; EDA Only</div>
+        <div class="state-row">
+          <div class="state-node border-orange">Report</div>
+          <div class="state-arrow">&#8594;</div>
+          <div class="state-node border-rose" style="background:rgba(251,113,133,0.08);">END</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Legend -->
+    <div style="margin-top: 1.5rem; display: flex; gap: 1.5rem; flex-wrap: wrap; font-size: 0.75rem; color: var(--text-muted);">
+      <div><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:rgba(251,113,133,0.3);margin-right:4px;vertical-align:middle;"></span> Interrupt = pause for user input</div>
+      <div><span style="display:inline-block;width:10px;height:10px;border-radius:50%;border:2px dashed var(--border);margin-right:4px;vertical-align:middle;"></span> Condition = routing decision</div>
+      <div><span style="display:inline-block;width:10px;height:10px;border-radius:3px;border:2px solid var(--accent-emerald);margin-right:4px;vertical-align:middle;"></span> Node = LangGraph agent</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ SECTION 4: FRONTEND PAGES ═══════════ -->
+<section id="pages">
+  <div class="section-label">Frontend</div>
+  <h2>Dashboard Page Flow</h2>
+  <p class="subtitle">9 sequential pages guiding users through the complete data science workflow</p>
+
+  <div class="page-flow">
+    <div class="page-card">
+      <div class="page-num bg-cyan">01</div>
+      <div class="page-icon">&#128193;</div>
+      <h4>Upload Data</h4>
+      <ul class="li-dot-cyan">
+        <li>File upload (9 formats)</li>
+        <li>Database connector</li>
+        <li>API import</li>
+        <li>Clipboard paste</li>
+        <li>Multi-source joins</li>
+      </ul>
+      <span class="status status-stub">Stub</span>
+    </div>
+
+    <div class="page-card">
+      <div class="page-num bg-indigo">02</div>
+      <div class="page-icon">&#9881;&#65039;</div>
+      <h4>Configure</h4>
+      <ul class="li-dot-indigo">
+        <li>Domain confirmation</li>
+        <li>Mode selection</li>
+        <li>Target column</li>
+        <li>Analysis goals</li>
+      </ul>
+      <span class="status status-stub">Stub</span>
+    </div>
+
+    <div class="page-card">
+      <div class="page-num bg-emerald">03</div>
+      <div class="page-icon">&#128202;</div>
+      <h4>EDA Interactive</h4>
+      <ul class="li-dot-emerald">
+        <li>Domain questions</li>
+        <li>Plotly charts</li>
+        <li>Statistical tests</li>
+        <li>AI insights</li>
+      </ul>
+      <span class="status status-stub">Stub</span>
+    </div>
+
+    <div class="page-card">
+      <div class="page-num bg-amber">04</div>
+      <div class="page-icon">&#128295;</div>
+      <h4>Features</h4>
+      <ul class="li-dot-amber">
+        <li>Per-column controls</li>
+        <li>Domain features</li>
+        <li>Encoding/imputation</li>
+        <li>Importance preview</li>
+      </ul>
+      <span class="status status-stub">Stub</span>
+    </div>
+
+    <div class="page-card">
+      <div class="page-num bg-violet">05</div>
+      <div class="page-icon">&#129302;</div>
+      <h4>Modeling</h4>
+      <ul class="li-dot-violet">
+        <li>Algorithm selection</li>
+        <li>Training + CV</li>
+        <li>Model comparison</li>
+        <li>Statistical tests</li>
+      </ul>
+      <span class="status status-stub">Stub</span>
+    </div>
+
+    <div class="page-card">
+      <div class="page-num bg-blue">06</div>
+      <div class="page-icon">&#128300;</div>
+      <h4>Explainability</h4>
+      <ul class="li-dot-blue">
+        <li>SHAP analysis</li>
+        <li>Fairness audit</li>
+        <li>What-if scenarios</li>
+        <li>Model card</li>
+      </ul>
+      <span class="status status-stub">Stub</span>
+    </div>
+
+    <div class="page-card">
+      <div class="page-num bg-rose">07</div>
+      <div class="page-icon">&#128200;</div>
+      <h4>Predict</h4>
+      <ul class="li-dot-rose">
+        <li>Batch predictions</li>
+        <li>Single-row input</li>
+        <li>Real-time explain</li>
+        <li>Schema validation</li>
+      </ul>
+      <span class="status status-stub">Stub</span>
+    </div>
+
+    <div class="page-card">
+      <div class="page-num bg-orange">08</div>
+      <div class="page-icon">&#128172;</div>
+      <h4>Ask Anything</h4>
+      <ul class="li-dot-orange">
+        <li>Natural language Q&A</li>
+        <li>Run additional tests</li>
+        <li>Generate charts</li>
+        <li>Tool registry search</li>
+      </ul>
+      <span class="status status-partial">Partial</span>
+    </div>
+
+    <div class="page-card">
+      <div class="page-num" style="background: linear-gradient(135deg, #6ee7b7, #34d399);">09</div>
+      <div class="page-icon">&#128229;</div>
+      <h4>Download</h4>
+      <ul class="li-dot-emerald">
+        <li>HTML report</li>
+        <li>PDF report</li>
+        <li>Executive summary</li>
+        <li>Jupyter notebook</li>
+        <li>ZIP all outputs</li>
+      </ul>
+      <span class="status status-stub">Stub</span>
+    </div>
+  </div>
+
+  <!-- Component tree -->
+  <h3 style="margin-top: 3rem; margin-bottom: 1rem; font-size: 1.15rem;">Component Hierarchy</h3>
+  <div class="comp-tree">
+    <div class="tree-node tag-cyan" style="font-size:0.9rem;">app.py (Entry Point)</div>
+    <div class="tree-level">
+      <div class="tree-connector">&#9492;&#9472;</div>
+      <div class="tree-node tag-indigo">Sidebar</div>
+      <div class="tree-level">
+        <div class="tree-node tag-amber">mode_selector.py</div>
+        <div class="tree-node tag-amber">workflow_progress.py</div>
+        <div class="tree-node tag-amber">domain_badge.py</div>
+      </div>
+      <div class="tree-connector">&#9492;&#9472;</div>
+      <div class="tree-node tag-indigo">Main Content (pages/*)</div>
+      <div class="tree-level">
+        <div class="tree-node tag-emerald">question_renderer.py</div>
+        <div class="tree-level" style="border-color: var(--accent-emerald);">
+          <div class="tree-node tag-violet">single_select (radio)</div>
+          <div class="tree-node tag-violet">multi_select (checkboxes)</div>
+          <div class="tree-node tag-violet">slider</div>
+          <div class="tree-node tag-violet">per_column_table (dropdowns)</div>
+          <div class="tree-node tag-violet">text_input / number_input</div>
+        </div>
+        <div class="tree-node tag-emerald">chart_container.py</div>
+        <div class="tree-node tag-emerald">metric_cards.py</div>
+        <div class="tree-node tag-emerald">approval_widget.py</div>
+        <div class="tree-node tag-emerald">download_buttons.py</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ SECTION 5: DATA PIPELINE ═══════════ -->
+<section id="data">
+  <div class="section-label">Data Flow</div>
+  <h2>Data Pipeline</h2>
+  <p class="subtitle">5-phase data lifecycle from raw input to actionable output</p>
+
+  <div class="pipeline">
+    <div class="pipeline-stage" style="border-left: 3px solid var(--accent-cyan);">
+      <div class="p-icon">&#128229;</div>
+      <h4>Ingest</h4>
+      <p>30+ connectors &rarr; Universal Loader &rarr; Input Sanitizer</p>
+    </div>
+    <div class="pipeline-arrow">&#9654;</div>
+    <div class="pipeline-stage" style="border-left: 3px solid var(--primary);">
+      <div class="p-icon">&#128203;</div>
+      <h4>Profile</h4>
+      <p>ydata-profiling &rarr; Schema + Quality + Edge Cases</p>
+    </div>
+    <div class="pipeline-arrow">&#9654;</div>
+    <div class="pipeline-stage" style="border-left: 3px solid var(--accent-emerald);">
+      <div class="p-icon">&#9881;&#65039;</div>
+      <h4>Transform</h4>
+      <p>Feature engineering &rarr; Encoding &rarr; Scaling &rarr; DuckDB</p>
+    </div>
+    <div class="pipeline-arrow">&#9654;</div>
+    <div class="pipeline-stage" style="border-left: 3px solid var(--accent-violet);">
+      <div class="p-icon">&#129302;</div>
+      <h4>Model</h4>
+      <p>Train/test split &rarr; CV &rarr; Compare &rarr; MLflow</p>
+    </div>
+    <div class="pipeline-arrow">&#9654;</div>
+    <div class="pipeline-stage" style="border-left: 3px solid var(--accent-amber);">
+      <div class="p-icon">&#128196;</div>
+      <h4>Output</h4>
+      <p>Reports &rarr; HTML/PDF/Notebook &rarr; Predictions &rarr; API</p>
+    </div>
+  </div>
+
+  <!-- Storage -->
+  <h3 style="margin-top: 2.5rem; margin-bottom: 1rem; font-size: 1.15rem;">Storage Architecture</h3>
+  <div class="stack-grid">
+    <div class="stack-category">
+      <h4><span style="color:var(--accent-amber);">&#9632;</span> DuckDB</h4>
+      <div class="tech-list">
+        <span class="tech-tag tag-amber">raw_data_{source}</span>
+        <span class="tech-tag tag-amber">joined_data</span>
+        <span class="tech-tag tag-amber">profiled_data</span>
+        <span class="tech-tag tag-amber">feature_data</span>
+        <span class="tech-tag tag-amber">train / test</span>
+        <span class="tech-tag tag-amber">prediction_data</span>
+      </div>
+    </div>
+    <div class="stack-category">
+      <h4><span style="color:var(--primary);">&#9632;</span> SQLite</h4>
+      <div class="tech-list">
+        <span class="tech-tag tag-indigo">LangGraph checkpoints</span>
+        <span class="tech-tag tag-indigo">Session metadata</span>
+        <span class="tech-tag tag-indigo">Crash recovery</span>
+      </div>
+    </div>
+    <div class="stack-category">
+      <h4><span style="color:var(--accent-violet);">&#9632;</span> ChromaDB</h4>
+      <div class="tech-list">
+        <span class="tech-tag tag-violet">Vector embeddings</span>
+        <span class="tech-tag tag-violet">Semantic search</span>
+        <span class="tech-tag tag-violet">Follow-up Q&A</span>
+      </div>
+    </div>
+    <div class="stack-category">
+      <h4><span style="color:var(--accent-emerald);">&#9632;</span> MLflow</h4>
+      <div class="tech-list">
+        <span class="tech-tag tag-emerald">Experiment tracking</span>
+        <span class="tech-tag tag-emerald">Model artifacts</span>
+        <span class="tech-tag tag-emerald">Metrics + params</span>
+        <span class="tech-tag tag-emerald">Model registry</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ SECTION 6: DOMAINS ═══════════ -->
+<section id="domains">
+  <div class="section-label">Intelligence</div>
+  <h2>Domain Detection Engine</h2>
+  <p class="subtitle">Auto-detect industry from column names. Adapts metrics, questions, features, reports, and compliance.</p>
+
+  <div class="domain-grid">
+    <div class="domain-card">
+      <div class="d-icon">&#127973;</div>
+      <h4>Healthcare</h4>
+      <div class="d-metrics">Sensitivity, Specificity, AUC, NNT</div>
+      <div class="d-color" style="background: linear-gradient(90deg, #22d3ee, #06b6d4);"></div>
+    </div>
+    <div class="domain-card">
+      <div class="d-icon">&#128176;</div>
+      <h4>Finance</h4>
+      <div class="d-metrics">KS, Gini, PSI, Vintage Analysis</div>
+      <div class="d-color" style="background: linear-gradient(90deg, #34d399, #059669);"></div>
+    </div>
+    <div class="domain-card">
+      <div class="d-icon">&#128722;</div>
+      <h4>E-commerce</h4>
+      <div class="d-metrics">RFM, CLV, AOV, Funnel, Cohort</div>
+      <div class="d-color" style="background: linear-gradient(90deg, #a78bfa, #7c3aed);"></div>
+    </div>
+    <div class="domain-card">
+      <div class="d-icon">&#128227;</div>
+      <h4>Marketing</h4>
+      <div class="d-metrics">CTR, ROAS, CPA, Attribution</div>
+      <div class="d-color" style="background: linear-gradient(90deg, #fb923c, #ea580c);"></div>
+    </div>
+    <div class="domain-card">
+      <div class="d-icon">&#128101;</div>
+      <h4>HR</h4>
+      <div class="d-metrics">Attrition, Diversity, Equity</div>
+      <div class="d-color" style="background: linear-gradient(90deg, #60a5fa, #2563eb);"></div>
+    </div>
+    <div class="domain-card">
+      <div class="d-icon">&#127981;</div>
+      <h4>Manufacturing</h4>
+      <div class="d-metrics">OEE, MTBF, SPC, Yield</div>
+      <div class="d-color" style="background: linear-gradient(90deg, #facc15, #ca8a04);"></div>
+    </div>
+    <div class="domain-card">
+      <div class="d-icon">&#128202;</div>
+      <h4>Generic</h4>
+      <div class="d-metrics">Standard ML metrics (fallback)</div>
+      <div class="d-color" style="background: linear-gradient(90deg, #818cf8, #6366f1);"></div>
+    </div>
+  </div>
+
+  <!-- User Modes -->
+  <h3 style="margin-top: 2.5rem; margin-bottom: 1rem; font-size: 1.15rem;">User Interaction Modes</h3>
+  <div class="stack-grid" style="grid-template-columns: repeat(3, 1fr);">
+    <div class="stack-category" style="border-top: 3px solid var(--accent-emerald);">
+      <h4>&#129302; Auto Mode</h4>
+      <div style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0.75rem;">System makes all decisions. Upload data, get results.</div>
+      <div class="tech-list">
+        <span class="tech-tag tag-emerald">No questions</span>
+        <span class="tech-tag tag-emerald">Fastest</span>
+        <span class="tech-tag tag-emerald">Fewer API calls</span>
+      </div>
+    </div>
+    <div class="stack-category" style="border-top: 3px solid var(--accent-amber);">
+      <h4>&#127899;&#65039; Guided Mode</h4>
+      <div style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0.75rem;">System recommends. User chooses at each step.</div>
+      <div class="tech-list">
+        <span class="tech-tag tag-amber">Smart defaults</span>
+        <span class="tech-tag tag-amber">Recommendations</span>
+        <span class="tech-tag tag-amber">Balanced</span>
+      </div>
+    </div>
+    <div class="stack-category" style="border-top: 3px solid var(--accent-rose);">
+      <h4>&#128295; Expert Mode</h4>
+      <div style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0.75rem;">Full control over every parameter and algorithm.</div>
+      <div class="tech-list">
+        <span class="tech-tag tag-rose">All parameters</span>
+        <span class="tech-tag tag-rose">Full control</span>
+        <span class="tech-tag tag-rose">Most API calls</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ SECTION 7: TECH STACK ═══════════ -->
+<section id="stack">
+  <div class="section-label">Technology</div>
+  <h2>Tech Stack</h2>
+  <p class="subtitle">Production-grade, open-source stack with embedded databases (zero infrastructure)</p>
+
+  <div class="stack-grid">
+    <div class="stack-category">
+      <h4><span style="color:var(--accent-cyan);">&#9632;</span> Agent Framework</h4>
+      <div class="tech-list">
+        <span class="tech-tag tag-cyan">LangGraph</span>
+        <span class="tech-tag tag-cyan">langchain-anthropic</span>
+        <span class="tech-tag tag-cyan">Claude Sonnet</span>
+      </div>
+    </div>
+    <div class="stack-category">
+      <h4><span style="color:var(--accent-emerald);">&#9632;</span> Machine Learning</h4>
+      <div class="tech-list">
+        <span class="tech-tag tag-emerald">scikit-learn</span>
+        <span class="tech-tag tag-emerald">XGBoost</span>
+        <span class="tech-tag tag-emerald">LightGBM</span>
+        <span class="tech-tag tag-emerald">CatBoost</span>
+        <span class="tech-tag tag-emerald">FLAML</span>
+      </div>
+    </div>
+    <div class="stack-category">
+      <h4><span style="color:var(--accent-violet);">&#9632;</span> Explainability</h4>
+      <div class="tech-list">
+        <span class="tech-tag tag-violet">SHAP</span>
+        <span class="tech-tag tag-violet">Fairlearn</span>
+        <span class="tech-tag tag-violet">Counterfactuals</span>
+        <span class="tech-tag tag-violet">Model Cards</span>
+      </div>
+    </div>
+    <div class="stack-category">
+      <h4><span style="color:var(--accent-amber);">&#9632;</span> Data & Storage</h4>
+      <div class="tech-list">
+        <span class="tech-tag tag-amber">DuckDB</span>
+        <span class="tech-tag tag-amber">pandas</span>
+        <span class="tech-tag tag-amber">pyarrow</span>
+        <span class="tech-tag tag-amber">SQLite</span>
+        <span class="tech-tag tag-amber">ChromaDB</span>
+      </div>
+    </div>
+    <div class="stack-category">
+      <h4><span style="color:var(--accent-rose);">&#9632;</span> Statistics</h4>
+      <div class="tech-list">
+        <span class="tech-tag tag-rose">scipy</span>
+        <span class="tech-tag tag-rose">statsmodels</span>
+        <span class="tech-tag tag-rose">lifelines</span>
+        <span class="tech-tag tag-rose">ydata-profiling</span>
+      </div>
+    </div>
+    <div class="stack-category">
+      <h4><span style="color:var(--accent-blue);">&#9632;</span> Frontend & API</h4>
+      <div class="tech-list">
+        <span class="tech-tag tag-blue">Streamlit</span>
+        <span class="tech-tag tag-blue">Plotly</span>
+        <span class="tech-tag tag-blue">FastAPI</span>
+        <span class="tech-tag tag-blue">Pydantic</span>
+      </div>
+    </div>
+    <div class="stack-category">
+      <h4><span style="color:var(--accent-orange);">&#9632;</span> Reports</h4>
+      <div class="tech-list">
+        <span class="tech-tag tag-orange">Jinja2</span>
+        <span class="tech-tag tag-orange">WeasyPrint</span>
+        <span class="tech-tag tag-orange">nbformat</span>
+        <span class="tech-tag tag-orange">MLflow</span>
+      </div>
+    </div>
+    <div class="stack-category">
+      <h4><span style="color:var(--primary);">&#9632;</span> Quality</h4>
+      <div class="tech-list">
+        <span class="tech-tag tag-indigo">pytest</span>
+        <span class="tech-tag tag-indigo">ruff</span>
+        <span class="tech-tag tag-indigo">mypy</span>
+        <span class="tech-tag tag-indigo">black</span>
+        <span class="tech-tag tag-indigo">Docker</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ SECTION 8: DEPLOYMENT ═══════════ -->
+<section id="deploy">
+  <div class="section-label">Infrastructure</div>
+  <h2>Deployment Options</h2>
+  <p class="subtitle">Local-first with zero infrastructure. Deploy anywhere with Docker.</p>
+
+  <div class="deploy-grid">
+    <div class="deploy-card" style="border-top: 3px solid var(--accent-emerald);">
+      <h4><span style="color:var(--accent-emerald);">&#9679;</span> Local Development</h4>
+      <p>Quickest path. Python venv + Makefile commands.</p>
+      <code>git clone &lt;repo&gt;
+cd autods-platform
+make setup
+cp .env.example .env   # add API key
+make run               # localhost:8501</code>
+    </div>
+
+    <div class="deploy-card" style="border-top: 3px solid var(--accent-cyan);">
+      <h4><span style="color:var(--accent-cyan);">&#9679;</span> Docker Compose</h4>
+      <p>Single container. DuckDB/SQLite/MLflow embedded.</p>
+      <code>docker-compose up -d
+# Dashboard: localhost:8501
+# API:       localhost:8000</code>
+    </div>
+
+    <div class="deploy-card" style="border-top: 3px solid var(--accent-violet);">
+      <h4><span style="color:var(--accent-violet);">&#9679;</span> Cloud Platforms</h4>
+      <p>Streamlit Cloud (free), HuggingFace Spaces, AWS/GCP/Azure containers.</p>
+      <code># Streamlit Cloud: point to dashboard/app.py
+# HuggingFace: Streamlit Space type
+# Docker: any container host</code>
+    </div>
+  </div>
+
+  <!-- Security -->
+  <h3 style="margin-top: 2.5rem; margin-bottom: 1rem; font-size: 1.15rem;">Security Boundaries</h3>
+  <div class="grid-2">
+    <div class="stack-category" style="border-left: 3px solid var(--accent-emerald);">
+      <h4 style="color:var(--accent-emerald);">Trusted (Local)</h4>
+      <div class="tech-list">
+        <span class="tech-tag tag-emerald">Application code</span>
+        <span class="tech-tag tag-emerald">DuckDB engine</span>
+        <span class="tech-tag tag-emerald">MLflow tracking</span>
+        <span class="tech-tag tag-emerald">Report templates</span>
+        <span class="tech-tag tag-emerald">Tool registry</span>
+      </div>
+    </div>
+    <div class="stack-category" style="border-left: 3px solid var(--accent-rose);">
+      <h4 style="color:var(--accent-rose);">Untrusted (External)</h4>
+      <div class="tech-list">
+        <span class="tech-tag tag-rose">User uploads</span>
+        <span class="tech-tag tag-rose">Database connections</span>
+        <span class="tech-tag tag-rose">API responses</span>
+        <span class="tech-tag tag-rose">Claude API output</span>
+        <span class="tech-tag tag-rose">Web scraping</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer style="text-align:center; padding: 3rem 2rem; color: var(--text-muted); font-size: 0.8rem; border-top: 1px solid var(--border);">
+  AutoDS Architecture &mdash; v1.0 &mdash; April 2026<br>
+  Built by Parth &middot; Powered by Claude
+</footer>
+
+</body>
+</html>

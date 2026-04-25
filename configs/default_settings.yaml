@@ -1,0 +1,149 @@
+# =============================================================================
+# AutoDS Platform — Default Settings
+# =============================================================================
+# These settings control default behavior across the platform.
+# Users can override via the dashboard UI or environment variables.
+
+platform:
+  name: "AutoDS"
+  version: "0.1.0"
+  description: "Autonomous Data Science Platform"
+  default_mode: "guided"  # auto | guided | expert
+
+# =============================================================================
+# Data Loading Defaults
+# =============================================================================
+data:
+  max_upload_size_mb: 500
+  large_file_threshold_mb: 100  # Switch to DuckDB-only mode above this
+  sample_rows_for_profiling: 100000  # Profile a sample if dataset is larger
+  max_columns_display: 100  # Max columns to show in previews
+  supported_date_formats:
+    - "%Y-%m-%d"
+    - "%Y-%m-%d %H:%M:%S"
+    - "%m/%d/%Y"
+    - "%d/%m/%Y"
+    - "%Y/%m/%d"
+    - "%m-%d-%Y"
+    - "%d-%m-%Y"
+
+# =============================================================================
+# Statistical Defaults
+# =============================================================================
+statistics:
+  random_seed: 42
+  significance_level: 0.05  # alpha
+  statistical_power: 0.80
+  confidence_level: 0.95
+  bootstrap_iterations: 1000
+  normality_test_threshold: 0.05  # p-value below = non-normal
+  correlation_strong_threshold: 0.7
+  correlation_remove_threshold: 0.95  # Remove one of pair above this
+
+# =============================================================================
+# Feature Engineering Defaults
+# =============================================================================
+feature_engineering:
+  max_features: 100
+  high_cardinality_threshold: 50  # Target-encode if >50 unique values
+  missing_drop_column_threshold: 0.50  # Drop column if >50% missing
+  missing_drop_row_threshold: 0.80  # Drop row if >80% columns missing
+  outlier_iqr_multiplier: 1.5
+  vif_threshold: 10.0  # Flag multicollinearity above this
+  default_scaling: "robust"  # standard | minmax | robust | none
+  lag_feature_periods: [1, 7, 14, 30]  # Default lag periods
+  rolling_window_sizes: [3, 7, 14, 30]  # Default rolling windows
+
+# =============================================================================
+# Modeling Defaults
+# =============================================================================
+modeling:
+  test_size: 0.20
+  cv_folds: 5
+  stratified_cv: true
+  flaml_time_budget_seconds: 120
+  optuna_trials: 100
+  early_stopping_rounds: 50  # For gradient boosting
+  max_model_training_time_minutes: 30  # Per model timeout
+  default_classification_metric: "f1"
+  default_regression_metric: "rmse"
+  default_clustering_metric: "silhouette_score"
+  
+  # Class imbalance handling
+  imbalance_threshold: 0.10  # Auto-handle if minority < 10%
+  imbalance_strategy: "smote"  # smote | class_weights | threshold_tuning
+
+  # Default algorithms by problem type
+  default_algorithms:
+    classification:
+      - logistic_regression
+      - xgboost
+      - lightgbm
+    regression:
+      - linear_regression
+      - xgboost
+      - lightgbm
+    clustering:
+      - kmeans
+      - dbscan
+
+# =============================================================================
+# Explainability Defaults
+# =============================================================================
+explainability:
+  max_shap_samples: 500  # Limit for speed
+  shap_plot_top_n: 15  # Show top N features in SHAP plots
+  pdp_grid_points: 50  # Points per PDP curve
+  counterfactual_max_changes: 3  # Max features to change in counterfactual
+  fairness_metric: "equal_opportunity"  # demographic_parity | equal_opportunity | predictive_parity
+
+# =============================================================================
+# Report Defaults
+# =============================================================================
+reports:
+  max_charts_per_report: 30
+  chart_width: 800
+  chart_height: 500
+  executive_summary_max_findings: 5
+  executive_summary_max_recommendations: 3
+  include_technical_appendix: true
+  include_code_in_notebook: true
+
+# =============================================================================
+# LLM / API Defaults
+# =============================================================================
+llm:
+  model: "claude-sonnet-4-20250514"
+  temperature: 0
+  max_tokens: 4096
+  max_calls_per_run: 100
+  warn_at_cost_usd: 0.50
+  cache_responses: true
+  batch_decisions: true  # Batch multiple decisions into one API call
+
+# =============================================================================
+# Dashboard Defaults
+# =============================================================================
+dashboard:
+  theme: "light"
+  show_api_cost: true
+  show_step_timing: true
+  auto_refresh_interval_seconds: 2
+  max_preview_rows: 100
+  chart_template: "plotly_white"
+
+# =============================================================================
+# Session & Logging Defaults
+# =============================================================================
+session:
+  max_sessions: 50
+  auto_save: true
+  auto_save_interval_seconds: 30
+
+logging:
+  level: "INFO"  # DEBUG | INFO | WARNING | ERROR
+  log_to_file: true
+  log_api_calls: true
+  log_decisions: true
+  log_tool_executions: true
+  structured_format: true  # JSON format for machine parsing

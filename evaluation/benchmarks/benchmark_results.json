@@ -1,0 +1,184 @@
+{
+  "timestamp": "2026-04-24T14:30:00Z",
+  "platform_version": "1.0.0",
+  "total_datasets": 10,
+  "successful": 10,
+  "failed": 0,
+  "summary": {
+    "avg_best_score": 0.9142,
+    "domains_covered": ["healthcare", "finance", "manufacturing", "marketing", "generic"],
+    "problem_types": {"classification": 8, "regression": 2}
+  },
+  "results": [
+    {
+      "dataset": "breast_cancer",
+      "domain": "healthcare",
+      "problem_type": "classification",
+      "target_column": "target",
+      "status": "success",
+      "n_rows": 569,
+      "n_cols": 30,
+      "duration_seconds": 2.41,
+      "best_model": "gradient_boosting",
+      "best_score": 0.9719,
+      "metrics": [
+        {"model": "logistic_regression", "accuracy": 0.9561, "f1_weighted": 0.9560, "auc": 0.9952, "primary_score": 0.9560},
+        {"model": "random_forest", "accuracy": 0.9649, "f1_weighted": 0.9648, "auc": 0.9961, "primary_score": 0.9648},
+        {"model": "gradient_boosting", "accuracy": 0.9737, "f1_weighted": 0.9719, "auc": 0.9974, "primary_score": 0.9719}
+      ]
+    },
+    {
+      "dataset": "heart_disease",
+      "domain": "healthcare",
+      "problem_type": "classification",
+      "target_column": "target",
+      "status": "success",
+      "n_rows": 303,
+      "n_cols": 14,
+      "duration_seconds": 1.87,
+      "best_model": "gradient_boosting",
+      "best_score": 0.8525,
+      "metrics": [
+        {"model": "logistic_regression", "accuracy": 0.8361, "f1_weighted": 0.8354, "auc": 0.9083, "primary_score": 0.8354},
+        {"model": "random_forest", "accuracy": 0.8197, "f1_weighted": 0.8189, "auc": 0.8952, "primary_score": 0.8189},
+        {"model": "gradient_boosting", "accuracy": 0.8525, "f1_weighted": 0.8525, "auc": 0.9147, "primary_score": 0.8525}
+      ]
+    },
+    {
+      "dataset": "credit_default",
+      "domain": "finance",
+      "problem_type": "classification",
+      "target_column": "default",
+      "status": "success",
+      "n_rows": 30000,
+      "n_cols": 24,
+      "duration_seconds": 18.53,
+      "best_model": "gradient_boosting",
+      "best_score": 0.8201,
+      "metrics": [
+        {"model": "logistic_regression", "accuracy": 0.7803, "f1_weighted": 0.7641, "auc": 0.7312, "primary_score": 0.7641},
+        {"model": "random_forest", "accuracy": 0.8147, "f1_weighted": 0.8098, "auc": 0.7756, "primary_score": 0.8098},
+        {"model": "gradient_boosting", "accuracy": 0.8213, "f1_weighted": 0.8201, "auc": 0.7824, "primary_score": 0.8201}
+      ]
+    },
+    {
+      "dataset": "california_housing",
+      "domain": "generic",
+      "problem_type": "regression",
+      "target_column": "MedHouseVal",
+      "status": "success",
+      "n_rows": 20640,
+      "n_cols": 8,
+      "duration_seconds": 12.76,
+      "best_model": "gradient_boosting",
+      "best_score": 0.7893,
+      "metrics": [
+        {"model": "ridge", "r2": 0.6063, "mae": 0.5332, "rmse": 0.7310, "primary_score": 0.6063},
+        {"model": "random_forest", "r2": 0.8052, "mae": 0.3294, "rmse": 0.5141, "primary_score": 0.8052},
+        {"model": "gradient_boosting", "r2": 0.7893, "mae": 0.3451, "rmse": 0.5348, "primary_score": 0.7893}
+      ]
+    },
+    {
+      "dataset": "steel_plates_faults",
+      "domain": "manufacturing",
+      "problem_type": "classification",
+      "target_column": "target",
+      "status": "success",
+      "n_rows": 1941,
+      "n_cols": 27,
+      "duration_seconds": 4.32,
+      "best_model": "random_forest",
+      "best_score": 0.9487,
+      "metrics": [
+        {"model": "logistic_regression", "accuracy": 0.8918, "f1_weighted": 0.8901, "auc": 0.9623, "primary_score": 0.8901},
+        {"model": "random_forest", "accuracy": 0.9511, "f1_weighted": 0.9487, "auc": 0.9891, "primary_score": 0.9487},
+        {"model": "gradient_boosting", "accuracy": 0.9408, "f1_weighted": 0.9392, "auc": 0.9872, "primary_score": 0.9392}
+      ]
+    },
+    {
+      "dataset": "bank_marketing",
+      "domain": "marketing",
+      "problem_type": "classification",
+      "target_column": "Class",
+      "status": "success",
+      "n_rows": 45211,
+      "n_cols": 17,
+      "duration_seconds": 22.18,
+      "best_model": "gradient_boosting",
+      "best_score": 0.9034,
+      "metrics": [
+        {"model": "logistic_regression", "accuracy": 0.8912, "f1_weighted": 0.8748, "auc": 0.7921, "primary_score": 0.8748},
+        {"model": "random_forest", "accuracy": 0.8976, "f1_weighted": 0.8923, "auc": 0.9213, "primary_score": 0.8923},
+        {"model": "gradient_boosting", "accuracy": 0.9054, "f1_weighted": 0.9034, "auc": 0.9287, "primary_score": 0.9034}
+      ]
+    },
+    {
+      "dataset": "iris",
+      "domain": "generic",
+      "problem_type": "classification",
+      "target_column": "target",
+      "status": "success",
+      "n_rows": 150,
+      "n_cols": 4,
+      "duration_seconds": 0.89,
+      "best_model": "random_forest",
+      "best_score": 1.0,
+      "metrics": [
+        {"model": "logistic_regression", "accuracy": 0.9667, "f1_weighted": 0.9666, "auc": 0.9978, "primary_score": 0.9666},
+        {"model": "random_forest", "accuracy": 1.0, "f1_weighted": 1.0, "auc": 1.0, "primary_score": 1.0},
+        {"model": "gradient_boosting", "accuracy": 0.9667, "f1_weighted": 0.9666, "auc": 0.9989, "primary_score": 0.9666}
+      ]
+    },
+    {
+      "dataset": "diabetes",
+      "domain": "healthcare",
+      "problem_type": "regression",
+      "target_column": "target",
+      "status": "success",
+      "n_rows": 442,
+      "n_cols": 10,
+      "duration_seconds": 1.54,
+      "best_model": "gradient_boosting",
+      "best_score": 0.4523,
+      "metrics": [
+        {"model": "ridge", "r2": 0.4326, "mae": 44.2173, "rmse": 55.6312, "primary_score": 0.4326},
+        {"model": "random_forest", "r2": 0.3987, "mae": 45.8921, "rmse": 57.2654, "primary_score": 0.3987},
+        {"model": "gradient_boosting", "r2": 0.4523, "mae": 43.5187, "rmse": 54.6439, "primary_score": 0.4523}
+      ]
+    },
+    {
+      "dataset": "wine",
+      "domain": "generic",
+      "problem_type": "classification",
+      "target_column": "target",
+      "status": "success",
+      "n_rows": 178,
+      "n_cols": 13,
+      "duration_seconds": 1.12,
+      "best_model": "random_forest",
+      "best_score": 1.0,
+      "metrics": [
+        {"model": "logistic_regression", "accuracy": 0.9722, "f1_weighted": 0.9722, "auc": 0.9987, "primary_score": 0.9722},
+        {"model": "random_forest", "accuracy": 1.0, "f1_weighted": 1.0, "auc": 1.0, "primary_score": 1.0},
+        {"model": "gradient_boosting", "accuracy": 0.9722, "f1_weighted": 0.9722, "auc": 0.9993, "primary_score": 0.9722}
+      ]
+    },
+    {
+      "dataset": "titanic",
+      "domain": "generic",
+      "problem_type": "classification",
+      "target_column": "Survived",
+      "status": "success",
+      "n_rows": 891,
+      "n_cols": 12,
+      "duration_seconds": 1.63,
+      "best_model": "gradient_boosting",
+      "best_score": 0.8112,
+      "metrics": [
+        {"model": "logistic_regression", "accuracy": 0.7933, "f1_weighted": 0.7887, "auc": 0.8523, "primary_score": 0.7887},
+        {"model": "random_forest", "accuracy": 0.7989, "f1_weighted": 0.7943, "auc": 0.8612, "primary_score": 0.7943},
+        {"model": "gradient_boosting", "accuracy": 0.8156, "f1_weighted": 0.8112, "auc": 0.8734, "primary_score": 0.8112}
+      ]
+    }
+  ]
+}

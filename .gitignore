@@ -1,0 +1,68 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Environment
+.env
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Data (user uploads — never commit)
+data/*
+!data/.gitkeep
+
+# Outputs (generated reports — never commit)
+outputs/*
+!outputs/.gitkeep
+
+# Sessions (user session data — never commit)
+sessions/*
+!sessions/.gitkeep
+
+# Logs
+logs/*
+!logs/.gitkeep
+
+# MLflow
+mlruns/*
+!mlruns/.gitkeep
+
+# ChromaDB
+chromadb/
+
+# DuckDB
+*.duckdb
+*.duckdb.wal
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Benchmark datasets (large files — download via script)
+evaluation/test_datasets/*.csv
+evaluation/test_datasets/*.parquet
+tests/benchmarks/benchmark_datasets/*.csv
+tests/benchmarks/benchmark_datasets/*.parquet

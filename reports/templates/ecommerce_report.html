@@ -1,0 +1,31 @@
+<!-- E-commerce-specific report sections (extends base_report.html) -->
+{% extends "base_report.html" %}
+
+{% block domain_sections %}
+<!-- Customer Intelligence -->
+<h2>🛒 Customer Intelligence</h2>
+{% if rfm_analysis %}
+<h3>RFM Segmentation</h3>
+{{ rfm_analysis }}
+{% endif %}
+
+{% if cohort_retention %}
+<h3>Cohort Retention Analysis</h3>
+<div class="chart-container">{{ cohort_retention }}</div>
+{% endif %}
+
+{% if funnel_analysis %}
+<h3>Conversion Funnel</h3>
+{{ funnel_analysis }}
+{% endif %}
+
+{% if clv_analysis %}
+<h3>Customer Lifetime Value</h3>
+{{ clv_analysis }}
+{% endif %}
+
+{% if seasonal_analysis %}
+<h3>Seasonal Patterns</h3>
+{{ seasonal_analysis }}
+{% endif %}
+{% endblock %}

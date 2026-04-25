@@ -1,0 +1,35 @@
+<!-- Finance-specific report sections (extends base_report.html) -->
+{% extends "base_report.html" %}
+
+{% block domain_sections %}
+<!-- Risk Metrics -->
+<h2>💰 Risk & Performance Metrics</h2>
+{% if ks_gini_analysis %}
+<h3>KS Statistic &amp; Gini Coefficient</h3>
+{{ ks_gini_analysis }}
+{% endif %}
+
+{% if gain_lift_charts %}
+<h3>Gain / Lift Analysis</h3>
+<div class="chart-container">{{ gain_lift_charts }}</div>
+{% endif %}
+
+{% if score_distribution %}
+<h3>Score Distribution</h3>
+{{ score_distribution }}
+{% endif %}
+
+{% if adverse_action %}
+<h3>Adverse Action Reason Codes</h3>
+<div class="warning-box">
+    <strong>Regulatory Note:</strong> The following reason codes are generated for
+    transparency and compliance with fair lending regulations.
+</div>
+{{ adverse_action }}
+{% endif %}
+
+{% if vintage_analysis %}
+<h3>Vintage Analysis</h3>
+{{ vintage_analysis }}
+{% endif %}
+{% endblock %}

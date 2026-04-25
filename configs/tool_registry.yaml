@@ -1,0 +1,69 @@
+# Tool Registry (YAML companion)
+# This mirrors agents/tools/tool_registry.py for reference.
+# The Python registry is the source of truth; this file is for documentation
+# and for tools that may be added without modifying Python code.
+
+statistical_tests:
+  - id: t_test_independent
+    name: "Independent Samples T-Test"
+    domains: [all]
+  - id: t_test_paired
+    name: "Paired Samples T-Test"
+    domains: [all]
+  - id: mann_whitney_u
+    name: "Mann-Whitney U Test"
+    domains: [all]
+  - id: chi_square
+    name: "Chi-Square Test of Independence"
+    domains: [all]
+  - id: fisher_exact
+    name: "Fisher's Exact Test"
+    domains: [all]
+  - id: anova_oneway
+    name: "One-Way ANOVA"
+    domains: [all]
+  - id: kruskal_wallis
+    name: "Kruskal-Wallis H Test"
+    domains: [all]
+  - id: shapiro_wilk
+    name: "Shapiro-Wilk Normality Test"
+    domains: [all]
+  - id: levene_test
+    name: "Levene's Test for Equal Variances"
+    domains: [all]
+  - id: correlation_pearson
+    name: "Pearson Correlation"
+    domains: [all]
+  - id: correlation_spearman
+    name: "Spearman Rank Correlation"
+    domains: [all]
+  - id: ks_test
+    name: "Kolmogorov-Smirnov Test"
+    domains: [finance, all]
+  - id: vif_test
+    name: "Variance Inflation Factor"
+    domains: [all]
+  - id: kaplan_meier
+    name: "Kaplan-Meier Survival Analysis"
+    domains: [healthcare, manufacturing, hr]
+  - id: cox_proportional_hazards
+    name: "Cox Proportional Hazards"
+    domains: [healthcare, manufacturing]
+  - id: log_rank
+    name: "Log-Rank Test"
+    domains: [healthcare]
+
+visualizations:
+  count: 25
+  note: "See agents/tools/tool_registry.py for complete list"
+
+feature_engineering:
+  count: 17
+  note: "See agents/tools/tool_registry.py for complete list"
+
+models:
+  classification: 8
+  regression: 6
+  clustering: 3
+  automl: 1
+  total: 18
