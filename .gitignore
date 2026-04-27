@@ -61,6 +61,13 @@ Thumbs.db
 .coverage
 htmlcov/
 
+# Tool caches
+.code-review-graph/
+autods_platform.egg-info/
+
+# Streamlit secrets
+.streamlit/secrets.toml
+
 # Benchmark datasets (large files — download via script)
 evaluation/test_datasets/*.csv
 evaluation/test_datasets/*.parquet

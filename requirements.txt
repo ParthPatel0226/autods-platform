@@ -27,6 +27,9 @@ polars>=1.0.0
 numpy>=1.26.0
 duckdb>=1.1.0
 
+# --- Auth & Database ---
+supabase>=2.0.0
+
 # --- Data Profiling & Quality ---
 # ydata-profiling>=4.10.0  # Incompatible with Python 3.14; using custom profiler
 # great-expectations>=1.0.0  # Unused; uncomment when validation module needs it
@@ -49,7 +52,9 @@ fairlearn>=0.11.0
 
 # --- Statistics ---
 scipy>=1.14.0
-statsmodels>=0.14.0
+statsmodels>=0.14.6
+formulaic>=1.0.0
+autograd-gamma>=0.3
 lifelines>=0.29.0
 
 # --- Visualization ---
