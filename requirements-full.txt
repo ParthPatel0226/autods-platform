@@ -1,0 +1,123 @@
+# =============================================================================
+# AutoDS Platform — Python Dependencies
+# =============================================================================
+
+# --- Core Framework ---
+langgraph>=0.2.0
+langchain>=0.3.0
+langchain-anthropic>=0.3.0
+langchain-core>=0.3.0
+
+# --- LLM Providers (install the one you need) ---
+# Default: Gemma 4 via Google Gemini API (cheapest)
+langchain-google-genai>=2.0.0
+
+# Alternative: Gemma 4 via Ollama (free, local)
+langchain-ollama>=0.3.0
+
+# Alternative: Claude via Anthropic
+langchain-anthropic>=0.3.0
+
+# Alternative: OpenAI GPT
+# langchain-openai>=0.3.0  # Uncomment if using OpenAI
+
+# --- Data Processing ---
+pandas>=2.2.0
+polars>=1.0.0
+numpy>=1.26.0
+duckdb>=1.1.0
+
+# --- Auth & Database ---
+supabase>=2.0.0
+
+# --- Data Profiling & Quality ---
+# ydata-profiling>=4.10.0  # Incompatible with Python 3.14; using custom profiler
+# great-expectations>=1.0.0  # Unused; uncomment when validation module needs it
+
+# --- Machine Learning ---
+scikit-learn>=1.5.0
+xgboost>=2.1.0
+lightgbm>=4.5.0
+catboost>=1.2.0
+flaml>=2.3.0
+optuna>=4.0.0
+imbalanced-learn>=0.12.0
+
+# --- Deep Learning (optional, for advanced features) ---
+# torch>=2.0.0  # Uncomment if needed
+
+# --- Explainability ---
+shap>=0.46.0
+fairlearn>=0.11.0
+
+# --- Statistics ---
+scipy>=1.14.0
+statsmodels>=0.14.6
+formulaic>=1.0.0
+autograd-gamma>=0.3
+lifelines>=0.29.0
+
+# --- Visualization ---
+plotly>=5.24.0
+matplotlib>=3.9.0
+seaborn>=0.13.0
+kaleido>=0.2.1
+
+# --- Dashboard ---
+streamlit>=1.40.0
+
+# --- API Serving ---
+fastapi>=0.115.0
+uvicorn>=0.32.0
+pydantic>=2.9.0
+
+# --- Experiment Tracking ---
+mlflow>=2.18.0
+
+# --- Vector Store (Agent Memory) ---
+chromadb>=0.5.0
+
+# --- Report Generation ---
+jinja2>=3.1.0
+weasyprint>=62.0
+nbformat>=5.10.0
+nbconvert>=7.16.0
+
+# --- Data Connectors ---
+sqlalchemy>=2.0.0
+psycopg2-binary>=2.9.0
+pymysql>=1.1.0
+openpyxl>=3.1.0
+pyarrow>=18.0.0
+xlrd>=2.0.0
+tabula-py>=2.9.0
+beautifulsoup4>=4.12.0
+requests>=2.32.0
+python-dotenv>=1.0.0
+chardet>=5.2.0
+
+# --- File Format Support ---
+# sas7bdat>=2.2.3  # Uncomment for SAS file support
+# pyreadstat>=1.2.0  # Uncomment for SPSS/STATA support
+# h5py>=3.11.0  # Uncomment for HDF5 support
+
+# --- Cloud (optional) ---
+# boto3>=1.35.0  # Uncomment for AWS S3
+# google-cloud-storage>=2.18.0  # Uncomment for GCS
+# google-cloud-bigquery>=3.26.0  # Uncomment for BigQuery
+# snowflake-connector-python>=3.12.0  # Uncomment for Snowflake
+
+# --- Kaggle ---
+kaggle>=1.6.0
+
+# --- HuggingFace ---
+datasets>=3.0.0
+
+# --- Yahoo Finance ---
+yfinance>=0.2.0
+
+# --- Utilities ---
+joblib>=1.4.0
+tqdm>=4.66.0
+pyyaml>=6.0.0
+python-dateutil>=2.9.0
