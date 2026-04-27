@@ -11,6 +11,8 @@ from typing import Any
 
 import streamlit as st
 
+from dashboard.components.shared_css import inject_shared_css
+
 logger = logging.getLogger(__name__)
 
 _SUGGESTED_QUESTIONS: list[str] = [
@@ -29,50 +31,20 @@ _SUGGESTED_QUESTIONS: list[str] = [
 
 _CSS = """
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
-@media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
-}
-
-section[data-testid="stMain"] { background: #0a0a0f; }
-.stApp { background: #0a0a0f; color: #f1f5f9; font-family: 'Inter', sans-serif; }
-header[data-testid="stHeader"] { background: transparent; }
-.stDeployButton, #MainMenu { display: none; }
+/* handled by shared_css.py */
 
 /* Page title */
 .page-title {
+    font-family: var(--font-display);
     font-size: 1.75rem;
     font-weight: 700;
-    color: #f1f5f9;
+    color: var(--text-primary);
     margin-bottom: 0.25rem;
 }
 .page-subtitle {
     font-size: 0.9rem;
-    color: #64748b;
+    color: var(--text-muted);
     margin-bottom: 1.5rem;
-}
-
-/* Section headers */
-.section-header {
-    font-size: 0.7rem;
-    font-weight: 600;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: #94a3b8;
-    margin-bottom: 0.75rem;
-    padding-bottom: 0.5rem;
-    position: relative;
-}
-.section-header::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 48px;
-    height: 2px;
-    background: linear-gradient(135deg, #6366f1, #0ea5e9);
-    border-radius: 1px;
 }
 
 /* Chat container */
@@ -101,23 +73,23 @@ header[data-testid="stHeader"] { background: transparent; }
 .msg-bubble {
     max-width: 75%;
     padding: 0.875rem 1.125rem;
-    border-radius: 12px;
+    border-radius: var(--radius-md);
     font-size: 0.88rem;
     line-height: 1.6;
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+    box-shadow: var(--shadow-card);
 }
 .msg-bubble.user {
-    background: rgba(99,102,241,0.12);
-    border: 1px solid rgba(99,102,241,0.25);
-    color: #f1f5f9;
+    background: var(--accent-primary-subtle);
+    border: 1px solid var(--accent-primary-light);
+    color: var(--text-primary);
     border-bottom-right-radius: 4px;
 }
 .msg-bubble.assistant {
-    background: rgba(18, 18, 26, 0.8);
-    border: 1px solid rgba(99,102,241,0.1);
-    color: #e2e8f0;
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-primary);
     border-bottom-left-radius: 4px;
 }
 
@@ -128,8 +100,8 @@ header[data-testid="stHeader"] { background: transparent; }
     letter-spacing: 0.08em;
     margin-bottom: 0.35rem;
 }
-.msg-role.user { color: #6366f1; }
-.msg-role.assistant { color: #64748b; }
+.msg-role.user { color: var(--accent-primary); }
+.msg-role.assistant { color: var(--text-muted); }
 
 /* Suggestion pills */
 .suggestion-grid {
@@ -139,44 +111,44 @@ header[data-testid="stHeader"] { background: transparent; }
     margin-bottom: 1.5rem;
 }
 .suggestion-pill {
-    background: rgba(18, 18, 26, 0.6);
+    background: var(--bg-card);
     backdrop-filter: blur(12px);
-    border: 1px solid rgba(99,102,241,0.12);
-    border-radius: 10px;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
     padding: 0.625rem 1rem;
     font-size: 0.8rem;
-    color: #94a3b8;
+    color: var(--text-secondary);
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all var(--transition-fast);
     text-align: left;
 }
 .suggestion-pill:hover {
-    border-color: rgba(99,102,241,0.35);
-    color: #f1f5f9;
-    background: rgba(99,102,241,0.06);
+    border-color: var(--border-active);
+    color: var(--text-primary);
+    background: var(--accent-primary-subtle);
 }
 
 /* Input area card */
 .input-area {
-    background: rgba(18, 18, 26, 0.8);
+    background: var(--bg-card);
     backdrop-filter: blur(20px);
-    border: 1px solid rgba(99,102,241,0.12);
-    border-radius: 12px;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
     padding: 0.75rem;
     margin-top: 1rem;
-    box-shadow: 0 -2px 16px rgba(0,0,0,0.15);
+    box-shadow: var(--shadow-card);
     position: sticky;
     bottom: 0;
 }
 
 /* Override Streamlit chat input */
 div[data-testid="stChatInput"] {
-    background: rgba(18, 18, 26, 0.6) !important;
-    border: 1px solid rgba(99,102,241,0.15) !important;
-    border-radius: 10px !important;
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border-subtle) !important;
+    border-radius: var(--radius-lg) !important;
 }
 div[data-testid="stChatInput"] textarea {
-    color: #f1f5f9 !important;
+    color: var(--text-primary) !important;
     background: transparent !important;
 }
 
@@ -189,36 +161,36 @@ div[data-testid="stChatMessage"] {
 
 /* Context sidebar */
 .context-card {
-    background: rgba(18, 18, 26, 0.7);
-    border: 1px solid rgba(99,102,241,0.1);
-    border-radius: 10px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
     padding: 0.875rem;
     margin-bottom: 0.75rem;
 }
 .context-label {
     font-size: 0.65rem;
-    color: #64748b;
+    color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.08em;
     margin-bottom: 0.2rem;
 }
 .context-value {
     font-size: 0.82rem;
-    color: #f1f5f9;
+    color: var(--text-primary);
     font-weight: 500;
 }
 
 /* Alert overrides */
 div[data-testid="stAlert"] {
-    background: rgba(18, 18, 26, 0.6) !important;
-    border: 1px solid rgba(99,102,241,0.15) !important;
-    border-radius: 10px !important;
-    color: #f1f5f9 !important;
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border-subtle) !important;
+    border-radius: var(--radius-lg) !important;
+    color: var(--text-primary) !important;
 }
 
 .glass-caption {
     font-size: 0.78rem;
-    color: #64748b;
+    color: var(--text-muted);
 }
 </style>
 """
@@ -230,7 +202,7 @@ div[data-testid="stAlert"] {
 
 def _guard() -> None:
     if "uploaded_data" not in st.session_state:
-        st.warning("Please upload data first.")
+        st.info("Complete the analysis pipeline first to use the chat interface. Ask follow-up questions about your data, request additional analyses, or explore model decisions.")
         st.stop()
 
 
@@ -429,6 +401,7 @@ def _render_chat_history() -> None:
 # ---------------------------------------------------------------------------
 
 def _page() -> None:
+    inject_shared_css()
     _guard()
     _init_chat()
     st.markdown(_CSS, unsafe_allow_html=True)
@@ -450,7 +423,7 @@ def _page() -> None:
 
     # Navigation
     st.markdown('<div style="height:2rem;"></div>', unsafe_allow_html=True)
-    st.markdown('<div style="height:1px; background:rgba(99,102,241,0.1); margin:0.5rem 0 1.5rem;"></div>', unsafe_allow_html=True)
+    st.markdown('<div style="height:1px; background:var(--border-subtle); margin:0.5rem 0 1.5rem;"></div>', unsafe_allow_html=True)
     col_back, col_next = st.columns(2)
     with col_back:
         if st.button("Back to Predictions", use_container_width=True):
@@ -460,4 +433,15 @@ def _page() -> None:
             st.switch_page("pages/09_download.py")
 
 
-_page()
+
+def _is_streamlit_running() -> bool:
+    """Return True only when executing inside a Streamlit runtime."""
+    try:
+        from streamlit.runtime.scriptrunner import get_script_run_ctx
+        return get_script_run_ctx() is not None
+    except Exception:
+        return False
+
+
+if _is_streamlit_running():
+    _page()

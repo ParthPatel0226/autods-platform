@@ -23,7 +23,35 @@ AutoDS offers three modes that control how much input you provide at each step:
 
 You select the mode on the Configuration page. You can switch modes mid-pipeline.
 
+## Theme System
+
+AutoDS features a **professional dual-theme design system** implemented via CSS custom properties.
+
+### Light Mode (Default)
+Clean, high-contrast light theme with white backgrounds, slate neutrals, and a blue accent (#2563eb primary).
+
+### Dark Mode
+Deep navy theme optimized for reduced eye strain during long analysis sessions. All UI elements automatically adapt — shadows, borders, text colors, and chart colors.
+
+**Toggle dark mode** anytime via the button in the top-right of the sidebar. Your preference persists throughout your session.
+
+The design system includes 80+ CSS tokens controlling:
+- Backgrounds (`--bg-primary`, `--bg-card`, `--bg-elevated`, `--bg-inset`)
+- Text colors (`--text-primary`, `--text-secondary`, `--text-muted`)
+- Accent colors (primary blue `#2563eb`, secondary cyan `#0891b2`, purple, success, warning, danger)
+- Spacing, radii, shadows, transitions, and typography (`Plus Jakarta Sans` display, `Inter` body, `JetBrains Mono` code)
+
 ## Workflow Steps
+
+## Landing Page
+
+When you first open AutoDS, you'll see a professional landing page featuring:
+
+- **Hero Banner**: Dark gradient background with animated title and floating stat pills showing platform capabilities
+- **Feature Showcase**: Three bento-grid cards highlighting Domain Intelligence, Collaborative Agents, and Pipeline Control
+- **File Upload**: Central drag-and-drop zone with format chips showing supported types
+- **Sample Datasets**: Quick-start options for Titanic, Heart Disease, Credit Risk, Online Retail, Attrition, and Predictive Maintenance
+- **Platform Stats**: Bottom grid showing key metrics (7 Domains, 25+ Charts, 16 Tests, 8 Agents, 30+ Sources)
 
 ### 1. Upload Data
 
@@ -42,16 +70,16 @@ Multi-source: upload multiple files and join them. AutoDS suggests join keys.
 - **Domain Detection**: AutoDS analyzes column names and auto-detects your industry (Healthcare, Finance, E-commerce, Marketing, HR, Manufacturing). Override if needed.
 - **Target Column**: Select the variable to predict (or leave empty for unsupervised).
 - **Problem Type**: Classification, regression, clustering, or time series.
-- **Goal**: Describe what you want to learn in natural language.
+- **Goal**: Select your analysis objective from a problem-type-aware dropdown, or type a custom goal in the text field below (e.g., "Find top 5 churn predictors with AUC > 0.85").
 
 ### 3. Exploratory Data Analysis (EDA)
 
 In Guided/Expert mode, AutoDS asks domain-specific questions:
 - What's your primary analysis goal?
-- Which correlations interest you?
-- Are there domain-specific patterns to investigate?
+- Which visualisations would you like?
+- Which statistical tests should be run?
 
-Results include: distribution charts, correlation heatmaps, statistical tests, outlier analysis, and an AI-generated summary of key findings.
+Each question includes preset options plus a manual text field for custom specifications. Click **Run Selected Analyses** to execute — results appear immediately with charts, statistical test tables, and key insights.
 
 ### 4. Feature Engineering
 

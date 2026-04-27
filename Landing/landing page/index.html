@@ -1,0 +1,2185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AutoDS — Autonomous Data Science, Engineered.</title>
+<meta name="description" content="From raw data to production models. An 8-agent autonomous platform that runs the full data science workflow with domain-aware reasoning.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/framer-motion@10.18.0/dist/framer-motion.js"></script>
+
+<style>
+  /* ============ DARK THEME (default) ============ */
+  :root, [data-theme="dark"] {
+    --bg: #07091A;
+    --bg-1: #0B0F2A;
+    --bg-2: #11173D;
+    --bg-3: #1A2150;
+    --surface: rgba(255, 255, 255, 0.04);
+    --surface-2: rgba(255, 255, 255, 0.08);
+    --surface-3: rgba(255, 255, 255, 0.12);
+    --border: rgba(255, 255, 255, 0.08);
+    --border-2: rgba(255, 255, 255, 0.14);
+    --ink: #F4F5FF;
+    --ink-2: #C4C7E8;
+    --ink-dim: #8B91C1;
+    --ink-faint: #5B608A;
+    --indigo: #6366F1;
+    --violet: #8B5CF6;
+    --purple: #A855F7;
+    --pink: #EC4899;
+    --cyan: #22D3EE;
+    --green: #10B981;
+    --amber: #F59E0B;
+
+    --nav-bg: rgba(11, 15, 42, 0.7);
+    --terminal-bg: rgba(0, 0, 0, 0.4);
+    --terminal-header: rgba(0, 0, 0, 0.5);
+    --grid-line: rgba(139, 92, 246, 0.08);
+    --aurora-1: rgba(139, 92, 246, 0.25);
+    --aurora-2: rgba(34, 211, 238, 0.12);
+    --aurora-3: rgba(236, 72, 153, 0.12);
+    --star-opacity: 0.5;
+    --sheen: rgba(255, 255, 255, 0.05);
+    --shadow-glow: 0 30px 80px rgba(99, 102, 241, 0.15);
+    --code-text: #F4F5FF;
+    --gradient-text: linear-gradient(135deg, #FFFFFF 0%, #C4B5FD 40%, #818CF8 70%, #22D3EE 100%);
+  }
+
+  /* ============ LIGHT THEME ============ */
+  [data-theme="light"] {
+    --bg: #FAFAFC;
+    --bg-1: #F4F5F9;
+    --bg-2: #EBEDF4;
+    --bg-3: #E0E3EE;
+    --surface: rgba(255, 255, 255, 0.7);
+    --surface-2: rgba(255, 255, 255, 0.85);
+    --surface-3: rgba(255, 255, 255, 1);
+    --border: rgba(15, 23, 42, 0.08);
+    --border-2: rgba(15, 23, 42, 0.14);
+    --ink: #0F172A;
+    --ink-2: #334155;
+    --ink-dim: #64748B;
+    --ink-faint: #94A3B8;
+    --indigo: #4F46E5;
+    --violet: #7C3AED;
+    --purple: #9333EA;
+    --pink: #DB2777;
+    --cyan: #0891B2;
+    --green: #059669;
+    --amber: #D97706;
+
+    --nav-bg: rgba(255, 255, 255, 0.75);
+    --terminal-bg: #0F172A;
+    --terminal-header: #1E293B;
+    --grid-line: rgba(124, 58, 237, 0.06);
+    --aurora-1: rgba(124, 58, 237, 0.18);
+    --aurora-2: rgba(8, 145, 178, 0.12);
+    --aurora-3: rgba(219, 39, 119, 0.12);
+    --star-opacity: 0;
+    --sheen: rgba(124, 58, 237, 0.06);
+    --shadow-glow: 0 30px 80px rgba(124, 58, 237, 0.12);
+    --code-text: #F4F5FF;
+    --gradient-text: linear-gradient(135deg, #0F172A 0%, #4F46E5 40%, #7C3AED 70%, #DB2777 100%);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Inter Tight', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+    line-height: 1.5;
+    letter-spacing: -0.01em;
+    transition: background 0.4s ease, color 0.4s ease;
+  }
+  .font-display { font-family: 'Instrument Serif', serif; font-weight: 400; letter-spacing: -0.02em; }
+  .font-mono { font-family: 'JetBrains Mono', monospace; }
+  .italic-serif { font-family: 'Instrument Serif', serif; font-style: italic; font-weight: 400; }
+
+  /* Cosmic background */
+  .cosmic-bg {
+    background:
+      radial-gradient(ellipse 80% 50% at 50% -10%, var(--aurora-1), transparent),
+      radial-gradient(ellipse 60% 50% at 100% 30%, var(--aurora-2), transparent),
+      radial-gradient(ellipse 60% 50% at 0% 60%, var(--aurora-3), transparent),
+      var(--bg);
+  }
+
+  .grid-pattern {
+    background-image:
+      linear-gradient(var(--grid-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+    background-size: 60px 60px;
+    mask-image: radial-gradient(ellipse 90% 70% at 50% 30%, black 30%, transparent 80%);
+    -webkit-mask-image: radial-gradient(ellipse 90% 70% at 50% 30%, black 30%, transparent 80%);
+  }
+
+  .stars {
+    background-image:
+      radial-gradient(1px 1px at 20% 30%, white, transparent),
+      radial-gradient(1px 1px at 60% 70%, white, transparent),
+      radial-gradient(1px 1px at 50% 50%, rgba(255,255,255,0.6), transparent),
+      radial-gradient(1px 1px at 80% 10%, rgba(255,255,255,0.8), transparent),
+      radial-gradient(1px 1px at 90% 60%, white, transparent),
+      radial-gradient(1px 1px at 33% 95%, rgba(255,255,255,0.7), transparent),
+      radial-gradient(1px 1px at 15% 80%, white, transparent),
+      radial-gradient(1px 1px at 70% 40%, rgba(255,255,255,0.5), transparent);
+    background-size: 400px 400px;
+    opacity: var(--star-opacity);
+    transition: opacity 0.4s ease;
+  }
+
+  .glow-text {
+    background: var(--gradient-text);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  ::-webkit-scrollbar { width: 10px; }
+  ::-webkit-scrollbar-track { background: var(--bg-1); }
+  ::-webkit-scrollbar-thumb { background: var(--bg-3); border-radius: 5px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--violet); }
+
+  @keyframes marquee-scroll {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+  .marquee-track {
+    animation: marquee-scroll 50s linear infinite;
+    display: flex;
+    width: max-content;
+  }
+
+  .glass {
+    background: var(--surface);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid var(--border);
+  }
+
+  .glass-strong {
+    background: var(--surface-2);
+    backdrop-filter: blur(32px);
+    -webkit-backdrop-filter: blur(32px);
+    border: 1px solid var(--border-2);
+  }
+
+  .btn-glow {
+    position: relative;
+    background: linear-gradient(135deg, var(--indigo) 0%, var(--violet) 50%, var(--purple) 100%);
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,0.1) inset,
+      0 8px 32px rgba(139, 92, 246, 0.4),
+      0 4px 16px rgba(99, 102, 241, 0.3);
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .btn-glow:hover {
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,0.2) inset,
+      0 12px 48px rgba(139, 92, 246, 0.6),
+      0 8px 24px rgba(99, 102, 241, 0.5);
+    transform: translateY(-2px);
+  }
+
+  @keyframes blink-cursor { 50% { opacity: 0; } }
+  .cursor-blink {
+    display: inline-block;
+    width: 8px; height: 16px;
+    background: currentColor;
+    animation: blink-cursor 1s steps(1) infinite;
+    vertical-align: middle;
+  }
+
+  @keyframes pulse-ring {
+    0% { transform: scale(1); opacity: 1; }
+    100% { transform: scale(2.5); opacity: 0; }
+  }
+
+  .hover-glow:hover {
+    box-shadow: 0 0 40px -8px rgba(139, 92, 246, 0.5);
+    border-color: rgba(139, 92, 246, 0.4);
+  }
+
+  .spotlight {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(60px);
+    pointer-events: none;
+    opacity: 0.5;
+  }
+
+  .card-sheen {
+    position: relative;
+    overflow: hidden;
+  }
+  .card-sheen::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, var(--sheen), transparent);
+    transition: left 0.7s;
+  }
+  .card-sheen:hover::before {
+    left: 100%;
+  }
+
+  .status-pulse {
+    position: relative;
+    display: inline-flex;
+    width: 8px;
+    height: 8px;
+  }
+  .status-pulse::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: var(--green);
+    animation: pulse-ring 2s ease-out infinite;
+  }
+  .status-pulse::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: var(--green);
+  }
+</style>
+</head>
+<body>
+
+<div id="root"></div>
+
+<script type="text/babel">
+const FM = window.Motion || window.framerMotion;
+const motion = FM.motion;
+const useInView = FM.useInView;
+const useScroll = FM.useScroll;
+const useTransform = FM.useTransform;
+const AnimatePresence = FM.AnimatePresence;
+const { useState, useRef, useEffect, createContext, useContext } = React;
+
+// =================== CONFIG ===================
+// Change this to your deployed Streamlit URL when you ship.
+// For local dev, it's typically http://localhost:8501
+const APP_URL = "http://localhost:8501";
+const GITHUB_URL = "https://github.com/your-username/autods";  // ← update with your repo
+const DOCS_URL = "#docs";
+
+// =================== THEME CONTEXT ===================
+const ThemeContext = createContext({ theme: 'dark', toggle: () => {} });
+
+function ThemeProvider({ children }) {
+  const [theme, setTheme] = useState('dark');
+
+  useEffect(() => {
+    const saved = localStorage.getItem('autods-theme');
+    if (saved) setTheme(saved);
+    else if (window.matchMedia('(prefers-color-scheme: light)').matches) setTheme('light');
+  }, []);
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('autods-theme', theme);
+  }, [theme]);
+
+  const toggle = () => setTheme(t => t === 'dark' ? 'light' : 'dark');
+  return <ThemeContext.Provider value={{ theme, toggle }}>{children}</ThemeContext.Provider>;
+}
+
+function ThemeToggle() {
+  const { theme, toggle } = useContext(ThemeContext);
+  const isDark = theme === 'dark';
+  return (
+    <motion.button
+      onClick={toggle}
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.92 }}
+      transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+      className="relative flex items-center justify-center flex-shrink-0 cursor-pointer"
+      style={{
+        width: '44px',
+        height: '44px',
+        borderRadius: '999px',
+        background: isDark
+          ? 'linear-gradient(135deg, #6366F1, #A855F7)'
+          : 'linear-gradient(135deg, #F59E0B, #EC4899)',
+        border: '2px solid var(--border-2)',
+        color: 'white',
+        boxShadow: isDark
+          ? '0 0 24px rgba(168, 85, 247, 0.6), 0 4px 12px rgba(99, 102, 241, 0.4)'
+          : '0 0 24px rgba(245, 158, 11, 0.5), 0 4px 12px rgba(236, 72, 153, 0.3)',
+      }}
+      aria-label={`Switch to ${isDark ? 'light' : 'dark'} mode`}
+      title={`Switch to ${isDark ? 'light' : 'dark'} mode`}
+    >
+      <AnimatePresence mode="wait">
+        {isDark ? (
+          <motion.svg
+            key="moon"
+            initial={{ rotate: -180, opacity: 0, scale: 0.3 }}
+            animate={{ rotate: 0, opacity: 1, scale: 1 }}
+            exit={{ rotate: 180, opacity: 0, scale: 0.3 }}
+            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+            width="20" height="20" viewBox="0 0 20 20" fill="white"
+          >
+            <path d="M17.5 11.875A7.5 7.5 0 0 1 8.125 2.5 7.5 7.5 0 1 0 17.5 11.875z"/>
+            <circle cx="14" cy="5" r="0.8" opacity="0.7"/>
+            <circle cx="16" cy="9" r="0.6" opacity="0.5"/>
+          </motion.svg>
+        ) : (
+          <motion.svg
+            key="sun"
+            initial={{ rotate: 180, opacity: 0, scale: 0.3 }}
+            animate={{ rotate: 0, opacity: 1, scale: 1 }}
+            exit={{ rotate: -180, opacity: 0, scale: 0.3 }}
+            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+            width="20" height="20" viewBox="0 0 20 20" fill="white"
+          >
+            <circle cx="10" cy="10" r="4"/>
+            <g stroke="white" strokeWidth="2" strokeLinecap="round">
+              <line x1="10" y1="1.5" x2="10" y2="3.5"/>
+              <line x1="10" y1="16.5" x2="10" y2="18.5"/>
+              <line x1="1.5" y1="10" x2="3.5" y2="10"/>
+              <line x1="16.5" y1="10" x2="18.5" y2="10"/>
+              <line x1="3.5" y1="3.5" x2="4.9" y2="4.9"/>
+              <line x1="15.1" y1="15.1" x2="16.5" y2="16.5"/>
+              <line x1="3.5" y1="16.5" x2="4.9" y2="15.1"/>
+              <line x1="15.1" y1="4.9" x2="16.5" y2="3.5"/>
+            </g>
+          </motion.svg>
+        )}
+      </AnimatePresence>
+    </motion.button>
+  );
+}
+
+// =================== FLOATING THEME TOGGLE (always visible) ===================
+function FloatingThemeToggle() {
+  const { theme, toggle } = useContext(ThemeContext);
+  const isDark = theme === 'dark';
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0, y: 100 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      transition={{ delay: 1.5, duration: 0.6, type: 'spring', stiffness: 200 }}
+      className="fixed bottom-6 right-6 z-50"
+    >
+      <motion.button
+        onClick={toggle}
+        whileHover={{ scale: 1.08, rotate: isDark ? -10 : 10 }}
+        whileTap={{ scale: 0.92 }}
+        className="relative flex items-center gap-3 px-5 py-3 rounded-full font-medium text-sm cursor-pointer"
+        style={{
+          background: isDark
+            ? 'linear-gradient(135deg, #6366F1, #A855F7)'
+            : 'linear-gradient(135deg, #F59E0B, #EC4899)',
+          color: 'white',
+          border: '2px solid var(--border-2)',
+          boxShadow: isDark
+            ? '0 8px 32px rgba(168, 85, 247, 0.5), 0 0 0 1px rgba(255,255,255,0.1) inset'
+            : '0 8px 32px rgba(245, 158, 11, 0.5), 0 0 0 1px rgba(255,255,255,0.2) inset',
+        }}
+        aria-label={`Switch to ${isDark ? 'light' : 'dark'} mode`}
+      >
+        <AnimatePresence mode="wait">
+          {isDark ? (
+            <motion.div
+              key="moon-float"
+              initial={{ rotate: -180, opacity: 0 }}
+              animate={{ rotate: 0, opacity: 1 }}
+              exit={{ rotate: 180, opacity: 0 }}
+              transition={{ duration: 0.4 }}
+              className="flex items-center gap-2"
+            >
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="white">
+                <path d="M17.5 11.875A7.5 7.5 0 0 1 8.125 2.5 7.5 7.5 0 1 0 17.5 11.875z"/>
+              </svg>
+              <span className="hidden sm:inline">Light Mode</span>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="sun-float"
+              initial={{ rotate: 180, opacity: 0 }}
+              animate={{ rotate: 0, opacity: 1 }}
+              exit={{ rotate: -180, opacity: 0 }}
+              transition={{ duration: 0.4 }}
+              className="flex items-center gap-2"
+            >
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="white">
+                <circle cx="10" cy="10" r="4"/>
+                <g stroke="white" strokeWidth="2" strokeLinecap="round">
+                  <line x1="10" y1="1.5" x2="10" y2="3.5"/>
+                  <line x1="10" y1="16.5" x2="10" y2="18.5"/>
+                  <line x1="1.5" y1="10" x2="3.5" y2="10"/>
+                  <line x1="16.5" y1="10" x2="18.5" y2="10"/>
+                  <line x1="3.5" y1="3.5" x2="4.9" y2="4.9"/>
+                  <line x1="15.1" y1="15.1" x2="16.5" y2="16.5"/>
+                  <line x1="3.5" y1="16.5" x2="4.9" y2="15.1"/>
+                  <line x1="15.1" y1="4.9" x2="16.5" y2="3.5"/>
+                </g>
+              </svg>
+              <span className="hidden sm:inline">Dark Mode</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.button>
+    </motion.div>
+  );
+}
+
+// =================== NAV ===================
+function Nav() {
+  const [scrolled, setScrolled] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const { theme } = useContext(ThemeContext);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 30);
+    window.addEventListener('scroll', onScroll);
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  const navItems = [
+    { name: 'Platform', href: '#workflow' },
+    { name: 'Agents', href: '#agents' },
+    { name: 'Architecture', href: '#architecture' },
+    { name: 'Stack', href: '#stack' }
+  ];
+
+  return (
+    <>
+      <motion.nav
+        initial={{ y: -80, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+        className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-32px)] max-w-5xl rounded-full"
+        style={{
+          background: 'var(--nav-bg)',
+          backdropFilter: 'blur(32px)',
+          WebkitBackdropFilter: 'blur(32px)',
+          border: '1px solid var(--border-2)',
+          boxShadow: scrolled ? '0 8px 32px rgba(0,0,0,0.2), 0 0 0 1px rgba(139,92,246,0.15) inset' : '0 4px 16px rgba(0,0,0,0.1)',
+          transition: 'box-shadow 0.3s, background 0.4s'
+        }}
+      >
+        <div className="px-4 md:px-5 py-2.5 flex items-center justify-between gap-3">
+          {/* Logo */}
+          <motion.a href="#" whileHover={{ scale: 1.02 }} className="flex items-center gap-2 flex-shrink-0">
+            <div className="relative w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg, var(--indigo), var(--purple))', boxShadow: '0 4px 12px rgba(139,92,246,0.4)' }}>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M2 8 L6 4 L10 8 L14 4" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M2 12 L6 8 L10 12 L14 8" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" opacity="0.6"/>
+              </svg>
+            </div>
+            <span className="font-semibold tracking-tight text-[15px]">AutoDS</span>
+          </motion.a>
+
+          {/* Desktop Links */}
+          <div className="hidden md:flex items-center gap-0.5 text-sm flex-shrink-0" style={{ color: 'var(--ink-2)' }}>
+            {navItems.map((item) => (
+              <motion.a
+                key={item.name}
+                href={item.href}
+                whileHover={{ background: 'var(--surface-2)' }}
+                className="px-3 py-1.5 rounded-full transition-colors whitespace-nowrap"
+              >
+                {item.name}
+              </motion.a>
+            ))}
+          </div>
+
+          {/* Right cluster */}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <ThemeToggle />
+            <motion.a
+              whileHover={{ scale: 1.04, y: -1 }}
+              whileTap={{ scale: 0.97 }}
+              href={APP_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-glow inline-flex items-center gap-1.5 text-sm font-medium px-4 py-2 rounded-full text-white whitespace-nowrap"
+            >
+              <span className="hidden sm:inline">Launch App</span>
+              <span className="sm:hidden">Launch</span>
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path d="M3 7h8m0 0L7 3m4 4l-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </motion.a>
+
+            {/* Mobile menu button */}
+            <button
+              onClick={() => setMobileOpen(!mobileOpen)}
+              className="md:hidden w-10 h-10 rounded-full glass flex items-center justify-center"
+              aria-label="Menu"
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d={mobileOpen ? "M3 3l10 10M13 3L3 13" : "M2 4h12M2 8h12M2 12h12"} stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </motion.nav>
+
+      {/* Mobile Menu */}
+      <AnimatePresence>
+        {mobileOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="fixed top-20 left-4 right-4 z-40 rounded-2xl glass-strong p-3 md:hidden"
+          >
+            {navItems.map((item) => (
+              <a
+                key={item.name}
+                href={item.href}
+                onClick={() => setMobileOpen(false)}
+                className="block px-4 py-3 rounded-xl text-sm font-medium hover:bg-white/5 transition-colors"
+                style={{ color: 'var(--ink-2)' }}
+              >
+                {item.name}
+              </a>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
+  );
+}
+
+// =================== HERO ===================
+function Hero() {
+  const ref = useRef(null);
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
+  const y = useTransform(scrollYProgress, [0, 1], [0, 200]);
+  const opacity = useTransform(scrollYProgress, [0, 0.7], [1, 0]);
+
+  const variants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.12, delayChildren: 0.2 } }
+  };
+  const item = {
+    hidden: { y: 30, opacity: 0 },
+    visible: { y: 0, opacity: 1, transition: { duration: 0.9, ease: [0.16, 1, 0.3, 1] } }
+  };
+
+  return (
+    <section ref={ref} className="relative pt-36 pb-24 cosmic-bg overflow-hidden min-h-screen flex flex-col items-center justify-center">
+      <div className="absolute inset-0 stars"></div>
+      <div className="absolute inset-0 grid-pattern"></div>
+
+      <div className="spotlight w-[600px] h-[600px] -top-[200px] left-[20%]" style={{ background: 'rgba(139, 92, 246, 0.4)' }}></div>
+      <div className="spotlight w-[500px] h-[500px] top-[40%] right-[10%]" style={{ background: 'rgba(34, 211, 238, 0.25)' }}></div>
+      <div className="spotlight w-[400px] h-[400px] top-[60%] left-[5%]" style={{ background: 'rgba(236, 72, 153, 0.2)' }}></div>
+
+      <motion.div style={{ y, opacity }} className="relative z-10 max-w-7xl mx-auto px-6 md:px-10 text-center">
+        <motion.div variants={variants} initial="hidden" animate="visible">
+          <motion.div variants={item} className="inline-flex items-center gap-2.5 px-3.5 py-1.5 mb-8 font-mono text-xs glass rounded-full">
+            <span className="status-pulse"></span>
+            <span style={{ color: 'var(--ink-2)' }}>v1.0.0 · 8 AI Agents · Production Ready</span>
+            <span style={{ color: 'var(--ink-faint)' }}>→</span>
+          </motion.div>
+
+          <motion.h1
+            variants={item}
+            className="font-display tracking-tight leading-[0.95] mb-6"
+            style={{ fontSize: "clamp(48px, 9vw, 128px)" }}
+          >
+            <span className="block">From raw data</span>
+            <span className="block glow-text italic-serif">to production models.</span>
+          </motion.h1>
+
+          <motion.p
+            variants={item}
+            className="text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed"
+            style={{ color: 'var(--ink-dim)' }}
+          >
+            Upload any dataset. AutoDS auto-detects your domain, runs analyst-level EDA, engineers features, trains and explains models — with full control at every step.
+          </motion.p>
+
+          <motion.div variants={item} className="flex flex-wrap items-center justify-center gap-4 mb-16">
+            <motion.a
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.97 }}
+              href={APP_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-glow inline-flex items-center gap-2 px-6 py-3 rounded-full text-white font-medium"
+            >
+              Launch the Platform
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M3 8h10m0 0L8 3m5 5l-5 5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </motion.a>
+            <motion.a
+              whileHover={{ scale: 1.04, background: 'var(--surface-2)' }}
+              whileTap={{ scale: 0.97 }}
+              href="#workflow"
+              className="glass inline-flex items-center gap-2 px-6 py-3 rounded-full font-medium"
+              style={{ color: 'var(--ink)' }}
+            >
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <polygon points="3,2 11,7 3,12" fill="currentColor"/>
+              </svg>
+              Watch how it works
+            </motion.a>
+          </motion.div>
+
+          <motion.div variants={item} className="flex flex-wrap items-center justify-center gap-3 mb-12">
+            {[
+              { num: '7', label: 'Domains', color: 'var(--violet)' },
+              { num: '8', label: 'AI Agents', color: 'var(--purple)' },
+              { num: '30+', label: 'Data Sources', color: 'var(--cyan)' },
+              { num: '25+', label: 'Chart Types', color: 'var(--pink)' }
+            ].map((s, i) => (
+              <div key={i} className="glass rounded-full px-4 py-2 flex items-center gap-2">
+                <span className="font-semibold" style={{ color: s.color }}>{s.num}</span>
+                <span className="text-sm" style={{ color: 'var(--ink-dim)' }}>{s.label}</span>
+              </div>
+            ))}
+          </motion.div>
+        </motion.div>
+
+        <DataFlowVisual />
+      </motion.div>
+    </section>
+  );
+}
+
+// =================== DATA FLOW VISUAL ===================
+function DataFlowVisual() {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 60 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 1.2, duration: 1, ease: [0.16, 1, 0.3, 1] }}
+      className="relative max-w-5xl mx-auto"
+    >
+      <svg viewBox="0 0 1000 320" className="w-full h-auto">
+        <defs>
+          <linearGradient id="flowGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#6366F1" stopOpacity="0"/>
+            <stop offset="50%" stopColor="#A855F7" stopOpacity="1"/>
+            <stop offset="100%" stopColor="#22D3EE" stopOpacity="0"/>
+          </linearGradient>
+          <linearGradient id="nodeGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#6366F1"/>
+            <stop offset="100%" stopColor="#8B5CF6"/>
+          </linearGradient>
+          <linearGradient id="nodeGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#A855F7"/>
+            <stop offset="100%" stopColor="#EC4899"/>
+          </linearGradient>
+          <linearGradient id="nodeGrad3" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#22D3EE"/>
+            <stop offset="100%" stopColor="#10B981"/>
+          </linearGradient>
+          <filter id="glow">
+            <feGaussianBlur stdDeviation="4" result="b"/>
+            <feMerge>
+              <feMergeNode in="b"/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
+        </defs>
+
+        <motion.path
+          d="M 130 160 Q 280 100 420 160"
+          stroke="url(#flowGrad)"
+          strokeWidth="2"
+          fill="none"
+          strokeDasharray="6 4"
+          initial={{ pathLength: 0 }}
+          animate={{ pathLength: 1, strokeDashoffset: [0, -100] }}
+          transition={{ pathLength: { duration: 1, delay: 1.5 }, strokeDashoffset: { duration: 3, repeat: Infinity, ease: "linear" } }}
+        />
+        <motion.path
+          d="M 510 160 Q 600 100 680 160"
+          stroke="url(#flowGrad)"
+          strokeWidth="2"
+          fill="none"
+          strokeDasharray="6 4"
+          initial={{ pathLength: 0 }}
+          animate={{ pathLength: 1, strokeDashoffset: [0, -100] }}
+          transition={{ pathLength: { duration: 1, delay: 1.7 }, strokeDashoffset: { duration: 3, repeat: Infinity, ease: "linear" } }}
+        />
+        <motion.path
+          d="M 770 160 Q 850 100 920 160"
+          stroke="url(#flowGrad)"
+          strokeWidth="2"
+          fill="none"
+          strokeDasharray="6 4"
+          initial={{ pathLength: 0 }}
+          animate={{ pathLength: 1, strokeDashoffset: [0, -100] }}
+          transition={{ pathLength: { duration: 1, delay: 1.9 }, strokeDashoffset: { duration: 3, repeat: Infinity, ease: "linear" } }}
+        />
+
+        {[0, 0.6, 1.2, 1.8, 2.4].map((delay, i) => (
+          <motion.circle
+            key={`p1-${i}`}
+            r="3"
+            fill="#A855F7"
+            filter="url(#glow)"
+            initial={{ offsetDistance: "0%" }}
+            animate={{ offsetDistance: "100%" }}
+            transition={{ duration: 3, delay: 2 + delay, repeat: Infinity, ease: "linear" }}
+            style={{ offsetPath: "path('M 130 160 Q 280 100 420 160 L 510 160 Q 600 100 680 160 L 770 160 Q 850 100 920 160')" }}
+          />
+        ))}
+
+        <motion.g
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ delay: 1.4, duration: 0.6, type: "spring" }}
+        >
+          <circle cx="80" cy="160" r="50" fill="url(#nodeGrad1)" filter="url(#glow)" opacity="0.3"/>
+          <circle cx="80" cy="160" r="42" fill="url(#nodeGrad1)" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5"/>
+          <g transform="translate(60, 145)">
+            <path d="M 12 18 C 5 18 2 14 4 10 C 2 6 6 2 12 4 C 14 0 22 0 24 6 C 30 6 32 12 28 14 C 30 18 24 20 20 18 Z" fill="white" opacity="0.95"/>
+          </g>
+          <text x="80" y="240" fill="currentColor" fontSize="12" fontFamily="JetBrains Mono" textAnchor="middle" fontWeight="500" style={{ color: 'var(--ink)' }}>DATA</text>
+          <text x="80" y="256" fill="currentColor" fontSize="10" fontFamily="JetBrains Mono" textAnchor="middle" opacity="0.6">Sources</text>
+        </motion.g>
+
+        <motion.g
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ delay: 1.7, duration: 0.6, type: "spring" }}
+        >
+          <circle cx="465" cy="160" r="55" fill="url(#nodeGrad2)" filter="url(#glow)" opacity="0.3"/>
+          <circle cx="465" cy="160" r="47" fill="url(#nodeGrad2)" stroke="rgba(255,255,255,0.25)" strokeWidth="1.5"/>
+          <motion.circle
+            cx="465" cy="160" r="60"
+            fill="none"
+            stroke="rgba(168, 85, 247, 0.3)"
+            strokeWidth="1"
+            strokeDasharray="4 4"
+            animate={{ rotate: 360 }}
+            transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+            style={{ transformOrigin: "465px 160px" }}
+          />
+          <g transform="translate(443, 138)">
+            <circle cx="22" cy="22" r="8" fill="white" opacity="0.95"/>
+            <circle cx="22" cy="22" r="14" fill="none" stroke="white" strokeWidth="1.5" opacity="0.6"/>
+            <circle cx="22" cy="22" r="20" fill="none" stroke="white" strokeWidth="1" opacity="0.3"/>
+          </g>
+          <text x="465" y="245" fill="currentColor" fontSize="12" fontFamily="JetBrains Mono" textAnchor="middle" fontWeight="500">ORCHESTRATOR</text>
+          <text x="465" y="261" fill="currentColor" fontSize="10" fontFamily="JetBrains Mono" textAnchor="middle" opacity="0.6">8 Agents</text>
+        </motion.g>
+
+        <motion.g
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ delay: 2.0, duration: 0.6, type: "spring" }}
+        >
+          <circle cx="725" cy="160" r="50" fill="url(#nodeGrad2)" filter="url(#glow)" opacity="0.3"/>
+          <circle cx="725" cy="160" r="42" fill="url(#nodeGrad2)" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5"/>
+          <g transform="translate(705, 142)">
+            <path d="M 10 12 L 14 12 M 10 18 L 18 18 M 10 24 L 14 24 M 22 12 L 30 12 M 22 18 L 26 18 M 22 24 L 30 24" stroke="white" strokeWidth="2" strokeLinecap="round" opacity="0.95"/>
+            <circle cx="6" cy="18" r="2" fill="white"/>
+            <circle cx="34" cy="18" r="2" fill="white"/>
+          </g>
+          <text x="725" y="240" fill="currentColor" fontSize="12" fontFamily="JetBrains Mono" textAnchor="middle" fontWeight="500">PROCESS</text>
+          <text x="725" y="256" fill="currentColor" fontSize="10" fontFamily="JetBrains Mono" textAnchor="middle" opacity="0.6">EDA + ML</text>
+        </motion.g>
+
+        <motion.g
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ delay: 2.3, duration: 0.6, type: "spring" }}
+        >
+          <circle cx="950" cy="160" r="50" fill="url(#nodeGrad3)" filter="url(#glow)" opacity="0.3"/>
+          <circle cx="950" cy="160" r="42" fill="url(#nodeGrad3)" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5"/>
+          <g transform="translate(932, 142)">
+            <rect x="2" y="2" width="22" height="32" rx="2" fill="none" stroke="white" strokeWidth="2" opacity="0.95"/>
+            <line x1="6" y1="10" x2="20" y2="10" stroke="white" strokeWidth="1.5" opacity="0.95"/>
+            <line x1="6" y1="16" x2="20" y2="16" stroke="white" strokeWidth="1.5" opacity="0.95"/>
+            <line x1="6" y1="22" x2="14" y2="22" stroke="white" strokeWidth="1.5" opacity="0.95"/>
+            <circle cx="28" cy="28" r="6" fill="white" opacity="0.95"/>
+            <path d="M 26 28 L 27.5 30 L 30.5 26" stroke="#10B981" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+          </g>
+          <text x="950" y="240" fill="currentColor" fontSize="12" fontFamily="JetBrains Mono" textAnchor="middle" fontWeight="500">OUTPUT</text>
+          <text x="950" y="256" fill="currentColor" fontSize="10" fontFamily="JetBrains Mono" textAnchor="middle" opacity="0.6">4 Formats</text>
+        </motion.g>
+
+        {[0, 1, 2].map((i) => (
+          <motion.circle
+            key={i}
+            cx="465" cy="160"
+            r="50"
+            fill="none"
+            stroke="#A855F7"
+            strokeWidth="1.5"
+            initial={{ scale: 1, opacity: 0.6 }}
+            animate={{ scale: 2, opacity: 0 }}
+            transition={{ duration: 3, delay: 2.5 + i * 1, repeat: Infinity, ease: "easeOut" }}
+            style={{ transformOrigin: "465px 160px" }}
+          />
+        ))}
+      </svg>
+
+      <div className="absolute top-2 left-2 hidden md:flex items-center gap-2 glass rounded-full px-3 py-1.5 text-xs font-mono" style={{ color: 'var(--ink-2)' }}>
+        <span className="w-1.5 h-1.5 rounded-full" style={{ background: 'var(--green)' }}></span>
+        ingest: 47k rows/s
+      </div>
+      <div className="absolute top-2 right-2 hidden md:flex items-center gap-2 glass rounded-full px-3 py-1.5 text-xs font-mono" style={{ color: 'var(--ink-2)' }}>
+        <span className="w-1.5 h-1.5 rounded-full" style={{ background: 'var(--cyan)' }}></span>
+        runtime: 3m 12s
+      </div>
+    </motion.div>
+  );
+}
+
+// =================== LOGO MARQUEE ===================
+function LogoMarquee() {
+  const items = ['LangGraph', '✦', 'PostgreSQL', '✦', 'XGBoost', '✦', 'SHAP', '✦', 'Polars', '✦', 'DuckDB', '✦', 'FastAPI', '✦', 'Streamlit', '✦', 'MLflow', '✦', 'ChromaDB', '✦', 'Plotly', '✦', 'PyTorch', '✦', 'Gemma', '✦', 'Claude', '✦', 'Ollama', '✦'];
+  return (
+    <section className="py-16 border-y" style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
+      <div className="text-center mb-8 font-mono text-xs tracking-widest" style={{ color: 'var(--ink-faint)' }}>
+        BUILT WITH MODERN, PRODUCTION-GRADE TOOLING
+      </div>
+      <div className="overflow-hidden">
+        <div className="marquee-track">
+          {[...items, ...items].map((item, i) => (
+            <span key={i} className="px-6 whitespace-nowrap" style={{
+              fontSize: '20px',
+              fontFamily: item === '✦' ? 'JetBrains Mono' : 'Inter Tight',
+              color: item === '✦' ? 'var(--violet)' : 'var(--ink-dim)',
+              fontWeight: item === '✦' ? 400 : 500
+            }}>
+              {item}
+            </span>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// =================== PLATFORM TABS ===================
+function PlatformTabs() {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, margin: "-100px" });
+  const [active, setActive] = useState(0);
+
+  const tabs = [
+    {
+      id: 'upload',
+      icon: '📤',
+      title: 'Upload',
+      headline: 'Drop a file. Connect a source.',
+      desc: 'CSV, Excel, JSON, Parquet — or stream from PostgreSQL, BigQuery, Snowflake, S3, REST APIs, Kaggle, HuggingFace, and more. Multi-source joining with auto-detected keys.',
+      stats: [
+        { label: 'File formats', val: '12+' },
+        { label: 'Connectors', val: '30+' },
+        { label: 'Max size', val: '5 GB' }
+      ]
+    },
+    {
+      id: 'configure',
+      icon: '⚙️',
+      title: 'Configure',
+      headline: 'Three modes for three users.',
+      desc: 'Auto for analysts and PMs — one-click. Guided for data scientists — approve every step. Expert for ML engineers — full pipeline control with custom Python hooks.',
+      stats: [
+        { label: 'Modes', val: '3' },
+        { label: 'LLM backends', val: '4' },
+        { label: 'Override depth', val: '∞' }
+      ]
+    },
+    {
+      id: 'eda',
+      icon: '📊',
+      title: 'EDA',
+      headline: 'Domain-aware exploration.',
+      desc: 'Healthcare ≠ finance ≠ HR. The EDA agent asks domain-specific questions, generates relevant plots, and surfaces hypotheses you would have missed.',
+      stats: [
+        { label: 'Plot types', val: '25+' },
+        { label: 'Auto findings', val: 'avg 14' },
+        { label: 'Domains', val: '7' }
+      ]
+    },
+    {
+      id: 'feature',
+      icon: '✦',
+      title: 'Features',
+      headline: 'Features that respect your data.',
+      desc: 'Temporal windows, lags, ratios, interactions — proposed automatically and validated against leakage. Domain-specific feature recipes per industry.',
+      stats: [
+        { label: 'Avg features', val: '12-30' },
+        { label: 'Leakage check', val: '100%' },
+        { label: 'Recipes', val: '40+' }
+      ]
+    },
+    {
+      id: 'modeling',
+      icon: '◆',
+      title: 'Modeling',
+      headline: 'The right algorithm, automatically.',
+      desc: 'Class imbalance handled natively. Hyperparameter search with smart priors. Compares XGBoost, LightGBM, CatBoost, neural nets — picks the winner on your business metric.',
+      stats: [
+        { label: 'Algorithms', val: '15+' },
+        { label: 'Search engine', val: 'Optuna' },
+        { label: 'Eval metrics', val: '20+' }
+      ]
+    },
+    {
+      id: 'explain',
+      icon: '◐',
+      title: 'Explain',
+      headline: 'Every prediction, fully explained.',
+      desc: 'SHAP values per row, global feature importance, partial dependence, counterfactuals, fairness audits. Translated to plain language any stakeholder can act on.',
+      stats: [
+        { label: 'Methods', val: '8' },
+        { label: 'Fairness audits', val: 'Built-in' },
+        { label: 'Plain language', val: 'Yes' }
+      ]
+    },
+    {
+      id: 'predict',
+      icon: '↗',
+      title: 'Predict',
+      headline: 'Score new data, instantly.',
+      desc: 'Drop a new file or hit the auto-generated REST API. Predictions stream back with confidence bounds, SHAP attributions, and drift warnings if your data has shifted.',
+      stats: [
+        { label: 'p99 latency', val: '<50ms' },
+        { label: 'API auto-gen', val: 'FastAPI' },
+        { label: 'Drift alerts', val: 'Yes' }
+      ]
+    },
+    {
+      id: 'chat',
+      icon: '💬',
+      title: 'Chat',
+      headline: 'Ask anything, in any language.',
+      desc: 'Chat with your data and your model. "Why did this customer churn?" "Show me the top segment by uplift." The Follow-Up agent runs the analysis live.',
+      stats: [
+        { label: 'Languages', val: '40+' },
+        { label: 'Avg response', val: '<3s' },
+        { label: 'Memory', val: 'Persistent' }
+      ]
+    },
+    {
+      id: 'download',
+      icon: '⬇',
+      title: 'Download',
+      headline: 'Four formats, one source of truth.',
+      desc: 'Interactive HTML, print-ready PDF, reproducible Jupyter notebook, executive summary markdown. All consistent, all branded, all generated together.',
+      stats: [
+        { label: 'Formats', val: '4' },
+        { label: 'Generated in', val: '<30s' },
+        { label: 'Reproducible', val: '100%' }
+      ]
+    }
+  ];
+
+  return (
+    <section ref={ref} id="workflow" className="py-32 relative">
+      <div className="max-w-7xl mx-auto px-6 md:px-10">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={inView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.8 }}
+          className="text-center mb-16"
+        >
+          <div className="font-mono text-xs tracking-widest mb-4" style={{ color: 'var(--violet)' }}>
+            ✦ THE FULL WORKFLOW
+          </div>
+          <h2 className="font-display tracking-tight leading-[1.05] mb-5" style={{ fontSize: 'clamp(40px, 6vw, 76px)' }}>
+            Nine steps. <span className="italic-serif glow-text">One platform.</span>
+          </h2>
+          <p className="text-lg max-w-2xl mx-auto" style={{ color: 'var(--ink-dim)' }}>
+            From upload to download, every phase of the data science workflow lives in AutoDS. Click through the journey.
+          </p>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={inView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="glass rounded-2xl p-2 mb-8 overflow-x-auto"
+        >
+          <div className="flex items-center gap-1 min-w-max">
+            {tabs.map((tab, i) => (
+              <motion.button
+                key={tab.id}
+                onClick={() => setActive(i)}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="relative px-4 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-2"
+                style={{
+                  color: active === i ? 'var(--ink)' : 'var(--ink-dim)',
+                  background: 'transparent'
+                }}
+              >
+                {active === i && (
+                  <motion.div
+                    layoutId="activeTab"
+                    className="absolute inset-0 rounded-xl"
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.18), rgba(139, 92, 246, 0.18))',
+                      border: '1px solid rgba(139, 92, 246, 0.4)',
+                      boxShadow: '0 4px 20px rgba(139, 92, 246, 0.15)'
+                    }}
+                    transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
+                  />
+                )}
+                <span className="relative">{tab.icon}</span>
+                <span className="relative">{tab.title}</span>
+              </motion.button>
+            ))}
+          </div>
+        </motion.div>
+
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={tabs[active].id}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+            className="grid lg:grid-cols-[1fr_1.2fr] gap-8 lg:gap-12 items-center"
+          >
+            <div>
+              <div className="font-mono text-xs tracking-widest mb-4" style={{ color: 'var(--cyan)' }}>
+                STEP_{String(active + 1).padStart(2, '0')} / {tabs[active].title.toUpperCase()}
+              </div>
+              <h3 className="font-display tracking-tight leading-[1.1] mb-5" style={{ fontSize: 'clamp(32px, 4.5vw, 56px)' }}>
+                {tabs[active].headline}
+              </h3>
+              <p className="text-lg leading-relaxed mb-8" style={{ color: 'var(--ink-dim)' }}>
+                {tabs[active].desc}
+              </p>
+              <div className="grid grid-cols-3 gap-4">
+                {tabs[active].stats.map((s, j) => (
+                  <div key={j} className="glass rounded-xl p-4">
+                    <div className="font-display text-3xl mb-1 glow-text">{s.val}</div>
+                    <div className="text-xs uppercase tracking-wider font-mono" style={{ color: 'var(--ink-faint)' }}>{s.label}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <TabPreview tabIndex={active} />
+          </motion.div>
+        </AnimatePresence>
+      </div>
+    </section>
+  );
+}
+
+// =================== TAB PREVIEW ===================
+function TabPreview({ tabIndex }) {
+  const previews = [
+    <div key="upload" className="space-y-4">
+      <div className="rounded-xl border border-dashed py-10 text-center" style={{ borderColor: 'rgba(139, 92, 246, 0.4)', background: 'rgba(139, 92, 246, 0.05)' }}>
+        <div className="text-4xl mb-3">📁</div>
+        <div className="font-medium mb-1">Drop your dataset here</div>
+        <div className="text-sm" style={{ color: 'var(--ink-faint)' }}>CSV · Excel · JSON · Parquet · 5GB max</div>
+      </div>
+      <div className="grid grid-cols-3 gap-2">
+        {['PostgreSQL', 'BigQuery', 'S3', 'Snowflake', 'Kaggle', 'API'].map((s, i) => (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: i * 0.05 }}
+            className="glass rounded-lg py-2 text-center text-xs font-mono"
+            style={{ color: 'var(--ink-2)' }}
+          >
+            {s}
+          </motion.div>
+        ))}
+      </div>
+    </div>,
+
+    <div key="configure" className="space-y-3">
+      {[
+        { name: 'Auto', desc: 'One-click execution', active: true, color: 'var(--violet)' },
+        { name: 'Guided', desc: 'Approve at every step', active: false, color: 'var(--cyan)' },
+        { name: 'Expert', desc: 'Full pipeline control', active: false, color: 'var(--green)' }
+      ].map((m, i) => (
+        <motion.div
+          key={i}
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: i * 0.1 }}
+          className="glass rounded-xl p-4 flex items-center justify-between"
+          style={{ border: m.active ? `1px solid ${m.color}` : '1px solid var(--border)' }}
+        >
+          <div>
+            <div className="font-semibold mb-1">{m.name}</div>
+            <div className="text-sm" style={{ color: 'var(--ink-faint)' }}>{m.desc}</div>
+          </div>
+          {m.active && (
+            <div className="px-2.5 py-1 rounded-full text-xs font-mono" style={{ background: m.color + '33', color: m.color }}>
+              ACTIVE
+            </div>
+          )}
+        </motion.div>
+      ))}
+    </div>,
+
+    <div key="eda" className="space-y-3">
+      <div className="glass rounded-xl p-4">
+        <div className="text-xs font-mono mb-3" style={{ color: 'var(--ink-faint)' }}>CORRELATION HEATMAP</div>
+        <div className="grid grid-cols-6 gap-1">
+          {Array.from({ length: 36 }).map((_, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: i * 0.02 }}
+              className="aspect-square rounded"
+              style={{
+                background: `hsl(${260 + (i % 6) * 5}, 70%, ${30 + (Math.abs(((i % 6) - Math.floor(i / 6))) / 6) * 50}%)`,
+                opacity: 0.5 + Math.random() * 0.5
+              }}
+            />
+          ))}
+        </div>
+      </div>
+      <div className="glass rounded-xl p-3 flex items-center gap-3">
+        <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(34, 211, 238, 0.2)', color: 'var(--cyan)' }}>✦</div>
+        <div className="text-sm">
+          <span style={{ color: 'var(--ink-2)' }}>Finding: </span>
+          <span style={{ color: 'var(--ink-dim)' }}>readmit rate <span style={{ color: 'var(--cyan)' }}>2.3× higher</span> in &gt;65 cohort</span>
+        </div>
+      </div>
+    </div>,
+
+    <div key="feature" className="space-y-2">
+      {[
+        { name: 'prior_admissions_90d', type: 'temporal', importance: 0.91 },
+        { name: 'medication_count_ratio', type: 'ratio', importance: 0.78 },
+        { name: 'lab_value_lag_7d', type: 'lag', importance: 0.65 },
+        { name: 'comorbidity_score', type: 'aggregate', importance: 0.54 },
+        { name: 'discharge_disposition', type: 'categorical', importance: 0.42 }
+      ].map((f, i) => (
+        <motion.div
+          key={i}
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: i * 0.08 }}
+          className="glass rounded-lg p-3 flex items-center gap-3"
+        >
+          <div className="font-mono text-xs px-2 py-0.5 rounded flex-shrink-0" style={{ background: 'rgba(168, 85, 247, 0.15)', color: 'var(--purple)' }}>
+            {f.type}
+          </div>
+          <div className="flex-1 font-mono text-sm truncate" style={{ color: 'var(--ink-2)' }}>{f.name}</div>
+          <div className="w-20 h-1.5 rounded-full overflow-hidden flex-shrink-0" style={{ background: 'var(--surface-2)' }}>
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${f.importance * 100}%` }}
+              transition={{ delay: 0.3 + i * 0.08, duration: 0.8 }}
+              className="h-full"
+              style={{ background: 'linear-gradient(90deg, var(--violet), var(--cyan))' }}
+            />
+          </div>
+        </motion.div>
+      ))}
+    </div>,
+
+    <div key="modeling" className="space-y-3">
+      {[
+        { name: 'XGBoost', auc: 0.847, winner: true },
+        { name: 'LightGBM', auc: 0.832, winner: false },
+        { name: 'Random Forest', auc: 0.811, winner: false },
+        { name: 'Logistic Regression', auc: 0.756, winner: false }
+      ].map((m, i) => (
+        <motion.div
+          key={i}
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: i * 0.08 }}
+          className="glass rounded-xl p-4 flex items-center justify-between"
+          style={{ border: m.winner ? '1px solid var(--green)' : '1px solid var(--border)' }}
+        >
+          <div className="flex items-center gap-3">
+            {m.winner && <div>🏆</div>}
+            <div>
+              <div className="font-medium">{m.name}</div>
+              <div className="text-xs font-mono" style={{ color: 'var(--ink-faint)' }}>ROC-AUC</div>
+            </div>
+          </div>
+          <div className="font-display text-2xl" style={{ color: m.winner ? 'var(--green)' : 'var(--ink-2)' }}>
+            {m.auc}
+          </div>
+        </motion.div>
+      ))}
+    </div>,
+
+    <div key="explain" className="glass rounded-xl p-5">
+      <div className="text-xs font-mono mb-4" style={{ color: 'var(--ink-faint)' }}>SHAP FORCE PLOT · SAMPLE_4F2A</div>
+      <div className="space-y-2.5">
+        {[
+          { name: 'prior_admissions_90d', val: 0.32, positive: true },
+          { name: 'age_75', val: 0.18, positive: true },
+          { name: 'discharge_home', val: -0.14, positive: false },
+          { name: 'med_adherence', val: -0.09, positive: false },
+          { name: 'comorbidity_count', val: 0.07, positive: true }
+        ].map((s, i) => (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: i * 0.08 }}
+            className="flex items-center gap-3"
+          >
+            <div className="font-mono text-xs w-32 truncate flex-shrink-0" style={{ color: 'var(--ink-2)' }}>{s.name}</div>
+            <div className="flex-1 h-6 relative rounded" style={{ background: 'var(--surface-2)' }}>
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${Math.abs(s.val) * 200}%` }}
+                transition={{ delay: 0.3 + i * 0.08, duration: 0.6 }}
+                className={`absolute top-0 h-full rounded ${s.positive ? 'left-1/2' : 'right-1/2'}`}
+                style={{ background: s.positive ? 'var(--pink)' : 'var(--cyan)' }}
+              />
+              <div className="absolute top-0 left-1/2 w-px h-full" style={{ background: 'var(--ink-faint)' }}></div>
+            </div>
+            <div className="font-mono text-xs w-12 text-right flex-shrink-0" style={{ color: s.positive ? 'var(--pink)' : 'var(--cyan)' }}>
+              {s.val > 0 ? '+' : ''}{s.val.toFixed(2)}
+            </div>
+          </motion.div>
+        ))}
+      </div>
+    </div>,
+
+    <div key="predict" className="space-y-3">
+      <div className="glass rounded-xl p-4 font-mono text-xs">
+        <div className="mb-2" style={{ color: 'var(--green)' }}>POST /api/v1/predict</div>
+        <div style={{ color: 'var(--ink-2)' }}>{'{ "model_id": "v1.0",'}</div>
+        <div style={{ color: 'var(--ink-2)' }}>&nbsp;&nbsp;{'"data": {...}'} {'}'}</div>
+      </div>
+      <div className="glass rounded-xl p-4">
+        <div className="text-xs font-mono mb-3" style={{ color: 'var(--ink-faint)' }}>RESPONSE · 38ms</div>
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <div className="font-display text-4xl" style={{ color: 'var(--pink)' }}>0.74</div>
+            <div className="text-xs font-mono" style={{ color: 'var(--ink-faint)' }}>readmit_probability</div>
+          </div>
+          <div className="text-right">
+            <div className="px-3 py-1 rounded-full text-xs font-mono inline-block" style={{ background: 'rgba(236, 72, 153, 0.2)', color: 'var(--pink)' }}>
+              HIGH RISK
+            </div>
+            <div className="text-xs font-mono mt-2" style={{ color: 'var(--ink-faint)' }}>conf: ±0.04</div>
+          </div>
+        </div>
+      </div>
+    </div>,
+
+    <div key="chat" className="space-y-3">
+      <div className="flex justify-end">
+        <div className="rounded-2xl rounded-tr-sm px-4 py-3 max-w-xs" style={{ background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.25), rgba(139, 92, 246, 0.25))', border: '1px solid var(--border)' }}>
+          <div className="text-sm" style={{ color: 'var(--ink)' }}>Why did patient_4f2a get flagged?</div>
+        </div>
+      </div>
+      <div className="flex justify-start">
+        <div className="glass rounded-2xl rounded-tl-sm px-4 py-3 max-w-md">
+          <div className="text-sm leading-relaxed" style={{ color: 'var(--ink-2)' }}>
+            Three factors drove the prediction: <span style={{ color: 'var(--pink)' }}>prior admissions in last 90d (+0.32)</span>, <span style={{ color: 'var(--pink)' }}>age 75 (+0.18)</span>, and elevated <span style={{ color: 'var(--pink)' }}>comorbidity count (+0.07)</span>. Discharge home was protective.
+          </div>
+        </div>
+      </div>
+      <div className="flex items-center gap-2 mt-3">
+        <span className="w-2 h-2 rounded-full" style={{ background: 'var(--cyan)' }}></span>
+        <span className="text-xs font-mono" style={{ color: 'var(--ink-faint)' }}>Follow-Up agent · 1.4s</span>
+      </div>
+    </div>,
+
+    <div key="download" className="grid grid-cols-2 gap-3">
+      {[
+        { ext: '.html', name: 'Interactive Report', size: '2.4 MB', color: 'var(--violet)' },
+        { ext: '.pdf', name: 'Print-Ready PDF', size: '1.8 MB', color: 'var(--pink)' },
+        { ext: '.ipynb', name: 'Jupyter Notebook', size: '340 KB', color: 'var(--cyan)' },
+        { ext: '.md', name: 'Exec Summary', size: '12 KB', color: 'var(--green)' }
+      ].map((f, i) => (
+        <motion.div
+          key={i}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: i * 0.08 }}
+          whileHover={{ y: -3 }}
+          className="glass rounded-xl p-4 cursor-pointer"
+        >
+          <div className="font-display text-3xl mb-1" style={{ color: f.color }}>{f.ext}</div>
+          <div className="text-sm font-medium mb-1">{f.name}</div>
+          <div className="text-xs font-mono flex items-center justify-between" style={{ color: 'var(--ink-faint)' }}>
+            <span>{f.size}</span>
+            <span>↓</span>
+          </div>
+        </motion.div>
+      ))}
+    </div>
+  ];
+
+  return (
+    <div className="glass-strong rounded-2xl p-6 lg:p-8 relative overflow-hidden">
+      <div className="absolute top-0 right-0 w-32 h-32 rounded-full opacity-30 blur-3xl" style={{ background: 'var(--violet)' }}></div>
+      <div className="relative">
+        {previews[tabIndex]}
+      </div>
+    </div>
+  );
+}
+
+// =================== AGENTS ===================
+function Agents() {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, margin: "-100px" });
+
+  const agents = [
+    { num: '01', name: 'Orchestrator', desc: 'The conductor. Decomposes goals, routes work, manages state, handles failures across the entire DAG.', icon: '◎', color: '#6366F1' },
+    { num: '02', name: 'Data Profiler', desc: 'Scans every column. Detects types, missingness, outliers, drift, PII. Auto-detects industry domain.', icon: '▦', color: '#8B5CF6' },
+    { num: '03', name: 'EDA', desc: 'Generates correlation matrices, distributions, temporal patterns. Domain-specific questions, not a checklist.', icon: '▲', color: '#A855F7' },
+    { num: '04', name: 'Feature Engineer', desc: 'Proposes domain-specific features — temporal windows, ratios, lags. Validates against leakage automatically.', icon: '✦', color: '#EC4899' },
+    { num: '05', name: 'Modeling', desc: 'Selects algorithms by problem type, runs hyperparameter search, evaluates appropriately. Handles imbalance natively.', icon: '◆', color: '#22D3EE' },
+    { num: '06', name: 'Explainability', desc: 'SHAP values, global feature importance, partial dependence, counterfactuals — translated to plain language.', icon: '◐', color: '#10B981' },
+    { num: '07', name: 'Report', desc: 'Generates exec summary, full HTML report, downloadable PDF, and reproducible Jupyter notebook.', icon: '▢', color: '#F59E0B' },
+    { num: '08', name: 'Follow-Up', desc: 'Listens for follow-up questions, runs deeper segment analysis, tests new hypotheses iteratively.', icon: '↻', color: '#EC4899' }
+  ];
+
+  return (
+    <section ref={ref} id="agents" className="py-32 relative">
+      <div className="max-w-7xl mx-auto px-6 md:px-10">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={inView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.8 }}
+          className="text-center mb-16"
+        >
+          <div className="font-mono text-xs tracking-widest mb-4" style={{ color: 'var(--violet)' }}>
+            ✦ EIGHT SPECIALIZED AGENTS
+          </div>
+          <h2 className="font-display tracking-tight leading-[1.05] mb-5" style={{ fontSize: 'clamp(40px, 6vw, 76px)' }}>
+            A team of <span className="italic-serif glow-text">autonomous</span> AI agents,<br />orchestrated as one.
+          </h2>
+          <p className="text-lg max-w-2xl mx-auto" style={{ color: 'var(--ink-dim)' }}>
+            Each agent is purpose-built for one phase of the workflow. A LangGraph state machine routes work, maintains context, and pauses for human approval at every critical decision.
+          </p>
+        </motion.div>
+
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {agents.map((agent, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 40 }}
+              animate={inView ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 0.6, delay: i * 0.06, ease: [0.16, 1, 0.3, 1] }}
+              whileHover={{ y: -6 }}
+              className="glass rounded-2xl p-6 card-sheen cursor-default relative overflow-hidden hover-glow transition-all"
+            >
+              <div className="absolute -top-12 -right-12 w-32 h-32 rounded-full opacity-20 blur-3xl" style={{ background: agent.color }}></div>
+
+              <motion.div
+                whileHover={{ scale: 1.15, rotate: 12 }}
+                className="text-3xl mb-4 inline-flex w-12 h-12 items-center justify-center rounded-xl"
+                style={{ background: `${agent.color}22`, color: agent.color }}
+              >
+                {agent.icon}
+              </motion.div>
+              <div className="font-mono text-xs mb-1.5 tracking-wider" style={{ color: 'var(--ink-faint)' }}>
+                AGENT_{agent.num}
+              </div>
+              <h3 className="font-semibold text-lg mb-3 leading-tight">{agent.name}</h3>
+              <p className="text-sm leading-relaxed" style={{ color: 'var(--ink-dim)' }}>{agent.desc}</p>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// =================== ARCHITECTURE ===================
+function Architecture() {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, margin: "-100px" });
+  const { theme } = useContext(ThemeContext);
+
+  return (
+    <section ref={ref} id="architecture" className="py-32 relative" style={{ background: 'linear-gradient(180deg, transparent, var(--surface), transparent)' }}>
+      <div className="max-w-7xl mx-auto px-6 md:px-10">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={inView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.8 }}
+          className="text-center mb-16"
+        >
+          <div className="font-mono text-xs tracking-widest mb-4" style={{ color: 'var(--cyan)' }}>
+            ✦ SYSTEM ARCHITECTURE
+          </div>
+          <h2 className="font-display tracking-tight leading-[1.05] mb-5" style={{ fontSize: 'clamp(40px, 6vw, 76px)' }}>
+            A LangGraph state machine,<br /><span className="italic-serif glow-text">not a script.</span>
+          </h2>
+          <p className="text-lg max-w-2xl mx-auto" style={{ color: 'var(--ink-dim)' }}>
+            Every agent is a node. Every transition is conditional. State is persisted, recoverable, and inspectable. Human-in-the-loop checkpoints fire at every critical decision.
+          </p>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, scale: 0.96 }}
+          animate={inView ? { opacity: 1, scale: 1 } : {}}
+          transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+          className="glass-strong rounded-2xl overflow-hidden"
+        >
+          <div className="flex items-center gap-2 px-5 py-3.5 font-mono text-xs border-b" style={{ borderColor: 'var(--border)', background: 'var(--surface-2)', color: 'var(--ink-faint)' }}>
+            <span className="w-3 h-3 rounded-full" style={{ background: '#FF5F57' }}></span>
+            <span className="w-3 h-3 rounded-full" style={{ background: '#FEBC2E' }}></span>
+            <span className="w-3 h-3 rounded-full" style={{ background: '#28C840' }}></span>
+            <span className="ml-auto">autods/architecture.svg</span>
+          </div>
+          <div className="p-6 md:p-10">
+            <ArchSVG inView={inView} theme={theme} />
+          </div>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
+function ArchSVG({ inView, theme }) {
+  const isLight = theme === 'light';
+  const inkColor = isLight ? '#0F172A' : '#F4F5FF';
+  const inkDim = isLight ? '#64748B' : '#8B91C1';
+  const inkFaint = isLight ? '#94A3B8' : '#5B608A';
+  const cardBg = isLight ? 'rgba(15, 23, 42, 0.04)' : 'rgba(255,255,255,0.04)';
+  const cardBorder = isLight ? 'rgba(15, 23, 42, 0.12)' : 'rgba(255,255,255,0.12)';
+  const arrowColor = isLight ? 'rgba(15, 23, 42, 0.3)' : 'rgba(255,255,255,0.3)';
+
+  return (
+    <svg viewBox="0 0 1100 600" className="w-full h-auto">
+      <defs>
+        <linearGradient id="orchGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#6366F1"/>
+          <stop offset="100%" stopColor="#A855F7"/>
+        </linearGradient>
+        <linearGradient id="stateGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="#22D3EE"/>
+          <stop offset="100%" stopColor="#10B981"/>
+        </linearGradient>
+        <linearGradient id="shimmerGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="white" stopOpacity="0"/>
+          <stop offset="50%" stopColor="white" stopOpacity="0.8"/>
+          <stop offset="100%" stopColor="white" stopOpacity="0"/>
+        </linearGradient>
+        <marker id="arrow2" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L9,3 z" fill={arrowColor}/>
+        </marker>
+        <marker id="arrowPurple" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L9,3 z" fill="#A855F7"/>
+        </marker>
+        <filter id="softGlow">
+          <feGaussianBlur stdDeviation="3" result="b"/>
+          <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <filter id="strongGlow">
+          <feGaussianBlur stdDeviation="6" result="b"/>
+          <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+
+      <text x="20" y="40" style={{ fill: inkFaint, fontSize: '10px', letterSpacing: '2px', fontFamily: 'JetBrains Mono' }}>INPUT</text>
+      <text x="20" y="170" style={{ fill: inkFaint, fontSize: '10px', letterSpacing: '2px', fontFamily: 'JetBrains Mono' }}>ORCHESTRATION</text>
+      <text x="20" y="290" style={{ fill: inkFaint, fontSize: '10px', letterSpacing: '2px', fontFamily: 'JetBrains Mono' }}>AGENTS</text>
+      <text x="20" y="475" style={{ fill: inkFaint, fontSize: '10px', letterSpacing: '2px', fontFamily: 'JetBrains Mono' }}>OUTPUT</text>
+
+      {[
+        { x: 120, label: 'Data Source', sub: 'CSV / DB / API / S3' },
+        { x: 320, label: 'User Mode', sub: 'Auto / Guided / Expert' },
+        { x: 520, label: 'LLM Backend', sub: 'Gemma · Claude · GPT' },
+        { x: 720, label: 'Tool Registry', sub: '200+ techniques' }
+      ].map((b, i) => (
+        <motion.g
+          key={i}
+          initial={{ opacity: 0, y: -20 }}
+          animate={inView ? { opacity: 1, y: 0 } : {}}
+          transition={{ delay: 0.3 + i * 0.1, duration: 0.5 }}
+        >
+          <rect x={b.x} y="20" width="180" height="60" rx="8" fill={cardBg} stroke={cardBorder} strokeWidth="1"/>
+          <text x={b.x + 90} y="48" style={{ fill: inkColor, fontSize: '13px', textAnchor: 'middle', fontWeight: '500', fontFamily: 'Inter Tight' }}>{b.label}</text>
+          <text x={b.x + 90} y="65" style={{ fill: inkDim, fontSize: '10px', textAnchor: 'middle', fontFamily: 'JetBrains Mono' }}>{b.sub}</text>
+        </motion.g>
+      ))}
+
+      {[210, 410, 610, 810].map((x, i) => (
+        <motion.line
+          key={i}
+          x1={x} y1="80" x2="550" y2="135"
+          stroke={arrowColor} strokeWidth="1"
+          markerEnd="url(#arrow2)"
+          initial={{ pathLength: 0 }}
+          animate={inView ? { pathLength: 1 } : {}}
+          transition={{ delay: 0.7 + i * 0.05, duration: 0.5 }}
+        />
+      ))}
+
+      {/* Orchestrator with continuous glow + pulse */}
+      <motion.g
+        initial={{ opacity: 0, scale: 0.5 }}
+        animate={inView ? { opacity: 1, scale: 1 } : {}}
+        transition={{ delay: 0.9, duration: 0.7, type: "spring", stiffness: 120 }}
+      >
+        {/* Outer glow halo — breathes */}
+        <motion.rect
+          x="340" y="130" width="420" height="90" rx="14"
+          fill="url(#orchGrad)"
+          opacity="0.3"
+          filter="url(#softGlow)"
+          animate={inView ? {
+            opacity: [0.3, 0.6, 0.3],
+            scale: [1, 1.03, 1]
+          } : {}}
+          transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+          style={{ transformOrigin: "550px 175px" }}
+        />
+
+        {/* Main orchestrator block */}
+        <rect x="350" y="140" width="400" height="70" rx="10" fill="url(#orchGrad)" filter="url(#softGlow)"/>
+
+        {/* Animated shimmer sweep across the block */}
+        <motion.rect
+          x="350" y="140" width="80" height="70" rx="10"
+          fill="url(#shimmerGrad)"
+          opacity="0.4"
+          animate={inView ? { x: [350, 670] } : {}}
+          transition={{ duration: 3, repeat: Infinity, ease: "linear", repeatDelay: 1 }}
+        />
+
+        {/* Activity dots — three pulsing nodes inside */}
+        <motion.circle
+          cx="380" cy="185" r="3" fill="white"
+          animate={inView ? { opacity: [0.3, 1, 0.3] } : {}}
+          transition={{ duration: 1.2, repeat: Infinity, delay: 0 }}
+        />
+        <motion.circle
+          cx="395" cy="185" r="3" fill="white"
+          animate={inView ? { opacity: [0.3, 1, 0.3] } : {}}
+          transition={{ duration: 1.2, repeat: Infinity, delay: 0.3 }}
+        />
+        <motion.circle
+          cx="410" cy="185" r="3" fill="white"
+          animate={inView ? { opacity: [0.3, 1, 0.3] } : {}}
+          transition={{ duration: 1.2, repeat: Infinity, delay: 0.6 }}
+        />
+
+        <text x="550" y="172" style={{ fill: 'white', fontSize: '16px', textAnchor: 'middle', fontWeight: '700', letterSpacing: '1px', fontFamily: 'JetBrains Mono' }}>LANGGRAPH ORCHESTRATOR</text>
+        <text x="550" y="192" style={{ fill: 'rgba(255,255,255,0.85)', fontSize: '11px', textAnchor: 'middle', fontFamily: 'JetBrains Mono' }}>State Machine · Routing · HITL Checkpoints</text>
+
+        {/* Live status badge on the right side */}
+        <motion.g
+          animate={inView ? { opacity: [0.6, 1, 0.6] } : {}}
+          transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+        >
+          <circle cx="715" cy="175" r="4" fill="#10B981"/>
+          <circle cx="715" cy="175" r="6" fill="none" stroke="#10B981" strokeWidth="1" opacity="0.5"/>
+        </motion.g>
+
+        {/* Expanding pulse rings around orchestrator */}
+        {[0, 1, 2].map((i) => (
+          <motion.rect
+            key={`pulse-${i}`}
+            x="350" y="140" width="400" height="70" rx="10"
+            fill="none"
+            stroke="#A855F7"
+            strokeWidth="2"
+            initial={{ scale: 1, opacity: 0.7 }}
+            animate={inView ? { scale: 1.15, opacity: 0 } : {}}
+            transition={{
+              duration: 2.5,
+              delay: 1.5 + i * 0.8,
+              repeat: Infinity,
+              ease: "easeOut",
+              repeatDelay: 0.3
+            }}
+            style={{ transformOrigin: "550px 175px" }}
+          />
+        ))}
+      </motion.g>
+
+      {/* Animated arrows from orchestrator to agents — flowing dashes */}
+      {[170, 320, 470, 620, 770, 920].map((x, i) => (
+        <g key={i}>
+          {/* Static base line */}
+          <line
+            x1={x} y1="220" x2={x} y2="250"
+            stroke="#A855F7"
+            strokeWidth="1.5"
+            strokeOpacity="0.3"
+          />
+          {/* Animated dashed flow */}
+          <motion.line
+            x1={x} y1="220" x2={x} y2="250"
+            stroke="#A855F7"
+            strokeWidth="2"
+            strokeDasharray="3 4"
+            markerEnd="url(#arrowPurple)"
+            initial={{ pathLength: 0, opacity: 0 }}
+            animate={inView ? {
+              pathLength: 1,
+              opacity: 1,
+              strokeDashoffset: [0, -14]
+            } : {}}
+            transition={{
+              pathLength: { delay: 1.2 + i * 0.05, duration: 0.4 },
+              opacity: { delay: 1.2 + i * 0.05, duration: 0.4 },
+              strokeDashoffset: { duration: 1.2, repeat: Infinity, ease: "linear", delay: 1.6 + i * 0.1 }
+            }}
+          />
+          {/* Pulsing dot at the orchestrator end */}
+          <motion.circle
+            cx={x} cy="220" r="2"
+            fill="#A855F7"
+            animate={inView ? {
+              opacity: [0.3, 1, 0.3],
+              scale: [1, 1.5, 1]
+            } : {}}
+            transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.15, ease: "easeInOut" }}
+          />
+        </g>
+      ))}
+
+      {[
+        { x: 100, label: 'Profiler', num: 'A02', color: '#8B5CF6' },
+        { x: 250, label: 'EDA', num: 'A03', color: '#A855F7' },
+        { x: 400, label: 'Feature Eng', num: 'A04', color: '#EC4899' },
+        { x: 550, label: 'Modeling', num: 'A05', color: '#22D3EE' },
+        { x: 700, label: 'Explain', num: 'A06', color: '#10B981' },
+        { x: 850, label: 'Report', num: 'A07', color: '#F59E0B' }
+      ].map((a, i) => (
+        <motion.g
+          key={i}
+          initial={{ opacity: 0, y: 20 }}
+          animate={inView ? { opacity: 1, y: 0 } : {}}
+          transition={{ delay: 1.3 + i * 0.06, duration: 0.4 }}
+        >
+          {/* Glow halo behind agent — sequentially activates */}
+          <motion.rect
+            x={a.x - 4} y="251" width="148" height="63" rx="10"
+            fill={a.color}
+            filter="url(#strongGlow)"
+            initial={{ opacity: 0 }}
+            animate={inView ? { opacity: [0, 0.25, 0] } : {}}
+            transition={{
+              duration: 2,
+              delay: 2 + i * 0.4,
+              repeat: Infinity,
+              repeatDelay: 3.6,
+              ease: "easeInOut"
+            }}
+          />
+          <rect x={a.x} y="255" width="140" height="55" rx="8" fill={cardBg} stroke={a.color + '88'} strokeWidth="1"/>
+          {/* Active indicator dot */}
+          <motion.circle
+            cx={a.x + 130} cy="265" r="2.5"
+            fill={a.color}
+            animate={inView ? {
+              opacity: [0.3, 1, 0.3]
+            } : {}}
+            transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.2, ease: "easeInOut" }}
+          />
+          <text x={a.x + 70} y="280" style={{ fill: inkColor, fontSize: '12px', textAnchor: 'middle', fontWeight: '600', fontFamily: 'Inter Tight' }}>{a.label}</text>
+          <text x={a.x + 70} y="297" style={{ fill: a.color, fontSize: '10px', textAnchor: 'middle', fontWeight: '600', fontFamily: 'JetBrains Mono' }}>{a.num}</text>
+        </motion.g>
+      ))}
+
+      <motion.g
+        initial={{ opacity: 0, scaleX: 0 }}
+        animate={inView ? { opacity: 1, scaleX: 1 } : {}}
+        transition={{ delay: 1.7, duration: 0.7 }}
+        style={{ transformOrigin: 'left center' }}
+      >
+        <rect x="100" y="345" width="890" height="55" rx="10" fill="url(#stateGrad)" filter="url(#softGlow)" opacity="0.95"/>
+
+        {/* Shimmer sweep across state bar */}
+        <motion.rect
+          x="100" y="345" width="120" height="55" rx="10"
+          fill="url(#shimmerGrad)"
+          opacity="0.3"
+          animate={inView ? { x: [100, 870] } : {}}
+          transition={{ duration: 4, repeat: Infinity, ease: "linear", repeatDelay: 1, delay: 2.5 }}
+        />
+
+        {/* Pulsing indicator dots on each side */}
+        <motion.circle
+          cx="120" cy="372" r="3" fill="white"
+          animate={inView ? { opacity: [0.4, 1, 0.4] } : {}}
+          transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+        />
+        <motion.circle
+          cx="970" cy="372" r="3" fill="white"
+          animate={inView ? { opacity: [0.4, 1, 0.4] } : {}}
+          transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut", delay: 0.9 }}
+        />
+
+        <text x="545" y="368" style={{ fill: 'white', fontSize: '12px', textAnchor: 'middle', fontWeight: '700', letterSpacing: '1px', fontFamily: 'JetBrains Mono' }}>SHARED STATE · CONTEXT MEMORY · ARTIFACT STORE</text>
+        <text x="545" y="386" style={{ fill: 'rgba(255,255,255,0.85)', fontSize: '10px', textAnchor: 'middle', fontFamily: 'JetBrains Mono' }}>PostgreSQL persistence · ChromaDB vectors · Versioned artifacts</text>
+      </motion.g>
+
+      <motion.line
+        x1="545" y1="400" x2="545" y2="445"
+        stroke={arrowColor} strokeWidth="1"
+        markerEnd="url(#arrow2)"
+        initial={{ pathLength: 0 }}
+        animate={inView ? { pathLength: 1 } : {}}
+        transition={{ delay: 2, duration: 0.4 }}
+      />
+
+      {[
+        { x: 180, label: 'HTML', sub: 'Interactive', color: '#8B5CF6' },
+        { x: 340, label: 'PDF', sub: 'Print-ready', color: '#EC4899' },
+        { x: 500, label: 'Notebook', sub: '.ipynb repro', color: '#22D3EE' },
+        { x: 660, label: 'Exec Summary', sub: 'Stakeholder', color: '#10B981' }
+      ].map((o, i) => (
+        <motion.g
+          key={i}
+          initial={{ opacity: 0, y: 20 }}
+          animate={inView ? { opacity: 1, y: 0 } : {}}
+          transition={{ delay: 2.1 + i * 0.08, duration: 0.4 }}
+        >
+          <rect x={o.x} y="455" width="140" height="60" rx="8" fill={o.color} stroke="rgba(255,255,255,0.2)" strokeWidth="1" opacity="0.95"/>
+          <text x={o.x + 70} y="481" style={{ fill: 'white', fontSize: '13px', textAnchor: 'middle', fontWeight: '700', fontFamily: 'Inter Tight' }}>{o.label}</text>
+          <text x={o.x + 70} y="498" style={{ fill: 'rgba(255,255,255,0.85)', fontSize: '9px', textAnchor: 'middle', fontFamily: 'JetBrains Mono' }}>{o.sub}</text>
+        </motion.g>
+      ))}
+
+      <text x="550" y="555" style={{ fill: inkFaint, fontSize: '11px', textAnchor: 'middle', letterSpacing: '0.5px', fontFamily: 'JetBrains Mono' }}>→ stateful · recoverable · inspectable · domain-aware</text>
+    </svg>
+  );
+}
+
+// =================== DOMAINS ===================
+function Domains() {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, margin: "-100px" });
+  const domains = [
+    { icon: '✚', name: 'Healthcare', desc: 'Survival analysis, comorbidity scoring, clinical range validation, fairness audits across demographics.', color: '#EC4899' },
+    { icon: '$', name: 'Finance', desc: 'Time-series safety, leakage detection, class imbalance for fraud, regulatory-grade explanations.', color: '#10B981' },
+    { icon: '⌗', name: 'E-Commerce', desc: 'RFM segmentation, cohort retention, basket analysis, cart funnel deconstruction, churn modeling.', color: '#F59E0B' },
+    { icon: '◆', name: 'HR / People', desc: 'Attrition modeling, fairness constraints by protected class, tenure curves, performance distribution.', color: '#A855F7' },
+    { icon: '∴', name: 'Manufacturing', desc: 'Sensor-stream anomaly detection, predictive maintenance windows, yield optimization.', color: '#22D3EE' },
+    { icon: '↗', name: 'Marketing', desc: 'Attribution modeling, uplift / CATE, cohort lift analysis, campaign cannibalization, LTV forecasting.', color: '#8B5CF6' }
+  ];
+
+  return (
+    <section ref={ref} className="py-32 relative">
+      <div className="max-w-7xl mx-auto px-6 md:px-10">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={inView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.8 }}
+          className="text-center mb-16"
+        >
+          <div className="font-mono text-xs tracking-widest mb-4" style={{ color: 'var(--pink)' }}>
+            ✦ DOMAIN AWARENESS
+          </div>
+          <h2 className="font-display tracking-tight leading-[1.05] mb-5" style={{ fontSize: 'clamp(40px, 6vw, 76px)' }}>
+            Healthcare ≠ finance ≠ HR.<br />
+            <span className="italic-serif glow-text">Your AI shouldn't pretend</span> they are.
+          </h2>
+          <p className="text-lg max-w-2xl mx-auto" style={{ color: 'var(--ink-dim)' }}>
+            AutoDS detects the industry domain from your data and applies domain-specific logic at every step.
+          </p>
+        </motion.div>
+
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {domains.map((d, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 40 }}
+              animate={inView ? { opacity: 1, y: 0 } : {}}
+              transition={{ delay: i * 0.08, duration: 0.6 }}
+              whileHover={{ y: -6 }}
+              className="glass rounded-2xl p-7 card-sheen hover-glow transition-all relative overflow-hidden"
+            >
+              <div className="absolute -top-16 -right-16 w-40 h-40 rounded-full opacity-15 blur-3xl" style={{ background: d.color }}></div>
+              <div className="relative">
+                <motion.div
+                  whileHover={{ scale: 1.2, rotate: 8 }}
+                  className="font-display text-6xl mb-4 leading-none inline-block"
+                  style={{ color: d.color }}
+                >
+                  {d.icon}
+                </motion.div>
+                <h4 className="font-display text-2xl mb-3">{d.name}</h4>
+                <p className="text-sm leading-relaxed" style={{ color: 'var(--ink-dim)' }}>{d.desc}</p>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// =================== TERMINAL ===================
+function Terminal() {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, margin: "-100px" });
+  const lines = [
+    { type: 'cmd', content: 'autods run --file healthcare_admissions.csv --mode auto' },
+    { type: 'sep' },
+    { type: 'log', agent: 'orchestrator', text: 'session initialized · graph compiled · 8 agents ready' },
+    { type: 'log', agent: 'profiler', text: 'scanning 47,231 rows × 28 cols ...', ok: 'done (1.4s)' },
+    { type: 'log', agent: 'profiler', text: 'domain detected →', val: 'healthcare', suffix: '(confidence 0.94)' },
+    { type: 'log', agent: 'profiler', text: 'PII fields flagged: 2 · missingness: 3.1% · outliers: 0.8%' },
+    { type: 'log', agent: 'eda', text: 'running clinical-aware EDA · 14 plots · 6 hypotheses' },
+    { type: 'log', agent: 'eda', text: 'finding:', ok: 'readmit rate 18.2% · 2.3× higher in >65 cohort' },
+    { type: 'log', agent: 'fe', text: 'engineering: 12 features (4 temporal, 5 ratio, 3 lag)' },
+    { type: 'log', agent: 'fe', text: 'leakage check ...', ok: 'passed' },
+    { type: 'log', agent: 'modeling', text: 'class imbalance handled (SMOTE-Tomek)' },
+    { type: 'log', agent: 'modeling', text: 'XGBoost · ROC-AUC =', val: '0.847', suffix: '· F1 = 0.71' },
+    { type: 'log', agent: 'explain', text: 'SHAP computed · top driver:', val: 'prior_admissions_90d' },
+    { type: 'log', agent: 'explain', text: 'fairness audit ·', ok: 'demographic parity Δ < 0.05' },
+    { type: 'log', agent: 'report', text: 'rendering ... HTML · PDF · notebook · exec_summary' },
+    { type: 'log', agent: 'orchestrator', ok: 'workflow complete · total runtime 3m 12s' },
+    { type: 'sep' },
+    { type: 'result', text: '→ artifacts/session_4f2a/ · 4 deliverables ready' }
+  ];
+
+  return (
+    <section ref={ref} className="py-32 relative">
+      <div className="max-w-6xl mx-auto px-6 md:px-10">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={inView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.8 }}
+          className="text-center mb-12"
+        >
+          <div className="font-mono text-xs tracking-widest mb-4" style={{ color: 'var(--cyan)' }}>
+            ✦ A DAY IN THE LIFE
+          </div>
+          <h2 className="font-display tracking-tight leading-[1.05] mb-5" style={{ fontSize: 'clamp(40px, 6vw, 76px)' }}>
+            From upload to insight,<br /><span className="italic-serif glow-text">in one prompt.</span>
+          </h2>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          animate={inView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 1, delay: 0.2 }}
+          className="rounded-2xl overflow-hidden"
+          style={{
+            boxShadow: 'var(--shadow-glow)',
+            border: '1px solid var(--border-2)',
+            background: 'var(--terminal-bg)'
+          }}
+        >
+          <div className="flex items-center gap-2 px-5 py-3.5 font-mono text-xs border-b" style={{ borderColor: 'rgba(255,255,255,0.08)', background: 'var(--terminal-header)', color: '#8B91C1' }}>
+            <span className="w-3 h-3 rounded-full" style={{ background: '#FF5F57' }}></span>
+            <span className="w-3 h-3 rounded-full" style={{ background: '#FEBC2E' }}></span>
+            <span className="w-3 h-3 rounded-full" style={{ background: '#28C840' }}></span>
+            <span className="ml-auto">autods · session_4f2a · live</span>
+          </div>
+          <div className="p-6 md:p-8 font-mono text-sm leading-loose overflow-x-auto" style={{ color: '#F4F5FF' }}>
+            {lines.map((line, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, x: -10 }}
+                animate={inView ? { opacity: 1, x: 0 } : {}}
+                transition={{ delay: 0.5 + i * 0.07, duration: 0.3 }}
+              >
+                {line.type === 'cmd' && (
+                  <div><span style={{ color: '#10B981' }}>parth@autods</span><span style={{ color: '#8B91C1' }}>:~$ </span><span>{line.content}</span></div>
+                )}
+                {line.type === 'sep' && <div style={{ color: '#5B608A' }}>──────────────────────────────────────────────────────</div>}
+                {line.type === 'log' && (
+                  <div>
+                    <span style={{ color: '#A855F7' }}>[{line.agent}]</span>{' '}
+                    <span style={{ color: '#C4C7E8' }}>{line.text}</span>{' '}
+                    {line.val && <span style={{ color: '#22D3EE' }}>{line.val}</span>}{' '}
+                    {line.suffix && <span style={{ color: '#8B91C1' }}>{line.suffix}</span>}{' '}
+                    {line.ok && <span style={{ color: '#10B981' }}>{line.ok}</span>}
+                  </div>
+                )}
+                {line.type === 'result' && (
+                  <div><span style={{ color: '#EC4899' }}>{line.text}</span><span className="cursor-blink"></span></div>
+                )}
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
+// =================== STACK ===================
+function Stack() {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, margin: "-100px" });
+  const stacks = [
+    { label: 'Orchestration & Agents', items: ['LangGraph', 'LangChain', 'PostgreSQL', 'ChromaDB', 'Python 3.11+'], color: '#6366F1' },
+    { label: 'LLM Backends', items: ['Gemma 4 (Gemini)', 'Gemma 4 (Ollama)', 'Claude (Anthropic)', 'OpenAI GPT'], color: '#A855F7' },
+    { label: 'Data & ML', items: ['Polars', 'DuckDB', 'Pandas', 'scikit-learn', 'XGBoost', 'LightGBM', 'PyTorch', 'SHAP', 'Evidently AI'], color: '#22D3EE' },
+    { label: 'Infra & Frontend', items: ['FastAPI', 'Streamlit', 'Docker', 'MLflow', 'dbt', 'Apache Airflow', 'Plotly'], color: '#10B981' }
+  ];
+
+  return (
+    <section ref={ref} id="stack" className="py-32 relative">
+      <div className="max-w-7xl mx-auto px-6 md:px-10">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={inView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.8 }}
+          className="text-center mb-16"
+        >
+          <div className="font-mono text-xs tracking-widest mb-4" style={{ color: 'var(--green)' }}>
+            ✦ TECH STACK
+          </div>
+          <h2 className="font-display tracking-tight leading-[1.05] mb-5" style={{ fontSize: 'clamp(40px, 6vw, 76px)' }}>
+            Built on the <span className="italic-serif glow-text">frontier</span>,<br />shipped on the metal.
+          </h2>
+          <p className="text-lg max-w-2xl mx-auto" style={{ color: 'var(--ink-dim)' }}>
+            Modern, in-production tools across every layer. LLM-agnostic by design — switch backends with a single environment variable.
+          </p>
+        </motion.div>
+
+        <div className="grid md:grid-cols-2 gap-5">
+          {stacks.map((s, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 30 }}
+              animate={inView ? { opacity: 1, y: 0 } : {}}
+              transition={{ delay: i * 0.1, duration: 0.6 }}
+              whileHover={{ y: -4 }}
+              className="glass rounded-2xl p-6 hover-glow transition-all relative overflow-hidden"
+            >
+              <div className="absolute -top-12 -right-12 w-32 h-32 rounded-full opacity-15 blur-3xl" style={{ background: s.color }}></div>
+              <div className="font-mono text-xs tracking-widest uppercase mb-4 inline-block px-2.5 py-1 rounded-full relative" style={{ background: s.color + '22', color: s.color, border: `1px solid ${s.color}44` }}>
+                {s.label}
+              </div>
+              <div className="flex flex-wrap gap-2 mt-3 relative">
+                {s.items.map((item, j) => (
+                  <motion.span
+                    key={j}
+                    whileHover={{ y: -2, background: s.color + '22', borderColor: s.color }}
+                    className="px-3 py-1.5 text-sm cursor-default rounded-full transition-all"
+                    style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--ink-2)' }}
+                  >
+                    {item}
+                  </motion.span>
+                ))}
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// =================== METRICS ===================
+function Metrics() {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, margin: "-100px" });
+  const cats = [
+    { title: 'Growth & Acquisition', desc: 'How users find and join the product.', items: ['DAU/WAU/MAU', 'Stickiness', 'K-Factor', 'CAC', 'Activation Rate', 'Time-to-Value'], color: '#6366F1' },
+    { title: 'Engagement & Retention', desc: 'Whether users stick around.', items: ['Cohort Retention', 'Churn', 'NPS', 'L7/L28', 'Session Depth', 'Feature Adoption'], color: '#EC4899' },
+    { title: 'Revenue & Monetization', desc: 'How the product makes money.', items: ['ARPU', 'LTV', 'LTV:CAC', 'MRR/ARR', 'AOV', 'GMV', 'Take Rate'], color: '#22D3EE' },
+    { title: 'Funnel & Experimentation', desc: 'What converts and what causes it.', items: ['CTR', 'Conversion Rate', 'ATE', 'CATE', 'CUPED', 'SRM', 'Power', 'MDE'], color: '#10B981' }
+  ];
+
+  return (
+    <section ref={ref} className="py-32 relative">
+      <div className="max-w-7xl mx-auto px-6 md:px-10">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={inView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.8 }}
+          className="text-center mb-16"
+        >
+          <div className="font-mono text-xs tracking-widest mb-4" style={{ color: 'var(--amber)' }}>
+            ✦ BUILT-IN BUSINESS METRICS
+          </div>
+          <h2 className="font-display tracking-tight leading-[1.05] mb-5" style={{ fontSize: 'clamp(40px, 6vw, 76px)' }}>
+            Every metric a <span className="italic-serif glow-text">FAANG analyst</span><br />actually uses.
+          </h2>
+          <p className="text-lg max-w-2xl mx-auto" style={{ color: 'var(--ink-dim)' }}>
+            Pre-computed, pre-validated, surfaced automatically when relevant to your data.
+          </p>
+        </motion.div>
+
+        <div className="grid md:grid-cols-2 gap-5">
+          {cats.map((c, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, x: i % 2 === 0 ? -30 : 30 }}
+              animate={inView ? { opacity: 1, x: 0 } : {}}
+              transition={{ delay: i * 0.1, duration: 0.6 }}
+              whileHover={{ y: -4 }}
+              className="glass rounded-2xl p-6 hover-glow transition-all"
+            >
+              <h4 className="font-display text-2xl mb-1" style={{ color: c.color }}>{c.title}</h4>
+              <p className="text-sm mb-5" style={{ color: 'var(--ink-faint)' }}>{c.desc}</p>
+              <div className="flex flex-wrap gap-2">
+                {c.items.map((item, j) => (
+                  <span key={j} className="px-2.5 py-1 text-xs font-mono rounded-md"
+                    style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--ink-2)' }}>
+                    {item}
+                  </span>
+                ))}
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// =================== CTA ===================
+function CTA() {
+  return (
+    <section className="py-32 text-center relative overflow-hidden">
+      <div className="absolute inset-0 cosmic-bg"></div>
+      <div className="absolute inset-0 grid-pattern"></div>
+      <div className="spotlight w-[700px] h-[700px] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" style={{ background: 'rgba(139, 92, 246, 0.5)' }}></div>
+
+      <div className="max-w-7xl mx-auto px-6 md:px-10 relative z-10">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8 }}
+        >
+          <h2 className="font-display tracking-tight leading-[0.95] mb-8" style={{ fontSize: 'clamp(48px, 8vw, 112px)' }}>
+            <span className="block">Skip the setup.</span>
+            <span className="block italic-serif glow-text">Ship the insight.</span>
+          </h2>
+          <p className="text-lg md:text-xl mb-10 max-w-xl mx-auto" style={{ color: 'var(--ink-dim)' }}>
+            Drop a dataset. Pick a mode. Get a stakeholder-ready report in minutes — not weeks.
+          </p>
+          <div className="flex flex-wrap justify-center gap-4">
+            <motion.a
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.97 }}
+              href={APP_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-glow inline-flex items-center gap-2 px-7 py-3.5 rounded-full text-white font-medium"
+            >
+              Launch the Platform
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M3 8h10m0 0L8 3m5 5l-5 5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </motion.a>
+            <motion.a
+              whileHover={{ scale: 1.05, background: 'var(--surface-2)' }}
+              whileTap={{ scale: 0.97 }}
+              href={GITHUB_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="glass inline-flex items-center gap-2 px-7 py-3.5 rounded-full font-medium"
+              style={{ color: 'var(--ink)' }}
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38v-1.34c-2.23.48-2.7-1.07-2.7-1.07-.36-.92-.89-1.17-.89-1.17-.73-.5.06-.49.06-.49.81.06 1.23.83 1.23.83.72 1.23 1.88.87 2.34.66.07-.52.28-.87.51-1.07-1.78-.2-3.65-.89-3.65-3.96 0-.87.31-1.59.83-2.15-.08-.2-.36-1.02.08-2.13 0 0 .67-.21 2.2.82a7.6 7.6 0 0 1 4 0c1.53-1.04 2.2-.82 2.2-.82.44 1.11.16 1.93.08 2.13.52.56.83 1.27.83 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.74.54 1.48v2.2c0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/>
+              </svg>
+              View on GitHub
+            </motion.a>
+          </div>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
+// =================== FOOTER ===================
+function Footer() {
+  return (
+    <footer id="docs" className="py-20 relative border-t" style={{ borderColor: 'var(--border)' }}>
+      <div className="max-w-7xl mx-auto px-6 md:px-10">
+        <div className="grid lg:grid-cols-[2fr_1fr_1fr_1fr] gap-12 mb-16">
+          <div>
+            <div className="flex items-center gap-2.5 mb-6">
+              <div className="relative w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg, var(--indigo), var(--purple))', boxShadow: '0 4px 16px rgba(139,92,246,0.4)' }}>
+                <svg width="20" height="20" viewBox="0 0 16 16" fill="none">
+                  <path d="M2 8 L6 4 L10 8 L14 4" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M2 12 L6 8 L10 12 L14 8" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" opacity="0.6"/>
+                </svg>
+              </div>
+              <span className="font-semibold text-lg">AutoDS <span className="font-mono text-xs" style={{ color: 'var(--ink-faint)' }}>v1.0.0</span></span>
+            </div>
+            <h3 className="font-display text-3xl md:text-4xl mb-4 leading-tight">
+              Autonomous data science,<br /><span className="italic-serif glow-text">shipped.</span>
+            </h3>
+            <p className="max-w-sm leading-relaxed" style={{ color: 'var(--ink-dim)' }}>
+              A multi-agent AI platform for the entire data science workflow. Built as a portfolio project signaling senior-level engineering and ML systems thinking.
+            </p>
+          </div>
+
+          {[
+            { title: 'Product', links: ['Launch App', 'Agents', 'Architecture', 'Tech Stack', 'Roadmap'] },
+            { title: 'Resources', links: ['Documentation', 'API Reference', 'CLAUDE.md', 'ADRs', 'Changelog'] },
+            { title: 'Connect', links: ['GitHub', 'LinkedIn', 'Portfolio', 'Email', 'Read the writeup'] }
+          ].map((col, i) => (
+            <div key={i}>
+              <h5 className="font-mono text-xs tracking-widest uppercase mb-4" style={{ color: 'var(--violet)' }}>{col.title}</h5>
+              <ul className="space-y-2.5">
+                {col.links.map((link, j) => (
+                  <motion.li key={j} whileHover={{ x: 4 }}>
+                    <a href="#" className="text-sm transition-colors" style={{ color: 'var(--ink-dim)' }}>{link}</a>
+                  </motion.li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+
+        <div className="pt-8 flex flex-wrap justify-between items-center gap-4 border-t font-mono text-xs" style={{ color: 'var(--ink-faint)', borderColor: 'var(--border)' }}>
+          <div>© 2026 AutoDS · Built by <span style={{ color: 'var(--violet)' }}>Parth</span></div>
+          <div className="flex gap-6">
+            <a href="#" className="transition-colors">Privacy</a>
+            <a href="#" className="transition-colors">Terms</a>
+            <a href="#" className="transition-colors">License</a>
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
+}
+
+// =================== APP ===================
+function App() {
+  return (
+    <ThemeProvider>
+      <Nav />
+      <FloatingThemeToggle />
+      <Hero />
+      <LogoMarquee />
+      <PlatformTabs />
+      <Agents />
+      <Architecture />
+      <Domains />
+      <Terminal />
+      <Stack />
+      <Metrics />
+      <CTA />
+      <Footer />
+    </ThemeProvider>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(<App />);
+</script>
+
+</body>
+</html>

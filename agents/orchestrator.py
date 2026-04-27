@@ -258,9 +258,24 @@ def _heuristic_detect_problem_type(state: AutoDSState):
     if best_score > 0:
         state["problem_type"] = best_type
         logger.info("Heuristic problem_type=%s (score=%d)", best_type, best_score)
-    else:
-        state["problem_type"] = ""  # EDA only
-        logger.info("No keyword matches — defaulting to EDA-only")
+        return
+
+    # Fallback: infer from target column data characteristics
+    target_col = state.get("target_column")
+    df = state.get("uploaded_data")
+    if target_col and df is not None and target_col in df.columns:
+        series = df[target_col]
+        nunique = series.nunique()
+        if nunique <= 20 or series.dtype == "object" or series.dtype.name == "category":
+            state["problem_type"] = PROBLEM_CLASSIFICATION
+            logger.info("Inferred classification from target column (nunique=%d)", nunique)
+            return
+        state["problem_type"] = PROBLEM_REGRESSION
+        logger.info("Inferred regression from target column (nunique=%d)", nunique)
+        return
+
+    state["problem_type"] = ""  # EDA only
+    logger.info("No keyword matches — defaulting to EDA-only")
 
 
 # =========================================================================

@@ -14,6 +14,7 @@ from typing import Any
 import pandas as pd
 import streamlit as st
 
+from dashboard.components.shared_css import inject_shared_css
 from core.constants import MODE_AUTO, MODE_EXPERT, MODE_GUIDED
 
 logger = logging.getLogger(__name__)
@@ -25,34 +26,6 @@ logger = logging.getLogger(__name__)
 
 _DARK_LUXURY_CSS = """
 <style>
-@media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after {
-        animation-duration: 0.01ms !important;
-        transition-duration: 0.01ms !important;
-    }
-}
-
-:root {
-    --bg-primary: #0a0a0f;
-    --bg-card: #12121a;
-    --bg-elevated: #16161f;
-    --border-subtle: rgba(99,102,241,0.12);
-    --text-primary: #f1f5f9;
-    --text-secondary: #94a3b8;
-    --text-muted: #64748b;
-    --accent-primary: #6366f1;
-    --accent-secondary: #0ea5e9;
-    --accent-success: #22c55e;
-    --accent-warning: #f59e0b;
-    --gradient-primary: linear-gradient(135deg, #6366f1, #0ea5e9);
-    --radius-md: 12px;
-    --shadow-card: 0 4px 24px rgba(0,0,0,0.25);
-}
-
-.stApp {
-    background-color: var(--bg-primary) !important;
-}
-
 /* --- Page header with gradient text --- */
 .eda-page-header {
     padding: 32px 0 24px 0;
@@ -104,12 +77,12 @@ _DARK_LUXURY_CSS = """
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     box-shadow: var(--shadow-card);
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    transition: var(--transition-all);
     margin-bottom: 16px;
 }
 .glass-card:hover {
-    border-color: rgba(99,102,241,0.25);
-    box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+    border-color: var(--border-active);
+    box-shadow: var(--shadow-glow);
 }
 
 /* --- Question card --- */
@@ -121,13 +94,13 @@ _DARK_LUXURY_CSS = """
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     box-shadow: var(--shadow-card);
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    transition: var(--transition-all);
     margin-bottom: 16px;
     position: relative;
 }
 .question-card:hover {
-    border-color: rgba(99,102,241,0.25);
-    box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+    border-color: var(--border-active);
+    box-shadow: var(--shadow-glow);
 }
 
 /* --- Number badge --- */
@@ -198,11 +171,11 @@ _DARK_LUXURY_CSS = """
     -webkit-backdrop-filter: blur(12px);
     box-shadow: var(--shadow-card);
     text-align: center;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    transition: var(--transition-all);
 }
 .metric-glass-card:hover {
-    border-color: rgba(99,102,241,0.25);
-    box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+    border-color: var(--border-active);
+    box-shadow: var(--shadow-glow);
 }
 .metric-value {
     font-size: 1.75rem;
@@ -253,7 +226,7 @@ _DARK_LUXURY_CSS = """
     color: var(--text-secondary);
     font-size: 0.9rem;
     padding: 8px 0 8px 16px;
-    border-left: 2px solid rgba(99,102,241,0.2);
+    border-left: 2px solid var(--accent-primary-light);
     margin-bottom: 8px;
     line-height: 1.5;
 }
@@ -310,7 +283,11 @@ _DARK_LUXURY_CSS = """
 
 def _guard() -> None:
     if "uploaded_data" not in st.session_state:
-        st.warning("Please upload data first.")
+        st.info(
+            "Upload and configure your dataset first to start exploratory analysis. "
+            "This page will show interactive charts, statistical tests, and "
+            "AI-generated insights."
+        )
         st.stop()
 
 
@@ -430,9 +407,31 @@ def _render_questions() -> None:
 
     responses = render_question_group(questions, key_prefix="eda")
 
+    # Manual text field per question for custom specifications
+    st.markdown(
+        '<p style="color: var(--text-muted); font-size: 0.78rem; margin-top: 12px;">'
+        'Add custom instructions for any question (optional):</p>',
+        unsafe_allow_html=True,
+    )
+    custom_inputs: dict[str, str] = {}
+    for q in questions:
+        q_label = q.get("question", q["id"])
+        val = st.text_input(
+            q_label,
+            value="",
+            key=f"eda_custom_{q['id']}",
+            placeholder=f"Custom input for: {q_label}",
+            label_visibility="collapsed",
+        )
+        if val.strip():
+            custom_inputs[q["id"]] = val.strip()
+    if custom_inputs:
+        responses["_custom"] = custom_inputs
+
     if st.button("Run Selected Analyses", key="eda_run_btn", type="primary"):
         st.session_state["eda_user_responses"] = responses
         st.session_state["eda_analyses_submitted"] = True
+        _execute_analyses(responses)
         st.rerun()
 
 
@@ -489,6 +488,168 @@ def _generate_default_questions() -> list[dict[str, Any]]:
         },
     ]
     return questions
+
+
+def _execute_analyses(responses: dict[str, Any]) -> None:
+    """Execute selected EDA analyses using tool functions and store results."""
+    df: pd.DataFrame = st.session_state["uploaded_data"]
+    numeric_cols = list(df.select_dtypes(include="number").columns)
+    categorical_cols = list(df.select_dtypes(include=["object", "category"]).columns)
+    target = st.session_state.get("target_column")
+
+    results: dict[str, Any] = {}
+    charts: list[dict[str, Any]] = []
+    insights: list[str] = []
+
+    # --- Visualisations ---
+    selected_charts = responses.get("eda_charts", [])
+    if isinstance(selected_charts, str):
+        selected_charts = [selected_charts]
+
+    try:
+        from agents.tools.viz_tools import (
+            histogram,
+            box_plot,
+            correlation_heatmap,
+            pair_plot,
+        )
+
+        if "distributions" in selected_charts:
+            for col in numeric_cols[:8]:
+                try:
+                    chart = histogram(df, col)
+                    charts.append(chart)
+                except Exception as exc:
+                    logger.warning("histogram %s failed: %s", col, exc)
+            insights.append(f"Generated distribution plots for {min(len(numeric_cols), 8)} numeric columns.")
+
+        if "correlations" in selected_charts and len(numeric_cols) > 1:
+            try:
+                chart = correlation_heatmap(df, numeric_cols[:20])
+                charts.append(chart)
+                insights.append("Correlation heatmap generated for numeric features.")
+            except Exception as exc:
+                logger.warning("correlation_heatmap failed: %s", exc)
+
+        if "boxplots" in selected_charts:
+            for col in numeric_cols[:8]:
+                try:
+                    grp = target if target and target != col and target in df.columns else None
+                    chart = box_plot(df, col, group_by=grp)
+                    charts.append(chart)
+                except Exception as exc:
+                    logger.warning("box_plot %s failed: %s", col, exc)
+            insights.append(f"Box plots generated for {min(len(numeric_cols), 8)} columns.")
+
+        if "scatter_matrix" in selected_charts and len(numeric_cols) >= 2:
+            try:
+                chart = pair_plot(df, numeric_cols[:5])
+                charts.append(chart)
+                insights.append("Scatter matrix generated for top 5 numeric features.")
+            except Exception as exc:
+                logger.warning("pair_plot failed: %s", exc)
+
+        if "missing_heatmap" in selected_charts:
+            missing_pct = df.isna().mean()
+            cols_with_missing = missing_pct[missing_pct > 0]
+            if len(cols_with_missing) > 0:
+                insights.append(
+                    f"{len(cols_with_missing)} columns have missing values. "
+                    f"Highest: {cols_with_missing.idxmax()} ({cols_with_missing.max():.1%})."
+                )
+            else:
+                insights.append("No missing values detected in the dataset.")
+
+        if "target_analysis" in selected_charts and target and target in df.columns:
+            try:
+                chart = histogram(df, target)
+                charts.append(chart)
+                insights.append(f"Target variable '{target}' distribution plotted.")
+            except Exception as exc:
+                logger.warning("target histogram failed: %s", exc)
+
+    except ImportError:
+        logger.warning("viz_tools import failed, skipping charts")
+
+    # --- Statistical tests ---
+    selected_tests = responses.get("eda_stat_tests", [])
+    if isinstance(selected_tests, str):
+        selected_tests = [selected_tests]
+
+    try:
+        from agents.tools.stats_tools import (
+            shapiro_wilk,
+            correlation_pearson,
+            correlation_matrix,
+            anova_oneway,
+            chi_square_test,
+            vif_analysis,
+        )
+
+        if "normality" in selected_tests:
+            for col in numeric_cols[:10]:
+                try:
+                    result = shapiro_wilk(df, col)
+                    results[f"shapiro_wilk_{col}"] = result
+                except Exception as exc:
+                    logger.warning("shapiro_wilk %s failed: %s", col, exc)
+            insights.append(f"Shapiro-Wilk normality tests run on {min(len(numeric_cols), 10)} columns.")
+
+        if "correlation_test" in selected_tests and len(numeric_cols) >= 2:
+            try:
+                result = correlation_matrix(df, numeric_cols[:15])
+                results["correlation_matrix"] = result
+                insights.append("Correlation matrix computed with significance tests.")
+            except Exception as exc:
+                logger.warning("correlation_matrix failed: %s", exc)
+
+        if "group_comparison" in selected_tests and target and target in df.columns:
+            series = df[target]
+            if series.nunique() <= 10:
+                for col in numeric_cols[:5]:
+                    if col == target:
+                        continue
+                    try:
+                        result = anova_oneway(df, col, target)
+                        results[f"anova_{col}_by_{target}"] = result
+                    except Exception as exc:
+                        logger.warning("anova %s failed: %s", col, exc)
+                insights.append("Group comparison tests (ANOVA) executed.")
+
+        if "chi_square" in selected_tests and len(categorical_cols) >= 2:
+            pairs_tested = 0
+            for i, c1 in enumerate(categorical_cols[:5]):
+                for c2 in categorical_cols[i + 1 : 6]:
+                    try:
+                        result = chi_square_test(df, c1, c2)
+                        results[f"chi2_{c1}_vs_{c2}"] = result
+                        pairs_tested += 1
+                    except Exception as exc:
+                        logger.warning("chi_square %s vs %s failed: %s", c1, c2, exc)
+            if pairs_tested:
+                insights.append(f"Chi-square independence tests on {pairs_tested} categorical pairs.")
+
+        if "multicollinearity" in selected_tests and len(numeric_cols) >= 2:
+            try:
+                result = vif_analysis(df, numeric_cols[:15])
+                results["vif"] = result
+                insights.append("VIF multicollinearity analysis completed.")
+            except Exception as exc:
+                logger.warning("vif_analysis failed: %s", exc)
+
+    except ImportError:
+        logger.warning("stats_tools import failed, skipping tests")
+
+    if not insights:
+        insights.append("No analyses were selected or all selected analyses were skipped.")
+
+    st.session_state["eda_results"] = results
+    st.session_state["eda_charts"] = charts
+    st.session_state["eda_insights"] = insights
+    st.session_state["eda_summary"] = (
+        f"EDA complete. {len(charts)} charts generated, {len(results)} statistical tests run. "
+        + " ".join(insights[:3])
+    )
 
 
 def _render_charts() -> None:
@@ -576,7 +737,8 @@ def _page() -> None:
     _guard()
     st.set_page_config(page_title="Exploratory Analysis", layout="wide") if not hasattr(st, "_is_running_with_streamlit") else None
 
-    # Inject CSS
+    # Inject shared theme + page-specific CSS
+    inject_shared_css()
     st.markdown(_DARK_LUXURY_CSS, unsafe_allow_html=True)
 
     # Page header
@@ -622,4 +784,15 @@ def _page() -> None:
             st.switch_page("pages/04_feature_engineering.py")
 
 
-_page()
+
+def _is_streamlit_running() -> bool:
+    """Return True only when executing inside a Streamlit runtime."""
+    try:
+        from streamlit.runtime.scriptrunner import get_script_run_ctx
+        return get_script_run_ctx() is not None
+    except Exception:
+        return False
+
+
+if _is_streamlit_running():
+    _page()

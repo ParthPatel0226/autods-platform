@@ -37,9 +37,11 @@ class TestHealthcareDomainDetection:
         assert confidence > 0.0
 
     def test_healthcare_config_has_required_keys(self):
-        from domains.healthcare import HEALTHCARE_CONFIG
+        from domains.healthcare import HealthcareDomainConfig
 
-        assert "domain_name" in HEALTHCARE_CONFIG or "name" in HEALTHCARE_CONFIG or len(HEALTHCARE_CONFIG) > 0
+        config = HealthcareDomainConfig()
+        assert config.domain_name == "healthcare"
+        assert config.display_name == "Healthcare"
 
 
 class TestHealthcareTools:

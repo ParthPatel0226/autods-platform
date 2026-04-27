@@ -15,6 +15,7 @@ from typing import Any
 import pandas as pd
 import streamlit as st
 
+from dashboard.components.shared_css import inject_shared_css
 from core.constants import (
     ENCODING_STRATEGIES,
     IMPUTATION_STRATEGIES,
@@ -35,37 +36,8 @@ _OUTLIER_STRATEGIES: dict[str, str] = {
 # Design tokens
 # ---------------------------------------------------------------------------
 
-_DARK_LUXURY_CSS = """
+_PAGE_CSS = """
 <style>
-@media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after {
-        animation-duration: 0.01ms !important;
-        transition-duration: 0.01ms !important;
-    }
-}
-
-:root {
-    --bg-primary: #0a0a0f;
-    --bg-card: #12121a;
-    --bg-elevated: #16161f;
-    --border-subtle: rgba(99,102,241,0.12);
-    --text-primary: #f1f5f9;
-    --text-secondary: #94a3b8;
-    --text-muted: #64748b;
-    --accent-primary: #6366f1;
-    --accent-secondary: #0ea5e9;
-    --accent-success: #22c55e;
-    --accent-warning: #f59e0b;
-    --accent-danger: #ef4444;
-    --gradient-primary: linear-gradient(135deg, #6366f1, #0ea5e9);
-    --radius-md: 12px;
-    --shadow-card: 0 4px 24px rgba(0,0,0,0.25);
-}
-
-.stApp {
-    background-color: var(--bg-primary) !important;
-}
-
 /* --- Page header --- */
 .fe-page-header {
     padding: 32px 0 24px 0;
@@ -84,45 +56,6 @@ _DARK_LUXURY_CSS = """
     color: var(--text-secondary);
     font-size: 0.95rem;
     margin-top: 4px;
-}
-
-/* --- Section headers --- */
-.section-header {
-    font-size: 0.7rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--text-muted);
-    margin-bottom: 16px;
-    padding-bottom: 8px;
-    position: relative;
-}
-.section-header::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 48px;
-    height: 2px;
-    background: var(--gradient-primary);
-    border-radius: 1px;
-}
-
-/* --- Glass card --- */
-.glass-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-md);
-    padding: 24px;
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    box-shadow: var(--shadow-card);
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
-    margin-bottom: 16px;
-}
-.glass-card:hover {
-    border-color: rgba(99,102,241,0.25);
-    box-shadow: 0 8px 32px rgba(0,0,0,0.35);
 }
 
 /* --- Glass table --- */
@@ -158,15 +91,15 @@ _DARK_LUXURY_CSS = """
     grid-template-columns: 2fr 1fr 1fr 2fr 2fr 2fr 2fr;
     gap: 0;
     padding: 10px 16px;
-    border-bottom: 1px solid rgba(99,102,241,0.06);
-    transition: background-color 0.15s ease;
+    border-bottom: 1px solid var(--border-subtle);
+    transition: var(--transition-all);
     align-items: center;
 }
 .glass-table-row:nth-child(even) {
-    background: rgba(22,22,31,0.5);
+    background: var(--bg-elevated);
 }
 .glass-table-row:hover {
-    background: rgba(99,102,241,0.06);
+    background: var(--accent-primary-subtle);
 }
 .glass-table-row .col-name {
     color: var(--text-primary);
@@ -193,12 +126,12 @@ _DARK_LUXURY_CSS = """
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     box-shadow: var(--shadow-card);
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    transition: var(--transition-all);
     margin-bottom: 12px;
 }
 .domain-feature-card:hover {
-    border-color: rgba(99,102,241,0.25);
-    box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+    border-color: var(--border-active);
+    box-shadow: var(--shadow-glow);
 }
 .domain-feature-name {
     color: var(--text-primary);
@@ -236,17 +169,17 @@ _DARK_LUXURY_CSS = """
 .strategy-pill {
     display: inline-block;
     padding: 4px 12px;
-    border-radius: 20px;
+    border-radius: var(--radius-full, 20px);
     font-size: 0.7rem;
     font-weight: 600;
     letter-spacing: 0.04em;
     margin-right: 8px;
     margin-bottom: 6px;
 }
-.pill-imputation { background: rgba(99,102,241,0.15); color: #818cf8; }
-.pill-encoding { background: rgba(14,165,233,0.15); color: #38bdf8; }
-.pill-scaling { background: rgba(34,197,94,0.15); color: #4ade80; }
-.pill-outlier { background: rgba(245,158,11,0.15); color: #fbbf24; }
+.pill-imputation { background: var(--accent-primary-light); color: var(--accent-primary); }
+.pill-encoding { background: var(--accent-secondary-light, rgba(14,165,233,0.15)); color: var(--accent-secondary); }
+.pill-scaling { background: var(--accent-success-light, rgba(34,197,94,0.15)); color: var(--accent-success); }
+.pill-outlier { background: var(--accent-warning-light, rgba(245,158,11,0.15)); color: var(--accent-warning); }
 
 /* --- Divider --- */
 .fe-divider {
@@ -295,7 +228,12 @@ _DARK_LUXURY_CSS = """
 
 def _guard() -> None:
     if "uploaded_data" not in st.session_state:
-        st.warning("Please upload data first.")
+        inject_shared_css()
+        st.info(
+            "Upload and run EDA first to access feature engineering. "
+            "This page lets you configure missing value strategies, encoding, "
+            "scaling, and domain-specific features per column."
+        )
         st.stop()
 
 
@@ -587,12 +525,12 @@ def _render_importance_preview() -> None:
             yaxis=dict(autorange="reversed"),
             height=400,
             paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor="rgba(18,18,26,0.8)",
-            font=dict(color="#94a3b8"),
-            xaxis=dict(gridcolor="rgba(99,102,241,0.08)"),
-            yaxis_gridcolor="rgba(99,102,241,0.08)",
+            plot_bgcolor="rgba(0,0,0,0)",
+            font=dict(color="#64748b"),
+            xaxis=dict(gridcolor="rgba(37,99,235,0.08)"),
+            yaxis_gridcolor="rgba(37,99,235,0.08)",
         )
-        fig.update_traces(marker_color="#6366f1")
+        fig.update_traces(marker_color="#2563eb")
         render_chart(fig, title="Preliminary Feature Importance", key="fe_importance")
     except ImportError:
         st.warning("Install plotly to see the importance chart.")
@@ -603,10 +541,11 @@ def _render_importance_preview() -> None:
 # ---------------------------------------------------------------------------
 
 def _page() -> None:
+    inject_shared_css()
     _guard()
 
-    # Inject CSS
-    st.markdown(_DARK_LUXURY_CSS, unsafe_allow_html=True)
+    # Inject page-specific CSS
+    st.markdown(_PAGE_CSS, unsafe_allow_html=True)
 
     # Page header
     st.markdown(
@@ -671,4 +610,15 @@ def _page() -> None:
             st.switch_page("pages/05_modeling.py")
 
 
-_page()
+
+def _is_streamlit_running() -> bool:
+    """Return True only when executing inside a Streamlit runtime."""
+    try:
+        from streamlit.runtime.scriptrunner import get_script_run_ctx
+        return get_script_run_ctx() is not None
+    except Exception:
+        return False
+
+
+if _is_streamlit_running():
+    _page()

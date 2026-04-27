@@ -1,8 +1,9 @@
 # Technical Documentation
 # AutoDS — Autonomous Data Science Platform
 
-**Version:** 1.0
-**Date:** 2026-04-22
+**Version:** 1.0.0
+**Date:** 2026-04-25
+**Latest Changes:** Professional frontend overhaul with dual-theme design system, modern landing page, and 920 passing tests
 
 ---
 
@@ -34,6 +35,44 @@
 | Web Scraping | BeautifulSoup4, requests | latest | HTML data extraction |
 | Testing | pytest, pytest-cov | latest | Unit/integration/agent tests |
 | Linting | ruff, black, isort, mypy | latest | Code quality enforcement |
+| Frontend Framework | Streamlit + CSS3 | latest | Web UI with custom design system |
+| Fonts | Google Fonts | latest | Plus Jakarta Sans, Inter, JetBrains Mono |
+
+---
+
+## 1.1 Design System
+
+The dashboard implements a **professional dual-theme design system** with 80+ CSS custom properties:
+
+### Theme Implementation
+- **Light Mode** (default): White backgrounds (#f8f9fb), slate neutrals, high contrast
+- **Dark Mode**: Deep navy (#0c0f1a), optimized for reduced eye strain
+- **Theme Injection**: Values baked into `:root` CSS via `shared_css.py` — no JavaScript required
+- **Toggle**: Sidebar button syncs theme across all pages instantly
+
+### CSS Token Categories
+- **Backgrounds** (6 tokens): primary, card, elevated, inset, overlay, sidebar
+- **Text Colors** (4 tokens): primary, secondary, muted, inverse
+- **Accent Palette** (8 tokens): primary (#2563eb blue), secondary (#0891b2 cyan), success, warning, danger, info, purple
+- **Typography** (3 font families): Plus Jakarta Sans (display), Inter (body), JetBrains Mono (code)
+- **Spacing** (12 tokens): 1-12 scale (0.25rem to 3rem)
+- **Shadows** (8 tokens): xs through lg, plus glow and focus rings
+- **Transitions** (3 durations): fast (120ms), normal (200ms), slow (350ms)
+
+### Shared Component Classes
+- `.glass-card` — Elevated card with borders, shadows, hover effects
+- `.pill-tabs` / `.pill-tab` — Tab-like controls with rounded pill styling
+- `.glass-table` — Data table with responsive styling and row hover
+- `.badge-primary/success/warning/danger` — Status badges
+- `.status-dot-*` — Colored status indicators
+
+### Landing Page Design
+- Dark gradient hero banner (135deg: #1e3a5f → #0f172a → #1a1040)
+- Animated gradient title with floating stat pills
+- Bento-grid feature cards (3 columns, top-border gradient on hover)
+- Drag-and-drop file upload with format chips
+- Sample dataset quick-start tiles (Titanic, Heart Disease, Credit Risk, etc.)
+- 5-column stats strip showing platform metrics
 
 ---
 
@@ -108,8 +147,8 @@ autods-platform/
 │   └── manufacturing.py         # OEE, MTBF, SPC, predictive maintenance, sensor anomaly
 │
 ├── dashboard/                   # Streamlit web application
-│   ├── app.py                   # Main entry point
-│   ├── pages/                   # 9 sequential pages
+│   ├── app.py                   # Main entry point + landing page (hero, bento grid, upload zone)
+│   ├── pages/                   # 9 sequential pages (all use shared design system)
 │   │   ├── 01_upload.py         # Data upload from any source
 │   │   ├── 02_configure.py      # Domain + mode + target + goals
 │   │   ├── 03_eda_interactive.py    # Interactive EDA with questions
@@ -120,6 +159,7 @@ autods-platform/
 │   │   ├── 08_chat.py           # Follow-up conversational interface
 │   │   └── 09_download.py       # Download all outputs
 │   └── components/              # Reusable Streamlit widgets
+│       ├── shared_css.py        # Design system: 80+ CSS tokens, dual-theme, component classes
 │       ├── mode_selector.py     # Auto/Guided/Expert toggle
 │       ├── domain_badge.py      # Domain icon + name display
 │       ├── approval_widget.py   # Human-in-the-loop approval UI
@@ -127,6 +167,7 @@ autods-platform/
 │       ├── workflow_progress.py # Step progress indicator
 │       ├── metric_cards.py      # KPI metric display cards
 │       ├── chart_container.py   # Plotly chart + export buttons
+│       ├── llm_selector.py      # LLM provider selector widget
 │       └── download_buttons.py  # Download buttons for all formats
 │
 ├── validation/                  # Data & model validation

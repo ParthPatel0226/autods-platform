@@ -16,6 +16,8 @@ from typing import Any
 import pandas as pd
 import streamlit as st
 
+from dashboard.components.shared_css import inject_shared_css
+
 logger = logging.getLogger(__name__)
 
 _ALLOWED_OUTPUTS_DIR = Path(os.path.abspath("outputs"))
@@ -35,66 +37,17 @@ def _safe_read_bytes(path_str: str) -> bytes:
 
 _CSS = """
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
-@media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
-}
-
-section[data-testid="stMain"] { background: #0a0a0f; }
-.stApp { background: #0a0a0f; color: #f1f5f9; font-family: 'Inter', sans-serif; }
-header[data-testid="stHeader"] { background: transparent; }
-.stDeployButton, #MainMenu { display: none; }
-
 /* Page title */
 .page-title {
     font-size: 1.75rem;
     font-weight: 700;
-    color: #f1f5f9;
+    color: var(--text-primary);
     margin-bottom: 0.25rem;
 }
 .page-subtitle {
     font-size: 0.9rem;
-    color: #64748b;
+    color: var(--text-muted);
     margin-bottom: 1.5rem;
-}
-
-/* Section headers */
-.section-header {
-    font-size: 0.7rem;
-    font-weight: 600;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: #94a3b8;
-    margin-bottom: 0.75rem;
-    padding-bottom: 0.5rem;
-    position: relative;
-}
-.section-header::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 48px;
-    height: 2px;
-    background: linear-gradient(135deg, #6366f1, #0ea5e9);
-    border-radius: 1px;
-}
-
-/* Glass card */
-.glass-card {
-    background: rgba(18, 18, 26, 0.8);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(99,102,241,0.12);
-    border-radius: 12px;
-    padding: 1.5rem;
-    margin-bottom: 1rem;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.25);
-    transition: border-color 0.2s ease;
-}
-.glass-card:hover {
-    border-color: rgba(99,102,241,0.25);
 }
 
 /* Download card grid */
@@ -110,21 +63,21 @@ header[data-testid="stHeader"] { background: transparent; }
 
 /* Download card */
 .dl-card {
-    background: rgba(18, 18, 26, 0.8);
+    background: var(--bg-card);
     backdrop-filter: blur(20px);
-    border: 1px solid rgba(99,102,241,0.12);
-    border-radius: 12px;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
     padding: 1.5rem;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.25);
-    transition: all 0.2s ease;
+    box-shadow: var(--shadow-card);
+    transition: all var(--transition-fast);
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
 }
 .dl-card:hover {
-    border-color: rgba(99,102,241,0.3);
+    border-color: var(--border-active);
     transform: translateY(-2px);
-    box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+    box-shadow: var(--shadow-md);
 }
 
 /* File type icon (CSS shape) */
@@ -141,12 +94,12 @@ header[data-testid="stHeader"] { background: transparent; }
     color: #ffffff;
     flex-shrink: 0;
 }
-.dl-icon-indigo { background: linear-gradient(135deg, #6366f1, #818cf8); }
-.dl-icon-red { background: linear-gradient(135deg, #ef4444, #f87171); }
-.dl-icon-green { background: linear-gradient(135deg, #22c55e, #4ade80); }
+.dl-icon-indigo { background: linear-gradient(135deg, var(--accent-primary), #818cf8); }
+.dl-icon-red { background: linear-gradient(135deg, var(--accent-danger), #f87171); }
+.dl-icon-green { background: linear-gradient(135deg, var(--accent-success), #4ade80); }
 .dl-icon-purple { background: linear-gradient(135deg, #a855f7, #c084fc); }
-.dl-icon-sky { background: linear-gradient(135deg, #0ea5e9, #38bdf8); }
-.dl-icon-amber { background: linear-gradient(135deg, #f59e0b, #fbbf24); }
+.dl-icon-sky { background: linear-gradient(135deg, var(--accent-secondary), #38bdf8); }
+.dl-icon-amber { background: linear-gradient(135deg, var(--accent-warning), #fbbf24); }
 
 .dl-card-header {
     display: flex;
@@ -156,11 +109,11 @@ header[data-testid="stHeader"] { background: transparent; }
 .dl-card-title {
     font-size: 0.9rem;
     font-weight: 600;
-    color: #f1f5f9;
+    color: var(--text-primary);
 }
 .dl-card-desc {
     font-size: 0.78rem;
-    color: #64748b;
+    color: var(--text-muted);
     line-height: 1.5;
 }
 
@@ -170,24 +123,24 @@ header[data-testid="stHeader"] { background: transparent; }
     align-items: flex-start;
     gap: 0.75rem;
     padding: 0.75rem 0;
-    border-bottom: 1px solid rgba(99,102,241,0.06);
+    border-bottom: 1px solid var(--accent-primary-subtle);
 }
 .audit-entry:last-child { border-bottom: none; }
 .audit-dot {
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: #6366f1;
+    background: var(--accent-primary);
     margin-top: 0.35rem;
     flex-shrink: 0;
 }
 .audit-text {
     font-size: 0.82rem;
-    color: #94a3b8;
+    color: var(--text-secondary);
 }
 .audit-step {
     font-weight: 500;
-    color: #f1f5f9;
+    color: var(--text-primary);
 }
 
 /* Metric mini cards for cost section */
@@ -197,8 +150,8 @@ header[data-testid="stHeader"] { background: transparent; }
     flex-wrap: wrap;
 }
 .metric-mini {
-    background: rgba(22, 22, 31, 0.6);
-    border: 1px solid rgba(99,102,241,0.08);
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
     border-radius: 10px;
     padding: 0.875rem 1.25rem;
     flex: 1;
@@ -206,7 +159,7 @@ header[data-testid="stHeader"] { background: transparent; }
 }
 .metric-mini-label {
     font-size: 0.65rem;
-    color: #64748b;
+    color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.08em;
     margin-bottom: 0.25rem;
@@ -214,7 +167,7 @@ header[data-testid="stHeader"] { background: transparent; }
 .metric-mini-value {
     font-size: 1.1rem;
     font-weight: 700;
-    color: #f1f5f9;
+    color: var(--text-primary);
 }
 
 /* Pipeline summary */
@@ -224,7 +177,7 @@ header[data-testid="stHeader"] { background: transparent; }
     gap: 0.5rem;
     padding: 0.4rem 0;
     font-size: 0.82rem;
-    color: #94a3b8;
+    color: var(--text-secondary);
 }
 .pipeline-check {
     width: 18px;
@@ -236,21 +189,21 @@ header[data-testid="stHeader"] { background: transparent; }
     align-items: center;
     justify-content: center;
     font-size: 0.65rem;
-    color: #22c55e;
+    color: var(--accent-success);
     flex-shrink: 0;
 }
 
 .glass-caption {
     font-size: 0.78rem;
-    color: #64748b;
+    color: var(--text-muted);
 }
 
 /* Alert overrides */
 div[data-testid="stAlert"] {
-    background: rgba(18, 18, 26, 0.6) !important;
-    border: 1px solid rgba(99,102,241,0.15) !important;
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border-subtle) !important;
     border-radius: 10px !important;
-    color: #f1f5f9 !important;
+    color: var(--text-primary) !important;
 }
 </style>
 """
@@ -262,7 +215,7 @@ div[data-testid="stAlert"] {
 
 def _guard() -> None:
     if "uploaded_data" not in st.session_state:
-        st.warning("Please upload data first.")
+        st.info("Run the analysis pipeline first to access downloads. This page provides HTML reports, executive PDFs, Jupyter notebooks, trained models, and full audit trails.")
         st.stop()
 
 
@@ -321,7 +274,7 @@ def _render_reports_section() -> None:
     else:
         st.markdown(
             '<div class="glass-card">'
-            '<p style="color:#94a3b8; margin:0;">No reports generated yet. Complete the analysis pipeline first.</p>'
+            '<p style="color:var(--text-secondary); margin:0;">No reports generated yet. Complete the analysis pipeline first.</p>'
             '</div>',
             unsafe_allow_html=True,
         )
@@ -385,7 +338,7 @@ def _render_data_section() -> None:
                 '<div class="dl-card" style="opacity:0.5;">'
                 '<div class="dl-card-header">'
                 '<div class="dl-icon dl-icon-green" style="opacity:0.4;">CSV</div>'
-                '<div class="dl-card-title" style="color:#64748b;">Processed Data</div>'
+                '<div class="dl-card-title" style="color:var(--text-muted);">Processed Data</div>'
                 '</div>'
                 '<div class="dl-card-desc">Not yet available</div>'
                 '</div>',
@@ -456,7 +409,7 @@ def _render_model_section() -> None:
                 '<div class="dl-card" style="opacity:0.5;">'
                 '<div class="dl-card-header">'
                 '<div class="dl-icon dl-icon-indigo" style="opacity:0.4;">MDL</div>'
-                '<div class="dl-card-title" style="color:#64748b;">Model</div>'
+                '<div class="dl-card-title" style="color:var(--text-muted);">Model</div>'
                 '</div>'
                 '<div class="dl-card-desc">No trained model available</div>'
                 '</div>',
@@ -490,7 +443,7 @@ def _render_model_section() -> None:
                 '<div class="dl-card" style="opacity:0.5;">'
                 '<div class="dl-card-header">'
                 '<div class="dl-icon dl-icon-purple" style="opacity:0.4;">JSON</div>'
-                '<div class="dl-card-title" style="color:#64748b;">Model Card</div>'
+                '<div class="dl-card-title" style="color:var(--text-muted);">Model Card</div>'
                 '</div>'
                 '<div class="dl-card-desc">Not yet generated</div>'
                 '</div>',
@@ -508,7 +461,7 @@ def _render_deployment_section() -> None:
     if not api_code and not dockerfile:
         st.markdown(
             '<div class="glass-card">'
-            '<p style="color:#94a3b8; margin:0;">Deployment artifacts not yet generated.</p>'
+            '<p style="color:var(--text-secondary); margin:0;">Deployment artifacts not yet generated.</p>'
             '</div>',
             unsafe_allow_html=True,
         )
@@ -705,6 +658,7 @@ def _render_session_summary() -> None:
 # ---------------------------------------------------------------------------
 
 def _page() -> None:
+    inject_shared_css()
     _guard()
     st.markdown(_CSS, unsafe_allow_html=True)
 
@@ -713,24 +667,35 @@ def _page() -> None:
     _render_progress()
 
     _render_reports_section()
-    st.markdown('<div style="height:1px; background:rgba(99,102,241,0.08); margin:1.5rem 0;"></div>', unsafe_allow_html=True)
+    st.markdown('<div style="height:1px; background:var(--border-subtle); margin:1.5rem 0;"></div>', unsafe_allow_html=True)
     _render_data_section()
-    st.markdown('<div style="height:1px; background:rgba(99,102,241,0.08); margin:1.5rem 0;"></div>', unsafe_allow_html=True)
+    st.markdown('<div style="height:1px; background:var(--border-subtle); margin:1.5rem 0;"></div>', unsafe_allow_html=True)
     _render_model_section()
-    st.markdown('<div style="height:1px; background:rgba(99,102,241,0.08); margin:1.5rem 0;"></div>', unsafe_allow_html=True)
+    st.markdown('<div style="height:1px; background:var(--border-subtle); margin:1.5rem 0;"></div>', unsafe_allow_html=True)
     _render_deployment_section()
-    st.markdown('<div style="height:1px; background:rgba(99,102,241,0.08); margin:1.5rem 0;"></div>', unsafe_allow_html=True)
+    st.markdown('<div style="height:1px; background:var(--border-subtle); margin:1.5rem 0;"></div>', unsafe_allow_html=True)
     _render_audit_section()
-    st.markdown('<div style="height:1px; background:rgba(99,102,241,0.08); margin:1.5rem 0;"></div>', unsafe_allow_html=True)
+    st.markdown('<div style="height:1px; background:var(--border-subtle); margin:1.5rem 0;"></div>', unsafe_allow_html=True)
     _render_session_summary()
 
     # Navigation
     st.markdown('<div style="height:2rem;"></div>', unsafe_allow_html=True)
-    st.markdown('<div style="height:1px; background:rgba(99,102,241,0.1); margin:0.5rem 0 1.5rem;"></div>', unsafe_allow_html=True)
+    st.markdown('<div style="height:1px; background:var(--border-subtle); margin:0.5rem 0 1.5rem;"></div>', unsafe_allow_html=True)
     col_back, _ = st.columns(2)
     with col_back:
         if st.button("Back to Chat", use_container_width=True):
             st.switch_page("pages/08_chat.py")
 
 
-_page()
+
+def _is_streamlit_running() -> bool:
+    """Return True only when executing inside a Streamlit runtime."""
+    try:
+        from streamlit.runtime.scriptrunner import get_script_run_ctx
+        return get_script_run_ctx() is not None
+    except Exception:
+        return False
+
+
+if _is_streamlit_running():
+    _page()

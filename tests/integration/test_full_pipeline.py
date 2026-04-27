@@ -117,33 +117,33 @@ class TestValidationIntegration:
     """Validation modules work together on real data."""
 
     def test_edge_case_detector_on_clean_data(self, sample_classification_df):
-        from validation.edge_case_detector import detect_edge_cases
+        from validation.edge_case_detector import detect_all_edge_cases
 
-        issues = detect_edge_cases(sample_classification_df, target_column="churned")
+        issues = detect_all_edge_cases(sample_classification_df, target_column="churned")
         assert isinstance(issues, list)
 
     def test_input_sanitizer_handles_mixed_types(self):
-        from validation.input_sanitizer import sanitize_input
+        from validation.input_sanitizer import sanitize_dataframe
 
         df = pd.DataFrame({
             "mixed": [1, "two", 3, "four", 5],
             "clean": [10, 20, 30, 40, 50],
         })
-        result = sanitize_input(df)
-        assert isinstance(result, pd.DataFrame)
-        assert len(result) > 0
+        result_df, issues = sanitize_dataframe(df)
+        assert isinstance(result_df, pd.DataFrame)
+        assert len(result_df) > 0
 
     def test_schema_extraction_and_validation(self, sample_classification_df):
-        from validation.schema_validator import extract_schema, validate_schema
+        from validation.schema_validator import extract_training_schema, validate_prediction_schema
 
-        schema = extract_schema(sample_classification_df)
+        schema = extract_training_schema(sample_classification_df)
         assert isinstance(schema, dict)
 
         # Validate same data against its own schema
-        issues = validate_schema(sample_classification_df, schema)
+        is_valid, issues = validate_prediction_schema(sample_classification_df, schema)
         assert isinstance(issues, list)
-        # Same data should have zero or minimal issues
-        assert len(issues) <= 1
+        # Same data should pass validation
+        assert is_valid is True
 
 
 class TestSessionIntegration:

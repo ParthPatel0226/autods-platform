@@ -17,7 +17,7 @@ class TestEDAQuestionGeneration:
 
     def test_generates_questions_for_classification(self, sample_classification_df):
         """EDA agent should generate relevant questions for classification data."""
-        from agents.eda_agent import _generate_eda_questions
+        from agents.eda_agent import generate_eda_questions
         from core.state import create_initial_state
 
         state = create_initial_state("test-eda")
@@ -27,13 +27,14 @@ class TestEDAQuestionGeneration:
         state["detected_domain"] = "generic"
         state["user_mode"] = "guided"
 
-        questions = _generate_eda_questions(state)
+        updated = generate_eda_questions(state)
+        questions = updated.get("eda_questions_asked", [])
         assert isinstance(questions, list)
         assert len(questions) > 0
 
     def test_generates_questions_for_regression(self, sample_regression_df):
         """EDA should adapt questions for regression problems."""
-        from agents.eda_agent import _generate_eda_questions
+        from agents.eda_agent import generate_eda_questions
         from core.state import create_initial_state
 
         state = create_initial_state("test-eda-reg")
@@ -43,12 +44,13 @@ class TestEDAQuestionGeneration:
         state["detected_domain"] = "generic"
         state["user_mode"] = "guided"
 
-        questions = _generate_eda_questions(state)
+        updated = generate_eda_questions(state)
+        questions = updated.get("eda_questions_asked", [])
         assert isinstance(questions, list)
 
     def test_healthcare_domain_adds_domain_questions(self, sample_healthcare_df):
         """Healthcare domain should add clinical-specific questions."""
-        from agents.eda_agent import _generate_eda_questions
+        from agents.eda_agent import generate_eda_questions
         from core.state import create_initial_state
 
         state = create_initial_state("test-eda-health")
@@ -58,7 +60,8 @@ class TestEDAQuestionGeneration:
         state["detected_domain"] = "healthcare"
         state["user_mode"] = "guided"
 
-        questions = _generate_eda_questions(state)
+        updated = generate_eda_questions(state)
+        questions = updated.get("eda_questions_asked", [])
         assert isinstance(questions, list)
 
 

@@ -13,6 +13,7 @@ from typing import Any
 import pandas as pd
 import streamlit as st
 
+from dashboard.components.shared_css import inject_shared_css
 from core.constants import (
     MODE_GUIDED,
     PROBLEM_CLASSIFICATION,
@@ -30,33 +31,6 @@ logger = logging.getLogger(__name__)
 
 _CSS = """
 <style>
-/* ---- Tokens ---- */
-:root {
-  --bg-primary: #0a0a0f;
-  --bg-card: #12121a;
-  --bg-card-hover: #1a1a25;
-  --bg-elevated: #16161f;
-  --border-subtle: rgba(99,102,241,0.12);
-  --border-active: rgba(99,102,241,0.4);
-  --text-primary: #f1f5f9;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
-  --accent-primary: #6366f1;
-  --accent-secondary: #0ea5e9;
-  --accent-success: #22c55e;
-  --accent-warning: #f59e0b;
-  --gradient-primary: linear-gradient(135deg, #6366f1, #0ea5e9);
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --shadow-card: 0 4px 24px rgba(0,0,0,0.25);
-  --shadow-glow: 0 0 20px rgba(99,102,241,0.15);
-}
-
-/* ---- Page base ---- */
-[data-testid="stAppViewContainer"] { background: var(--bg-primary); }
-[data-testid="stSidebar"] { background: #0d0d14; }
-
 /* ---- Section header ---- */
 .cfg-section-label {
   font-size: 0.65rem;
@@ -109,7 +83,7 @@ _CSS = """
   font-size: 0.85rem; font-weight: 800; letter-spacing: 0.04em;
   color: #fff;
   background: var(--domain-color, var(--accent-primary));
-  box-shadow: 0 0 14px -2px var(--domain-color, var(--accent-primary));
+  box-shadow: var(--shadow-glow);
 }
 .domain-info { flex: 1; }
 .domain-label {
@@ -118,13 +92,13 @@ _CSS = """
 }
 .domain-confidence-track {
   height: 6px; border-radius: 3px;
-  background: rgba(255,255,255,0.06);
+  background: var(--bg-elevated);
   overflow: hidden; margin-top: 0.5rem; max-width: 200px;
 }
 .domain-confidence-fill {
   height: 100%; border-radius: 3px;
   background: var(--gradient-primary);
-  transition: width 0.6s cubic-bezier(0.16,1,0.3,1);
+  transition: width var(--duration-slow) var(--ease-out);
 }
 .domain-confidence-text {
   font-size: 0.7rem; color: var(--text-muted);
@@ -133,15 +107,25 @@ _CSS = """
 
 /* ---- Mode cards ---- */
 .mode-row { display: flex; gap: 0.75rem; margin-bottom: 0.5rem; }
+.mode-card-wrap { flex: 1; position: relative; }
+.mode-rec-tag {
+  position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
+  font-size: 0.58rem; font-weight: 800;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: #fff; background: var(--gradient-primary);
+  padding: 2px 10px; border-radius: 4px;
+  white-space: nowrap; z-index: 2;
+  box-shadow: var(--shadow-card);
+}
 .mode-card {
-  flex: 1;
+  width: 100%;
   background: var(--bg-card);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   padding: 1.15rem 1rem;
   text-align: center;
   cursor: pointer;
-  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s, background 0.2s;
+  transition: border-color var(--duration-fast), box-shadow var(--duration-fast), transform var(--duration-fast), background var(--duration-fast);
   min-height: 110px;
   display: flex; flex-direction: column;
   align-items: center; justify-content: center; gap: 0.3rem;
@@ -153,14 +137,14 @@ _CSS = """
 }
 .mode-card.active {
   border: 2px solid var(--mode-accent, var(--accent-primary));
-  box-shadow: 0 0 20px -4px var(--mode-accent, var(--accent-primary));
+  box-shadow: var(--shadow-glow);
   background: color-mix(in srgb, var(--mode-accent, var(--accent-primary)) 8%, var(--bg-card));
 }
 .mode-dot {
   width: 10px; height: 10px; border-radius: 50%;
   border: 2px solid var(--text-muted);
   margin-bottom: 0.2rem;
-  transition: background 0.2s, border-color 0.2s;
+  transition: background var(--duration-fast), border-color var(--duration-fast);
 }
 .mode-card.active .mode-dot {
   background: var(--mode-accent, var(--accent-primary));
@@ -174,6 +158,22 @@ _CSS = """
 .mode-desc {
   font-size: 0.72rem; color: var(--text-muted);
   line-height: 1.35; max-width: 150px;
+}
+/* Hide mode button container label/chrome */
+.mode-btn-row [data-testid="stButton"] button {
+  background: transparent !important;
+  border: 1px solid var(--border-subtle) !important;
+  color: var(--text-secondary) !important;
+  font-size: 0.75rem !important;
+  padding: 0.35rem 0.5rem !important;
+  min-height: 32px !important;
+  border-radius: 6px !important;
+  opacity: 0.6;
+  transition: opacity var(--duration-fast);
+}
+.mode-btn-row [data-testid="stButton"] button:hover {
+  opacity: 1;
+  border-color: var(--accent-primary) !important;
 }
 
 /* ---- Pill badge ---- */
@@ -237,12 +237,12 @@ _CSS = """
   letter-spacing: 0.05em;
   padding: 0.8rem 2.5rem;
   min-height: 48px;
-  box-shadow: 0 0 22px -4px rgba(99,102,241,0.5);
-  transition: box-shadow 0.2s, transform 0.15s;
+  box-shadow: var(--shadow-glow);
+  transition: box-shadow var(--duration-fast), transform var(--duration-fast);
   animation: pulse-start 2.4s ease-in-out infinite;
 }
 [data-testid="stButton"] > button[kind="primary"]:hover {
-  box-shadow: 0 0 32px -2px rgba(99,102,241,0.7);
+  box-shadow: var(--shadow-lg);
   transform: translateY(-1px);
 }
 [data-testid="stButton"] > button[kind="primary"]:focus-visible {
@@ -250,15 +250,12 @@ _CSS = """
   outline-offset: 2px;
 }
 @keyframes pulse-start {
-  0%, 100% { box-shadow: 0 0 18px -4px rgba(99,102,241,0.45); }
-  50%      { box-shadow: 0 0 30px -2px rgba(99,102,241,0.65); }
+  0%, 100% { box-shadow: var(--shadow-glow); }
+  50%      { box-shadow: var(--shadow-lg); }
 }
 
 /* ---- Streamlit overrides ---- */
 [data-testid="stSelectbox"] label { color: var(--text-secondary) !important; font-size: 0.8rem !important; }
-[data-testid="stTextArea"] label { color: var(--text-secondary) !important; font-size: 0.8rem !important; }
-[data-testid="stRadio"] label { min-height: 44px; display: flex; align-items: center; }
-[data-testid="stRadio"] [role="radiogroup"] label { min-height: 44px; }
 
 /* ---- Page header ---- */
 .page-header { margin-bottom: 1.75rem; }
@@ -294,9 +291,9 @@ _DOMAIN_META: dict[str, dict[str, str]] = {
 }
 
 _MODE_META: dict[str, dict[str, str]] = {
-    "auto":   {"label": "Auto",   "desc": "Fully autonomous -- system makes all decisions.", "color": "#6366f1"},
-    "guided": {"label": "Guided", "desc": "Interactive -- system recommends, you approve.",  "color": "#0ea5e9"},
-    "expert": {"label": "Expert", "desc": "Full control -- you specify every parameter.",    "color": "#a855f7"},
+    "auto":   {"label": "Auto",   "desc": "Fully autonomous -- system makes all decisions.", "color": "#2563eb"},
+    "guided": {"label": "Guided", "desc": "Interactive -- system recommends, you approve.",  "color": "#0891b2"},
+    "expert": {"label": "Expert", "desc": "Full control -- you specify every parameter.",    "color": "#7c3aed"},
 }
 
 _PROBLEM_LABELS: dict[str, str] = {
@@ -412,44 +409,52 @@ def _render_mode_section() -> str:
     st.markdown('<div class="cfg-section-label">Analysis Mode</div>', unsafe_allow_html=True)
 
     ordered = ["auto", "guided", "expert"]
+    recommended = "guided"
+
+    # Render visual flashcards
     cards_html = '<div class="mode-row">'
     for mode_key in ordered:
         meta = _MODE_META[mode_key]
         active = "active" if mode_key == current_mode else ""
+        rec_tag = (
+            '<div class="mode-rec-tag">Recommended</div>'
+            if mode_key == recommended else ""
+        )
         cards_html += (
-            f'<div class="mode-card {active}" style="--mode-accent:{meta["color"]}">'
-            f'  <div class="mode-dot"></div>'
-            f'  <div class="mode-name">{meta["label"]}</div>'
-            f'  <div class="mode-desc">{meta["desc"]}</div>'
+            f'<div class="mode-card-wrap">'
+            f'  {rec_tag}'
+            f'  <div class="mode-card {active}" style="--mode-accent:{meta["color"]}">'
+            f'    <div class="mode-dot"></div>'
+            f'    <div class="mode-name">{meta["label"]}</div>'
+            f'    <div class="mode-desc">{meta["desc"]}</div>'
+            f'  </div>'
             f'</div>'
         )
     cards_html += '</div>'
     st.markdown(cards_html, unsafe_allow_html=True)
 
-    radio_labels = [_MODE_META[m]["label"] for m in ordered]
-    selected_label = st.radio(
-        "Mode",
-        options=radio_labels,
-        index=ordered.index(current_mode),
-        horizontal=True,
-        label_visibility="collapsed",
-        key="mode_selector_radio",
-    )
+    # Buttons for interaction (one per card)
+    st.markdown('<div class="mode-btn-row">', unsafe_allow_html=True)
+    cols = st.columns(len(ordered))
+    chosen_mode = current_mode
+    for col, mode_key in zip(cols, ordered):
+        meta = _MODE_META[mode_key]
+        with col:
+            if st.button(
+                f"Select {meta['label']}",
+                key=f"mode_btn_{mode_key}",
+                use_container_width=True,
+            ):
+                chosen_mode = mode_key
+    st.markdown('</div>', unsafe_allow_html=True)
 
-    chosen_mode = {_MODE_META[m]["label"]: m for m in ordered}.get(
-        selected_label, MODE_GUIDED
-    )
     st.session_state["user_mode"] = chosen_mode
     return chosen_mode
 
 
 def _render_target_section(df: pd.DataFrame) -> tuple[str | None, str]:
     """Render target + problem type selectors. Return (target_column, problem_type)."""
-    st.markdown(
-        '<div class="cfg-section-label">Target &amp; Problem Type</div>'
-        '<div class="glass-card">',
-        unsafe_allow_html=True,
-    )
+    st.markdown('<div class="glass-card">', unsafe_allow_html=True)
 
     col_options = ["(none -- unsupervised)"] + list(df.columns)
     target_idx = 0
@@ -475,21 +480,13 @@ def _render_target_section(df: pd.DataFrame) -> tuple[str | None, str]:
         _PROBLEM_LABELS.get(inferred, "Classification")
     )
 
-    left, right = st.columns([3, 1])
-    with left:
-        problem_label = st.selectbox(
-            "Problem type",
-            options=display_options,
-            index=default_idx,
-            key="problem_type_select",
-            help="Auto-detected from target column. Override if needed.",
-        )
-    with right:
-        st.markdown("<div style='height:1.9rem'></div>", unsafe_allow_html=True)
-        st.markdown(
-            '<span class="pill-badge">Auto-detected</span>',
-            unsafe_allow_html=True,
-        )
+    problem_label = st.selectbox(
+        "Problem type (auto-detected)",
+        options=display_options,
+        index=default_idx,
+        key="problem_type_select",
+        help="Auto-detected from target column. Override if needed.",
+    )
 
     problem_type = label_to_key.get(problem_label, PROBLEM_CLASSIFICATION)
     st.session_state["problem_type"] = problem_type
@@ -523,23 +520,65 @@ def _render_target_section(df: pd.DataFrame) -> tuple[str | None, str]:
     return target_column, problem_type
 
 
-def _render_goal_section() -> str:
-    """Render the analysis goal text area and return the current value."""
-    st.markdown(
-        '<div class="cfg-section-label">Analysis Goal</div>'
-        '<div class="glass-card">',
-        unsafe_allow_html=True,
+_GOAL_OPTIONS: dict[str, list[str]] = {
+    PROBLEM_CLASSIFICATION: [
+        "Predict the target class with highest accuracy",
+        "Identify key drivers of the target variable",
+        "Build an interpretable model for decision support",
+        "Minimize false negatives (catch all positives)",
+        "Minimize false positives (high precision)",
+        "Comprehensive EDA + modeling pipeline",
+    ],
+    PROBLEM_REGRESSION: [
+        "Predict the target value as accurately as possible",
+        "Identify features with strongest impact on the target",
+        "Build an interpretable regression model",
+        "Forecast future values with confidence intervals",
+        "Comprehensive EDA + modeling pipeline",
+    ],
+    PROBLEM_CLUSTERING: [
+        "Discover natural segments in the data",
+        "Identify anomalies and outliers",
+        "Understand data structure and distributions",
+        "Comprehensive exploratory analysis only",
+    ],
+    PROBLEM_TIME_SERIES: [
+        "Forecast future values",
+        "Detect trends and seasonality patterns",
+        "Identify anomalies in time series",
+        "Comprehensive time series analysis",
+    ],
+}
+
+
+def _render_goal_section(problem_type: str) -> str:
+    """Render the analysis goal dropdown and return the current value."""
+    st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+
+    goals = _GOAL_OPTIONS.get(problem_type, _GOAL_OPTIONS[PROBLEM_CLASSIFICATION])
+    prev_goal = st.session_state.get("user_goal", "")
+    default_idx = goals.index(prev_goal) if prev_goal in goals else 0
+
+    user_goal = st.selectbox(
+        "What do you want to achieve?",
+        options=goals,
+        index=default_idx,
+        key="user_goal_select",
+        help="Select a common objective, or type your own below.",
     )
-    user_goal = st.text_area(
-        "Describe your goal in plain language (optional)",
-        value=st.session_state.get("user_goal", ""),
-        height=90,
-        placeholder="e.g. Predict which patients will be readmitted within 30 days...",
-        key="user_goal_input",
+
+    custom_goal = st.text_input(
+        "Or describe your goal manually",
+        value="",
+        key="user_goal_custom",
+        placeholder="e.g. Find top 5 churn predictors with AUC > 0.85",
     )
+
     st.markdown("</div>", unsafe_allow_html=True)
-    st.session_state["user_goal"] = user_goal
-    return user_goal
+
+    final_goal = custom_goal.strip() if custom_goal.strip() else user_goal
+    st.session_state["user_goal"] = final_goal
+    return final_goal
 
 
 def _render_summary_bar(
@@ -580,10 +619,14 @@ def _page() -> None:
     st.set_page_config(
         page_title="Configure -- AutoDS", layout="wide", page_icon="+"
     )
+    inject_shared_css()
     st.markdown(_CSS, unsafe_allow_html=True)
 
     if "uploaded_data" not in st.session_state:
-        st.warning("Please upload data first.")
+        st.info(
+            "Upload a dataset to configure analysis settings. "
+            "Supported: CSV, Excel, Parquet, JSON, and 30+ other sources."
+        )
         st.stop()
 
     df: pd.DataFrame = st.session_state["uploaded_data"]
@@ -603,7 +646,7 @@ def _page() -> None:
     final_domain = _render_domain_section(df)
     selected_mode = _render_mode_section()
     target_column, problem_type = _render_target_section(df)
-    _render_goal_section()
+    _render_goal_section(problem_type)
 
     # Summary bar
     _render_summary_bar(final_domain, selected_mode, problem_type, target_column)
@@ -624,4 +667,15 @@ def _page() -> None:
         st.switch_page("pages/03_eda_interactive.py")
 
 
-_page()
+
+def _is_streamlit_running() -> bool:
+    """Return True only when executing inside a Streamlit runtime."""
+    try:
+        from streamlit.runtime.scriptrunner import get_script_run_ctx
+        return get_script_run_ctx() is not None
+    except Exception:
+        return False
+
+
+if _is_streamlit_running():
+    _page()

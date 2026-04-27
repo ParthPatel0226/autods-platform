@@ -1,0 +1,20 @@
+{
+  "name": "autods-landing",
+  "version": "1.0.0",
+  "description": "AutoDS marketing landing page — single-file React app with Framer Motion animations",
+  "private": true,
+  "scripts": {
+    "dev": "npx serve . -p 3000",
+    "start": "npx serve . -p 3000",
+    "preview": "npx serve . -p 4173"
+  },
+  "keywords": [
+    "autods",
+    "data-science",
+    "ai-agents",
+    "langgraph",
+    "landing-page"
+  ],
+  "author": "Parth",
+  "license": "MIT"
+}

@@ -1,0 +1,5 @@
+# AutoDS Streamlit app — minimum requirements for the theme module
+# Add these to your existing requirements.txt if missing
+# (the theme module itself only needs streamlit, but you'll need these to run a real app)
+
+streamlit>=1.32.0

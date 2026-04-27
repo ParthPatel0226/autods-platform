@@ -1,6 +1,6 @@
-"""Mode Selector — Auto / Guided / Expert toggle widget.
+"""Mode Selector -- Auto / Guided / Expert toggle widget.
 
-Renders a styled radio group that lets the user choose the analysis mode.
+Renders styled flashcards with buttons for mode selection.
 Stores the selection in ``st.session_state["user_mode"]``.
 """
 
@@ -15,23 +15,24 @@ _MODE_OPTIONS: Final[dict[str, dict[str, str]]] = {
         "label": "Auto",
         "icon": "bolt",
         "description": "Fully autonomous -- system makes all decisions.",
-        "color": "#6366f1",
+        "color": "var(--accent-primary)",
     },
     MODE_GUIDED: {
         "label": "Guided",
         "icon": "sliders",
         "description": "Interactive -- system recommends, you approve.",
-        "color": "#0ea5e9",
+        "color": "var(--accent-secondary)",
     },
     MODE_EXPERT: {
         "label": "Expert",
         "icon": "wrench",
         "description": "Full control -- you specify every parameter.",
-        "color": "#f59e0b",
+        "color": "var(--accent-warning)",
     },
 }
 
 _ORDERED_MODES: Final[list[str]] = [MODE_AUTO, MODE_GUIDED, MODE_EXPERT]
+_RECOMMENDED_MODE: Final[str] = MODE_GUIDED
 
 
 def render_mode_selector() -> str:
@@ -48,36 +49,38 @@ def render_mode_selector() -> str:
     for col, mode_key in zip(cols, _ORDERED_MODES):
         info = _MODE_OPTIONS[mode_key]
         is_selected = mode_key == current_mode
-        border_css = f"border: 2px solid {info['color']};" if is_selected else "border: 1px solid #e5e7eb;"
-        bg_css = f"background: {info['color']}11;" if is_selected else ""
+        border_css = f"border: 2px solid {info['color']};" if is_selected else "border: 1px solid var(--border-subtle);"
+        bg_css = f"background: color-mix(in srgb, {info['color']} 8%, transparent);" if is_selected else ""
 
         with col:
+            rec_html = ""
+            if mode_key == _RECOMMENDED_MODE:
+                rec_html = (
+                    '<div style="font-size:0.65rem;font-weight:700;color:var(--accent-secondary);'
+                    'text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.15rem;">'
+                    "Recommended</div>"
+                )
             st.markdown(
                 f"""
+                {rec_html}
                 <div style="padding: 0.75rem; border-radius: 0.5rem; text-align: center;
                             {border_css} {bg_css} margin-bottom: 0.25rem;">
                     <div style="font-size: 1.1rem; font-weight: 600; color: {info['color']};">
                         :{info['icon']}: {info['label']}
                     </div>
-                    <div style="font-size: 0.78rem; color: #6b7280; margin-top: 0.25rem;">
+                    <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.25rem;">
                         {info['description']}
                     </div>
                 </div>
                 """,
                 unsafe_allow_html=True,
             )
+            if st.button(
+                f"Select {info['label']}",
+                key=f"mode_sel_btn_{mode_key}",
+                use_container_width=True,
+            ):
+                current_mode = mode_key
 
-    selected_label = st.radio(
-        "Select mode",
-        options=[_MODE_OPTIONS[m]["label"] for m in _ORDERED_MODES],
-        index=_ORDERED_MODES.index(current_mode),
-        horizontal=True,
-        label_visibility="collapsed",
-        key="mode_selector_radio",
-    )
-
-    label_to_mode = {_MODE_OPTIONS[m]["label"]: m for m in _ORDERED_MODES}
-    chosen_mode = label_to_mode.get(selected_label, MODE_GUIDED)
-
-    st.session_state["user_mode"] = chosen_mode
-    return chosen_mode
+    st.session_state["user_mode"] = current_mode
+    return current_mode

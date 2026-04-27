@@ -12,6 +12,7 @@ from typing import Any
 import pandas as pd
 import streamlit as st
 
+from dashboard.components.shared_css import inject_shared_css
 from core.constants import MODE_AUTO, PROBLEM_CLASSIFICATION
 
 logger = logging.getLogger(__name__)
@@ -21,79 +22,28 @@ logger = logging.getLogger(__name__)
 # Design tokens
 # ---------------------------------------------------------------------------
 
-_CSS = """
+_PAGE_CSS = """
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
-@media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
-}
-
-section[data-testid="stMain"] { background: #0a0a0f; }
-.stApp { background: #0a0a0f; color: #f1f5f9; font-family: 'Inter', sans-serif; }
-header[data-testid="stHeader"] { background: transparent; }
-
-/* Hide default Streamlit chrome */
-.stDeployButton, #MainMenu { display: none; }
-
-/* Section headers */
-.section-header {
-    font-size: 0.7rem;
-    font-weight: 600;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: #94a3b8;
-    margin-bottom: 0.75rem;
-    padding-bottom: 0.5rem;
-    position: relative;
-}
-.section-header::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 48px;
-    height: 2px;
-    background: linear-gradient(135deg, #6366f1, #0ea5e9);
-    border-radius: 1px;
-}
-
-/* Glass card */
-.glass-card {
-    background: rgba(18, 18, 26, 0.8);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(99,102,241,0.12);
-    border-radius: 12px;
-    padding: 1.5rem;
-    margin-bottom: 1rem;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.25);
-    transition: border-color 0.2s ease;
-}
-.glass-card:hover {
-    border-color: rgba(99,102,241,0.25);
-}
-
 /* Glass pill tabs */
 .pill-tabs {
     display: flex;
     gap: 0.5rem;
     padding: 0.375rem;
-    background: rgba(18, 18, 26, 0.6);
+    background: var(--bg-elevated);
     backdrop-filter: blur(12px);
-    border: 1px solid rgba(99,102,241,0.1);
-    border-radius: 12px;
+    border: 1px solid var(--accent-primary-subtle);
+    border-radius: var(--radius-md);
     margin-bottom: 1.5rem;
     flex-wrap: wrap;
 }
 .pill-tab {
     padding: 0.5rem 1.25rem;
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     font-size: 0.8rem;
     font-weight: 500;
-    color: #94a3b8;
+    color: var(--text-secondary);
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all var(--transition-fast);
     border: 1px solid transparent;
     background: transparent;
     text-align: center;
@@ -101,21 +51,21 @@ header[data-testid="stHeader"] { background: transparent; }
     min-width: 100px;
 }
 .pill-tab:hover {
-    color: #f1f5f9;
-    background: rgba(99,102,241,0.08);
+    color: var(--text-primary);
+    background: var(--accent-primary-subtle);
 }
 .pill-tab.active {
-    background: linear-gradient(135deg, rgba(99,102,241,0.2), rgba(14,165,233,0.15));
-    color: #f1f5f9;
-    border-color: rgba(99,102,241,0.3);
-    box-shadow: 0 0 12px rgba(99,102,241,0.15);
+    background: linear-gradient(135deg, var(--accent-primary-light), var(--accent-secondary-light));
+    color: var(--text-primary);
+    border-color: var(--accent-primary);
+    box-shadow: var(--shadow-glow);
 }
 
 /* Chart container */
 .chart-container {
-    background: rgba(22, 22, 31, 0.6);
-    border: 1px solid rgba(99,102,241,0.08);
-    border-radius: 12px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--accent-primary-subtle);
+    border-radius: var(--radius-md);
     padding: 1rem;
     margin: 0.5rem 0;
 }
@@ -128,25 +78,25 @@ header[data-testid="stHeader"] { background: transparent; }
     font-size: 0.85rem;
 }
 .glass-table thead th {
-    background: rgba(99,102,241,0.08);
-    color: #94a3b8;
+    background: var(--accent-primary-subtle);
+    color: var(--text-secondary);
     font-weight: 600;
     font-size: 0.7rem;
     text-transform: uppercase;
     letter-spacing: 0.08em;
     padding: 0.75rem 1rem;
-    border-bottom: 1px solid rgba(99,102,241,0.12);
+    border-bottom: 1px solid var(--border-subtle);
     text-align: left;
 }
 .glass-table thead th:first-child { border-radius: 8px 0 0 0; }
 .glass-table thead th:last-child { border-radius: 0 8px 0 0; }
 .glass-table tbody td {
     padding: 0.625rem 1rem;
-    color: #f1f5f9;
-    border-bottom: 1px solid rgba(99,102,241,0.06);
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--accent-primary-subtle);
 }
 .glass-table tbody tr:hover td {
-    background: rgba(99,102,241,0.04);
+    background: var(--accent-primary-subtle);
 }
 
 /* Status indicators */
@@ -157,7 +107,7 @@ header[data-testid="stHeader"] { background: transparent; }
     font-size: 0.75rem;
     font-weight: 600;
     background: rgba(34,197,94,0.12);
-    color: #22c55e;
+    color: var(--accent-success);
     border: 1px solid rgba(34,197,94,0.2);
 }
 .status-fail {
@@ -167,7 +117,7 @@ header[data-testid="stHeader"] { background: transparent; }
     font-size: 0.75rem;
     font-weight: 600;
     background: rgba(239,68,68,0.12);
-    color: #ef4444;
+    color: var(--accent-danger);
     border: 1px solid rgba(239,68,68,0.2);
 }
 .status-warn {
@@ -177,20 +127,20 @@ header[data-testid="stHeader"] { background: transparent; }
     font-size: 0.75rem;
     font-weight: 600;
     background: rgba(245,158,11,0.12);
-    color: #f59e0b;
+    color: var(--accent-warning);
     border: 1px solid rgba(245,158,11,0.2);
 }
 
 /* Model card section */
 .model-card-section {
-    background: rgba(22, 22, 31, 0.5);
-    border-left: 3px solid rgba(99,102,241,0.4);
+    background: var(--bg-elevated);
+    border-left: 3px solid var(--accent-primary);
     border-radius: 0 8px 8px 0;
     padding: 1rem 1.25rem;
     margin-bottom: 0.75rem;
 }
 .model-card-section h4 {
-    color: #f1f5f9;
+    color: var(--text-primary);
     font-size: 0.85rem;
     font-weight: 600;
     margin-bottom: 0.5rem;
@@ -203,41 +153,30 @@ header[data-testid="stHeader"] { background: transparent; }
     gap: 1rem;
     align-items: center;
     padding: 0.5rem 0;
-    border-bottom: 1px solid rgba(99,102,241,0.06);
+    border-bottom: 1px solid var(--accent-primary-subtle);
 }
 .compare-arrow {
-    color: #6366f1;
+    color: var(--accent-primary);
     font-weight: 700;
     font-size: 1.1rem;
 }
-.compare-original { color: #94a3b8; }
-.compare-changed { color: #0ea5e9; font-weight: 500; }
+.compare-original { color: var(--text-secondary); }
+.compare-changed { color: var(--accent-secondary); font-weight: 500; }
 
 /* Override Streamlit widgets */
 div[data-testid="stExpander"] {
-    background: rgba(18, 18, 26, 0.6);
-    border: 1px solid rgba(99,102,241,0.1);
-    border-radius: 12px;
+    background: var(--bg-card);
+    border: 1px solid var(--accent-primary-subtle);
+    border-radius: var(--radius-md);
     overflow: hidden;
 }
 div[data-testid="stExpander"] summary {
-    color: #f1f5f9;
+    color: var(--text-primary);
     font-weight: 500;
 }
 
-.stNumberInput > div, .stSelectbox > div {
-    background: rgba(18, 18, 26, 0.6);
-    border-radius: 8px;
-}
-.stNumberInput input, .stSelectbox select {
-    color: #f1f5f9 !important;
-    background: rgba(22, 22, 31, 0.8) !important;
-    border: 1px solid rgba(99,102,241,0.15) !important;
-    border-radius: 8px !important;
-}
-
-.stSlider > div > div { background: rgba(99,102,241,0.2); }
-.stSlider > div > div > div { background: #6366f1; }
+.stSlider > div > div { background: var(--accent-primary-light); }
+.stSlider > div > div > div { background: var(--accent-primary); }
 
 /* Navigation buttons */
 .nav-btn {
@@ -249,31 +188,23 @@ div[data-testid="stExpander"] summary {
     font-size: 0.85rem;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all var(--transition-fast);
     text-decoration: none;
     width: 100%;
     text-align: center;
 }
 .nav-btn-secondary {
-    background: rgba(18, 18, 26, 0.8);
-    border: 1px solid rgba(99,102,241,0.15);
-    color: #94a3b8;
+    background: var(--bg-card);
+    border: 1px solid var(--accent-primary-light);
+    color: var(--text-secondary);
 }
-.nav-btn-secondary:hover { border-color: rgba(99,102,241,0.3); color: #f1f5f9; }
+.nav-btn-secondary:hover { border-color: var(--accent-primary); color: var(--text-primary); }
 .nav-btn-primary {
-    background: linear-gradient(135deg, #6366f1, #0ea5e9);
+    background: var(--gradient-primary);
     border: none;
     color: #ffffff;
 }
-.nav-btn-primary:hover { box-shadow: 0 0 20px rgba(99,102,241,0.3); }
-
-/* Info/warning/success/error overrides */
-div[data-testid="stAlert"] {
-    background: rgba(18, 18, 26, 0.6) !important;
-    border: 1px solid rgba(99,102,241,0.15) !important;
-    border-radius: 10px !important;
-    color: #f1f5f9 !important;
-}
+.nav-btn-primary:hover { box-shadow: var(--shadow-glow); }
 
 /* Streamlit tab overrides to hide defaults */
 .stTabs [data-baseweb="tab-list"] { display: none; }
@@ -282,7 +213,7 @@ div[data-testid="stAlert"] {
 /* Caption style */
 .glass-caption {
     font-size: 0.78rem;
-    color: #64748b;
+    color: var(--text-muted);
     margin-top: 0.25rem;
 }
 
@@ -290,12 +221,15 @@ div[data-testid="stAlert"] {
 .page-title {
     font-size: 1.75rem;
     font-weight: 700;
-    color: #f1f5f9;
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
     margin-bottom: 0.25rem;
 }
 .page-subtitle {
     font-size: 0.9rem;
-    color: #64748b;
+    color: var(--text-muted);
     margin-bottom: 1.5rem;
 }
 </style>
@@ -308,10 +242,19 @@ div[data-testid="stAlert"] {
 
 def _guard() -> None:
     if "uploaded_data" not in st.session_state:
-        st.warning("Please upload data first.")
+        inject_shared_css()
+        st.info(
+            "Upload a dataset to get started. This page provides SHAP explanations, "
+            "partial dependence plots, counterfactual examples, fairness audits, "
+            "what-if analysis, and model cards."
+        )
         st.stop()
     if not st.session_state.get("model_results"):
-        st.warning("Train models first before viewing explainability.")
+        inject_shared_css()
+        st.info(
+            "Train models first. This page requires a trained model to generate "
+            "explainability outputs including SHAP values and fairness metrics."
+        )
         st.stop()
 
 
@@ -341,7 +284,7 @@ def _render_shap_section() -> None:
     if not shap_data and not explainability.get("shap"):
         st.markdown(
             '<div class="glass-card">'
-            '<p style="color:#94a3b8; margin:0;">SHAP values not computed yet. '
+            '<p style="color:var(--text-secondary); margin:0;">SHAP values not computed yet. '
             'Connect the Explainability Agent to generate SHAP explanations.</p>'
             '</div>',
             unsafe_allow_html=True,
@@ -369,8 +312,8 @@ def _render_shap_section() -> None:
                 yaxis=dict(autorange="reversed"),
                 height=450,
                 paper_bgcolor="rgba(0,0,0,0)",
-                plot_bgcolor="rgba(22,22,31,0.6)",
-                font=dict(color="#94a3b8"),
+                plot_bgcolor="rgba(0,0,0,0)",
+                font=dict(color="#475569"),
             )
             st.markdown('<div class="glass-card"><div class="chart-container">', unsafe_allow_html=True)
             render_chart(fig, title="SHAP Global Feature Importance", key="shap_global")
@@ -413,7 +356,7 @@ def _render_shap_local(shap_info: dict[str, Any]) -> None:
             # Render as glass table
             rows_html = ""
             for feat, val in sorted_c.items():
-                val_color = "#22c55e" if val >= 0 else "#ef4444"
+                val_color = "var(--accent-success)" if val >= 0 else "var(--accent-danger)"
                 rows_html += (
                     f'<tr><td>{feat}</td>'
                     f'<td style="color:{val_color}; font-weight:500;">{val:+.4f}</td></tr>'
@@ -449,7 +392,7 @@ def _render_pdp_section() -> None:
             selected_feat = st.selectbox("Select feature for PDP", feature_list, key="pdp_feature")
             st.markdown(
                 f'<div class="glass-card">'
-                f'<p style="color:#94a3b8; margin:0;">PDP for \'{selected_feat}\' not yet computed. '
+                f'<p style="color:var(--text-secondary); margin:0;">PDP for \'{selected_feat}\' not yet computed. '
                 f'Connect the Explainability Agent to generate.</p>'
                 f'</div>',
                 unsafe_allow_html=True,
@@ -457,7 +400,7 @@ def _render_pdp_section() -> None:
         else:
             st.markdown(
                 '<div class="glass-card">'
-                '<p style="color:#94a3b8; margin:0;">Feature list not available. Complete modeling first.</p>'
+                '<p style="color:var(--text-secondary); margin:0;">Feature list not available. Complete modeling first.</p>'
                 '</div>',
                 unsafe_allow_html=True,
             )
@@ -480,7 +423,7 @@ def _render_counterfactual_section() -> None:
     if not examples:
         st.markdown(
             '<div class="glass-card">'
-            '<p style="color:#94a3b8; margin:0;">No counterfactual examples generated yet.</p>'
+            '<p style="color:var(--text-secondary); margin:0;">No counterfactual examples generated yet.</p>'
             '</div>',
             unsafe_allow_html=True,
         )
@@ -507,10 +450,10 @@ def _render_counterfactual_section() -> None:
                         f'</div>'
                     )
                 header_html = (
-                    '<div class="compare-row" style="border-bottom: 1px solid rgba(99,102,241,0.15);">'
-                    '<div style="color:#64748b; font-size:0.7rem; text-transform:uppercase; letter-spacing:0.08em;">Original</div>'
-                    '<div style="color:#64748b; font-size:0.7rem;">Feature: ' + feat + '</div>'
-                    '<div style="color:#64748b; font-size:0.7rem; text-transform:uppercase; letter-spacing:0.08em;">Changed To</div>'
+                    '<div class="compare-row" style="border-bottom: 1px solid var(--accent-primary-light);">'
+                    '<div style="color:var(--text-muted); font-size:0.7rem; text-transform:uppercase; letter-spacing:0.08em;">Original</div>'
+                    '<div style="color:var(--text-muted); font-size:0.7rem;">Feature: ' + feat + '</div>'
+                    '<div style="color:var(--text-muted); font-size:0.7rem; text-transform:uppercase; letter-spacing:0.08em;">Changed To</div>'
                     '</div>'
                 )
                 # Build a proper table instead
@@ -521,7 +464,7 @@ def _render_counterfactual_section() -> None:
                     table_rows += (
                         f'<tr><td style="font-weight:500;">{feat}</td>'
                         f'<td class="compare-original">{orig_val}</td>'
-                        f'<td style="color:#6366f1; font-weight:700; text-align:center;">--></td>'
+                        f'<td style="color:var(--accent-primary); font-weight:700; text-align:center;">--></td>'
                         f'<td class="compare-changed">{new_val}</td></tr>'
                     )
                 st.markdown(
@@ -539,8 +482,8 @@ def _render_counterfactual_section() -> None:
             if orig_pred is not None:
                 st.markdown(
                     f'<p class="glass-caption">Prediction: '
-                    f'<span style="color:#ef4444;">{orig_pred}</span> --> '
-                    f'<span style="color:#22c55e;">{new_pred}</span></p>',
+                    f'<span style="color:var(--accent-danger);">{orig_pred}</span> --> '
+                    f'<span style="color:var(--accent-success);">{new_pred}</span></p>',
                     unsafe_allow_html=True,
                 )
 
@@ -553,7 +496,7 @@ def _render_fairness_section() -> None:
     if not report:
         st.markdown(
             '<div class="glass-card">'
-            '<p style="color:#94a3b8; margin:0;">Fairness audit not yet run. Connect the Explainability Agent.</p>'
+            '<p style="color:var(--text-secondary); margin:0;">Fairness audit not yet run. Connect the Explainability Agent.</p>'
             '</div>',
             unsafe_allow_html=True,
         )
@@ -572,7 +515,7 @@ def _render_fairness_section() -> None:
         st.markdown(
             f'<div class="glass-card" style="display:flex; align-items:center; gap:1rem;">'
             f'{badge}'
-            f'<span style="color:#f1f5f9; font-weight:500;">{overall}</span>'
+            f'<span style="color:var(--text-primary); font-weight:500;">{overall}</span>'
             f'</div>',
             unsafe_allow_html=True,
         )
@@ -586,7 +529,7 @@ def _render_fairness_section() -> None:
                     rows_html = ""
                     for k, v in metrics.items():
                         val_str = f"{v:.4f}" if isinstance(v, float) else str(v)
-                        rows_html += f'<tr><td>{k}</td><td style="color:#0ea5e9;">{val_str}</td></tr>'
+                        rows_html += f'<tr><td>{k}</td><td style="color:var(--accent-secondary);">{val_str}</td></tr>'
                     st.markdown(
                         '<div class="glass-card">'
                         '<table class="glass-table"><thead><tr>'
@@ -604,7 +547,7 @@ def _render_fairness_section() -> None:
     if recommendations:
         recs_html = '<div class="glass-card"><div class="section-header">Recommendations</div>'
         for rec in recommendations:
-            recs_html += f'<p style="color:#94a3b8; margin:0.4rem 0; padding-left:0.75rem; border-left:2px solid rgba(99,102,241,0.3);">{rec}</p>'
+            recs_html += f'<p style="color:var(--text-secondary); margin:0.4rem 0; padding-left:0.75rem; border-left:2px solid var(--accent-primary);">{rec}</p>'
         recs_html += '</div>'
         st.markdown(recs_html, unsafe_allow_html=True)
 
@@ -617,7 +560,7 @@ def _render_whatif_section() -> None:
     if not feature_list:
         st.markdown(
             '<div class="glass-card">'
-            '<p style="color:#94a3b8; margin:0;">Feature list not available. Complete modeling first.</p>'
+            '<p style="color:var(--text-secondary); margin:0;">Feature list not available. Complete modeling first.</p>'
             '</div>',
             unsafe_allow_html=True,
         )
@@ -676,7 +619,7 @@ def _render_model_card() -> None:
     if not card:
         st.markdown(
             '<div class="glass-card">'
-            '<p style="color:#94a3b8; margin:0;">Model card not yet generated.</p>'
+            '<p style="color:var(--text-secondary); margin:0;">Model card not yet generated.</p>'
             '</div>',
             unsafe_allow_html=True,
         )
@@ -699,12 +642,12 @@ def _render_model_card() -> None:
             inner = ""
             if isinstance(content, dict):
                 for k, v in content.items():
-                    inner += f'<p style="color:#94a3b8; margin:0.3rem 0;"><span style="color:#f1f5f9; font-weight:500;">{k}:</span> {v}</p>'
+                    inner += f'<p style="color:var(--text-secondary); margin:0.3rem 0;"><span style="color:var(--text-primary); font-weight:500;">{k}:</span> {v}</p>'
             elif isinstance(content, list):
                 for item in content:
-                    inner += f'<p style="color:#94a3b8; margin:0.2rem 0; padding-left:0.75rem; border-left:2px solid rgba(99,102,241,0.2);">{item}</p>'
+                    inner += f'<p style="color:var(--text-secondary); margin:0.2rem 0; padding-left:0.75rem; border-left:2px solid var(--accent-primary-light);">{item}</p>'
             else:
-                inner = f'<p style="color:#94a3b8; margin:0;">{content}</p>'
+                inner = f'<p style="color:var(--text-secondary); margin:0;">{content}</p>'
 
             st.markdown(
                 f'<div class="model-card-section">'
@@ -753,8 +696,9 @@ def _render_pill_tabs() -> str:
 # ---------------------------------------------------------------------------
 
 def _page() -> None:
+    inject_shared_css()
     _guard()
-    st.markdown(_CSS, unsafe_allow_html=True)
+    st.markdown(_PAGE_CSS, unsafe_allow_html=True)
 
     st.markdown('<div class="page-title">Model Explainability</div>', unsafe_allow_html=True)
     st.markdown('<div class="page-subtitle">Understand model decisions through SHAP, counterfactuals, fairness audits, and more</div>', unsafe_allow_html=True)
@@ -786,7 +730,7 @@ def _page() -> None:
 
     # Navigation
     st.markdown('<div style="height:2rem;"></div>', unsafe_allow_html=True)
-    st.markdown('<div style="height:1px; background:rgba(99,102,241,0.1); margin:0.5rem 0 1.5rem;"></div>', unsafe_allow_html=True)
+    st.markdown('<div style="height:1px; background:var(--accent-primary-subtle); margin:0.5rem 0 1.5rem;"></div>', unsafe_allow_html=True)
     col_back, col_next = st.columns(2)
     with col_back:
         if st.button("Back to Modeling", use_container_width=True):
@@ -796,4 +740,15 @@ def _page() -> None:
             st.switch_page("pages/07_predict.py")
 
 
-_page()
+
+def _is_streamlit_running() -> bool:
+    """Return True only when executing inside a Streamlit runtime."""
+    try:
+        from streamlit.runtime.scriptrunner import get_script_run_ctx
+        return get_script_run_ctx() is not None
+    except Exception:
+        return False
+
+
+if _is_streamlit_running():
+    _page()

@@ -26,10 +26,10 @@ cp .env.example .env
 
 # Run dashboard
 make run                    # Streamlit at http://localhost:8501
-
-# Run prediction API (separate terminal)
-make serve                  # FastAPI at http://localhost:8000
+#                          # Opens landing page with hero section, sample datasets, and theme toggle
 ```
+
+**First Launch**: The landing page displays a professional dark-gradient hero banner with floating stat pills, a three-card feature showcase, drag-and-drop upload zone, and a sample dataset selector. Choose **Light** or **Dark** mode via the sidebar toggle.
 
 ## Docker Compose (Recommended for Production)
 

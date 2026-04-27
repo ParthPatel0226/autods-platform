@@ -14,6 +14,7 @@ from typing import Any
 import pandas as pd
 import streamlit as st
 
+from dashboard.components.shared_css import inject_shared_css
 from core.constants import (
     MODE_AUTO,
     MODE_EXPERT,
@@ -85,37 +86,8 @@ _TUNING_STRATEGIES: dict[str, str] = {
 # Design tokens
 # ---------------------------------------------------------------------------
 
-_DARK_LUXURY_CSS = """
+_PAGE_CSS = """
 <style>
-@media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after {
-        animation-duration: 0.01ms !important;
-        transition-duration: 0.01ms !important;
-    }
-}
-
-:root {
-    --bg-primary: #0a0a0f;
-    --bg-card: #12121a;
-    --bg-elevated: #16161f;
-    --border-subtle: rgba(99,102,241,0.12);
-    --text-primary: #f1f5f9;
-    --text-secondary: #94a3b8;
-    --text-muted: #64748b;
-    --accent-primary: #6366f1;
-    --accent-secondary: #0ea5e9;
-    --accent-success: #22c55e;
-    --accent-warning: #f59e0b;
-    --accent-danger: #ef4444;
-    --gradient-primary: linear-gradient(135deg, #6366f1, #0ea5e9);
-    --radius-md: 12px;
-    --shadow-card: 0 4px 24px rgba(0,0,0,0.25);
-}
-
-.stApp {
-    background-color: var(--bg-primary) !important;
-}
-
 /* --- Page header --- */
 .model-page-header {
     padding: 32px 0 24px 0;
@@ -134,28 +106,6 @@ _DARK_LUXURY_CSS = """
     color: var(--text-secondary);
     font-size: 0.95rem;
     margin-top: 4px;
-}
-
-/* --- Section headers --- */
-.section-header {
-    font-size: 0.7rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--text-muted);
-    margin-bottom: 16px;
-    padding-bottom: 8px;
-    position: relative;
-}
-.section-header::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 48px;
-    height: 2px;
-    background: var(--gradient-primary);
-    border-radius: 1px;
 }
 
 /* --- Algorithm cards grid --- */
@@ -177,16 +127,16 @@ _DARK_LUXURY_CSS = """
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     box-shadow: var(--shadow-card);
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    transition: border-color var(--duration-fast) var(--ease-in-out), box-shadow var(--duration-fast) var(--ease-in-out);
     position: relative;
 }
 .algo-card:hover {
-    border-color: rgba(99,102,241,0.25);
-    box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+    border-color: var(--border-active);
+    box-shadow: var(--shadow-glow);
 }
 .algo-card.recommended {
-    border-color: rgba(99,102,241,0.35);
-    box-shadow: 0 0 20px rgba(99,102,241,0.1), var(--shadow-card);
+    border-color: var(--accent-primary);
+    box-shadow: var(--shadow-glow), var(--shadow-card);
 }
 .algo-card .algo-name {
     color: var(--text-primary);
@@ -202,25 +152,8 @@ _DARK_LUXURY_CSS = """
     letter-spacing: 0.06em;
     padding: 2px 8px;
     border-radius: 4px;
-    background: rgba(99,102,241,0.15);
-    color: #818cf8;
-}
-
-/* --- Glass card --- */
-.glass-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-md);
-    padding: 24px;
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    box-shadow: var(--shadow-card);
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
-    margin-bottom: 16px;
-}
-.glass-card:hover {
-    border-color: rgba(99,102,241,0.25);
-    box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+    background: var(--accent-primary-light);
+    color: var(--accent-primary);
 }
 
 /* --- Training progress container --- */
@@ -239,7 +172,7 @@ _DARK_LUXURY_CSS = """
     display: flex;
     align-items: center;
     padding: 10px 0;
-    border-bottom: 1px solid rgba(99,102,241,0.06);
+    border-bottom: 1px solid var(--border-subtle);
 }
 .progress-step:last-child { border-bottom: none; }
 
@@ -292,7 +225,7 @@ _DARK_LUXURY_CSS = """
     height: 100%;
     border-radius: 6px;
     background: var(--gradient-primary);
-    transition: width 0.5s ease;
+    transition: width var(--duration-normal) var(--ease-in-out);
 }
 
 /* --- Results table --- */
@@ -326,11 +259,11 @@ _DARK_LUXURY_CSS = """
     -webkit-backdrop-filter: blur(12px);
     box-shadow: var(--shadow-card);
     text-align: center;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    transition: border-color var(--duration-fast) var(--ease-in-out), box-shadow var(--duration-fast) var(--ease-in-out);
 }
 .metric-glass-card:hover {
-    border-color: rgba(99,102,241,0.25);
-    box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+    border-color: var(--border-active);
+    box-shadow: var(--shadow-glow);
 }
 .metric-value {
     font-size: 1.75rem;
@@ -435,7 +368,12 @@ _DARK_LUXURY_CSS = """
 
 def _guard() -> None:
     if "uploaded_data" not in st.session_state:
-        st.warning("Please upload data first.")
+        inject_shared_css()
+        st.info(
+            "Complete data preparation first. This page handles algorithm "
+            "selection, model training with cross-validation, and statistical "
+            "model comparison."
+        )
         st.stop()
 
 
@@ -647,7 +585,7 @@ def _render_results() -> None:
         # Highlight best model row
         def _highlight_best(row: pd.Series) -> list[str]:
             if row.name == best_name:
-                return ["background-color: rgba(99,102,241,0.12); color: #f1f5f9; font-weight: 600"] * len(row)
+                return ["background-color: var(--accent-primary-subtle); font-weight: 600"] * len(row)
             return [""] * len(row)
 
         styled = results_df.style.apply(_highlight_best, axis=1).highlight_max(axis=0)
@@ -711,8 +649,8 @@ def _render_comparison_chart(model_results: dict[str, dict]) -> None:
             data=[go.Bar(
                 x=model_names,
                 y=values,
-                marker_color="#6366f1",
-                marker_line_color="rgba(99,102,241,0.5)",
+                marker_color="#2563eb",
+                marker_line_color="rgba(37,99,235,0.5)",
                 marker_line_width=1,
             )],
         )
@@ -720,10 +658,10 @@ def _render_comparison_chart(model_results: dict[str, dict]) -> None:
             yaxis_title=primary.replace("_", " ").title(),
             height=350,
             paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor="rgba(18,18,26,0.8)",
-            font=dict(color="#94a3b8"),
-            xaxis=dict(gridcolor="rgba(99,102,241,0.08)"),
-            yaxis=dict(gridcolor="rgba(99,102,241,0.08)"),
+            plot_bgcolor="rgba(0,0,0,0)",
+            font=dict(color="#475569"),
+            xaxis=dict(gridcolor="rgba(15,23,42,0.06)"),
+            yaxis=dict(gridcolor="rgba(15,23,42,0.06)"),
         )
 
         st.markdown('<div class="section-header">Model Comparison</div>', unsafe_allow_html=True)
@@ -754,12 +692,12 @@ def _render_feature_importance() -> None:
             yaxis=dict(autorange="reversed"),
             height=400,
             paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor="rgba(18,18,26,0.8)",
-            font=dict(color="#94a3b8"),
-            xaxis=dict(gridcolor="rgba(99,102,241,0.08)"),
-            yaxis_gridcolor="rgba(99,102,241,0.08)",
+            plot_bgcolor="rgba(0,0,0,0)",
+            font=dict(color="#475569"),
+            xaxis=dict(gridcolor="rgba(15,23,42,0.06)"),
+            yaxis_gridcolor="rgba(15,23,42,0.06)",
         )
-        fig.update_traces(marker_color="#6366f1")
+        fig.update_traces(marker_color="#2563eb")
 
         st.markdown('<div class="section-header">Feature Importance (Top 20)</div>', unsafe_allow_html=True)
         render_chart(fig, title="Feature Importance (Top 20)", key="model_feat_imp")
@@ -780,7 +718,7 @@ def _render_cv_scores(model_results: dict[str, dict]) -> None:
             import plotly.graph_objects as go
 
             fig = go.Figure()
-            colors = ["#6366f1", "#0ea5e9", "#22c55e", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#14b8a6"]
+            colors = ["#2563eb", "#0ea5e9", "#22c55e", "#f59e0b", "#ef4444", "#7c3aed", "#ec4899", "#14b8a6"]
             for idx, (name, result) in enumerate(model_results.items()):
                 cv = result.get("cv_scores", [])
                 if cv:
@@ -793,9 +731,9 @@ def _render_cv_scores(model_results: dict[str, dict]) -> None:
                 yaxis_title="Score",
                 height=350,
                 paper_bgcolor="rgba(0,0,0,0)",
-                plot_bgcolor="rgba(18,18,26,0.8)",
-                font=dict(color="#94a3b8"),
-                yaxis=dict(gridcolor="rgba(99,102,241,0.08)"),
+                plot_bgcolor="rgba(0,0,0,0)",
+                font=dict(color="#475569"),
+                yaxis=dict(gridcolor="rgba(15,23,42,0.06)"),
             )
             render_chart(fig, title="CV Score Distribution", key="cv_box")
         except ImportError:
@@ -822,15 +760,15 @@ def _render_confusion_matrix() -> None:
 
             labels = ["Negative", "Positive"]
             fig = ff.create_annotated_heatmap(
-                z=cm, x=labels, y=labels, colorscale=[[0, "#12121a"], [1, "#6366f1"]],
+                z=cm, x=labels, y=labels, colorscale=[[0, "#f1f5f9"], [1, "#2563eb"]],
             )
             fig.update_layout(
                 xaxis_title="Predicted",
                 yaxis_title="Actual",
                 height=350,
                 paper_bgcolor="rgba(0,0,0,0)",
-                plot_bgcolor="rgba(18,18,26,0.8)",
-                font=dict(color="#94a3b8"),
+                plot_bgcolor="rgba(0,0,0,0)",
+                font=dict(color="#475569"),
             )
             render_chart(fig, title="Confusion Matrix", key="conf_matrix")
         except ImportError:
@@ -842,10 +780,11 @@ def _render_confusion_matrix() -> None:
 # ---------------------------------------------------------------------------
 
 def _page() -> None:
+    inject_shared_css()
     _guard()
 
-    # Inject CSS
-    st.markdown(_DARK_LUXURY_CSS, unsafe_allow_html=True)
+    # Inject page-specific CSS
+    st.markdown(_PAGE_CSS, unsafe_allow_html=True)
 
     # Page header
     st.markdown(
@@ -912,4 +851,15 @@ def _page() -> None:
             st.switch_page("pages/06_explainability.py")
 
 
-_page()
+
+def _is_streamlit_running() -> bool:
+    """Return True only when executing inside a Streamlit runtime."""
+    try:
+        from streamlit.runtime.scriptrunner import get_script_run_ctx
+        return get_script_run_ctx() is not None
+    except Exception:
+        return False
+
+
+if _is_streamlit_running():
+    _page()

@@ -23,6 +23,8 @@ autods-platform/
   data_connectors/  # 30+ data source connectors
   domains/          # Industry domain configurations (7 domains)
   dashboard/        # Streamlit web application (9 pages + components)
+    components/
+      shared_css.py # Design system + theme tokens (80+ CSS variables)
   evaluation/       # Model comparison, bootstrap CI, domain metrics
   explainability/   # SHAP, fairness, counterfactuals, model cards
   logging_audit/    # Structured logging, decision log, cost tracker
@@ -34,6 +36,64 @@ autods-platform/
   configs/          # YAML configuration files
   scripts/          # Utility scripts
   docs/             # Documentation
+```
+
+## Design System & Styling
+
+All dashboard pages use a shared CSS design system defined in `dashboard/components/shared_css.py`. This ensures consistency and makes theme switching seamless.
+
+### Key Design System Features
+
+**80+ CSS Custom Properties** organized by category:
+- **Backgrounds**: `--bg-primary`, `--bg-card`, `--bg-elevated`, `--bg-inset`, `--bg-overlay`
+- **Text Colors**: `--text-primary`, `--text-secondary`, `--text-muted`, `--text-inverse`
+- **Accent Colors**: `--accent-primary` (#2563eb), `--accent-secondary` (#0891b2), plus success/warning/danger/info/purple variants
+- **Shadows**: `--shadow-xs` through `--shadow-lg`, `--shadow-glow`, `--shadow-focus`
+- **Spacing**: `--space-1` through `--space-12` (0.25rem to 3rem)
+- **Radii**: `--radius-xs` through `--radius-full`
+- **Typography**: `--font-display` (Plus Jakarta Sans), `--font-body` (Inter), `--font-mono` (JetBrains Mono)
+- **Transitions**: `--duration-fast/normal/slow`, `--ease-in-out`, `--ease-out`
+
+**Dual-Theme Support**:
+- Light mode (default) with white backgrounds and high contrast
+- Dark mode with deep navy backgrounds optimized for eye comfort
+- Theme values baked into `:root` CSS via `inject_shared_css()` — no JavaScript needed
+
+**Shared Component Classes**:
+- `.glass-card` — Card with border, shadow, hover effects
+- `.pill-tabs` / `.pill-tab` — Tab-like control with pill styling
+- `.glass-table` — Styled table with hover rows
+- `.badge-*` / `.status-dot-*` — Utility classes for badges and status indicators
+
+**When Adding Dashboard Pages or Components**:
+
+1. Call `inject_shared_css()` at the top of every page
+2. Use CSS variables instead of hardcoded colors: `var(--bg-card)`, `var(--accent-primary)`, etc.
+3. Reference shared component classes for consistency
+4. For charts, use `get_plotly_layout(is_dark)` helper and `PLOTLY_CHART_COLORS` list
+5. Example:
+
+```python
+from dashboard.components.shared_css import inject_shared_css, get_plotly_layout, PLOTLY_CHART_COLORS
+import streamlit as st
+
+# Page setup
+is_dark = inject_shared_css()
+
+# Use in Plotly charts
+fig.update_layout(**get_plotly_layout(is_dark))
+
+# Use in markdown/HTML
+st.markdown(
+    '<div class="glass-card"><h3>Analysis Results</h3></div>',
+    unsafe_allow_html=True
+)
+
+# Don't hardcode colors — use variables
+st.markdown(
+    '<div style="color: var(--accent-primary); background: var(--bg-card);">Content</div>',
+    unsafe_allow_html=True
+)
 ```
 
 ## Adding a New Connector
@@ -155,6 +215,68 @@ def your_agent(state: AutoDSState) -> AutoDSState:
 
 2. Register as a node in `core/graph.py`
 3. Add edges and conditional routing
+
+## Adding a Dashboard Page
+
+All Streamlit pages live in `dashboard/pages/` and follow this pattern:
+
+```python
+import streamlit as st
+from dashboard.components.shared_css import inject_shared_css
+
+def _page() -> None:
+    """Page entry point — only runs inside Streamlit runtime."""
+    inject_shared_css()
+    # ... page content ...
+
+def _is_streamlit_running() -> bool:
+    """Return True only when executing inside a Streamlit runtime."""
+    try:
+        from streamlit.runtime.scriptrunner import get_script_run_ctx
+        return get_script_run_ctx() is not None
+    except Exception:
+        return False
+
+if _is_streamlit_running():
+    _page()
+```
+
+Key rules:
+- **Never call `_page()` unconditionally** at module level. Always gate behind `_is_streamlit_running()` to prevent bare-import crashes in tests.
+- **Use `st.session_state.get("key")` not `st.session_state["key"]`** for data that may not exist yet.
+- **Import `inject_shared_css`** from `dashboard/components/shared_css.py` for consistent theming.
+- **Guard against missing data** with `st.info("descriptive message about what this page does")` + `st.stop()` at the top of `_page()`.
+- **Never hardcode colors** — use `var(--bg-primary)`, `var(--text-primary)`, etc. from shared_css.py.
+- **Do not redefine `:root` CSS variables** in page CSS — shared_css.py owns all design tokens.
+- **Theme support**: `inject_shared_css()` bakes the active theme palette directly into `:root`. Both light and dark palettes are defined as Python dicts (`_LIGHT`, `_DARK`) and `_build_css()` generates the CSS. Page-specific CSS should use only `var(--xxx)` references.
+- **No rgba(255,255,255,...) backgrounds** — use `var(--bg-elevated)` instead (invisible on white in light mode).
+- **No heavy dark shadows** — use `var(--shadow-glow)` or `var(--shadow-card)` instead of hardcoded rgba.
+
+### Design System Reference
+
+The design system lives in `dashboard/components/shared_css.py`. Key token categories:
+
+| Category | Examples | Usage |
+|----------|---------|-------|
+| **Backgrounds** | `--bg-primary`, `--bg-card`, `--bg-elevated`, `--bg-inset` | Page/card/section backgrounds |
+| **Borders** | `--border-subtle`, `--border-default`, `--border-active` | Container borders |
+| **Text** | `--text-primary`, `--text-secondary`, `--text-muted` | Typography colors |
+| **Accents** | `--accent-primary` (#2563eb), `--accent-secondary`, `--accent-success`, `--accent-warning`, `--accent-danger`, `--accent-purple` | Interactive elements |
+| **Subtle accents** | `--accent-primary-subtle`, `--accent-primary-light` | Hover backgrounds, badges |
+| **Fonts** | `--font-display` (Plus Jakarta Sans), `--font-body` (Inter), `--font-mono` (JetBrains Mono) | Typography families |
+| **Sizes** | `--text-xs` through `--text-4xl` | Font sizes |
+| **Spacing** | `--space-1` through `--space-12` | Margins/padding |
+| **Radii** | `--radius-xs` through `--radius-full` | Border radius |
+| **Shadows** | `--shadow-xs`, `--shadow-card`, `--shadow-md`, `--shadow-lg`, `--shadow-glow`, `--shadow-focus` | Elevation |
+| **Transitions** | `--transition-colors`, `--transition-shadow`, `--transition-all` | Motion |
+| **Charts** | `--chart-1` through `--chart-8` | Plotly/data viz colors |
+
+For Plotly charts, use the helper:
+```python
+from dashboard.components.shared_css import get_plotly_layout, PLOTLY_CHART_COLORS
+
+fig.update_layout(**get_plotly_layout(is_dark))
+```
 
 ## Running Tests
 

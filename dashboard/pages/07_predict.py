@@ -14,6 +14,7 @@ import pandas as pd
 import streamlit as st
 
 from core.constants import PROBLEM_CLASSIFICATION, PROBLEM_REGRESSION
+from dashboard.components.shared_css import inject_shared_css
 
 logger = logging.getLogger(__name__)
 
@@ -24,106 +25,57 @@ logger = logging.getLogger(__name__)
 
 _CSS = """
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
-@media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
-}
-
-section[data-testid="stMain"] { background: #0a0a0f; }
-.stApp { background: #0a0a0f; color: #f1f5f9; font-family: 'Inter', sans-serif; }
-header[data-testid="stHeader"] { background: transparent; }
-.stDeployButton, #MainMenu { display: none; }
-
-/* Section headers */
-.section-header {
-    font-size: 0.7rem;
-    font-weight: 600;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: #94a3b8;
-    margin-bottom: 0.75rem;
-    padding-bottom: 0.5rem;
-    position: relative;
-}
-.section-header::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 48px;
-    height: 2px;
-    background: linear-gradient(135deg, #6366f1, #0ea5e9);
-    border-radius: 1px;
-}
-
-/* Glass card */
-.glass-card {
-    background: rgba(18, 18, 26, 0.8);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(99,102,241,0.12);
-    border-radius: 12px;
-    padding: 1.5rem;
-    margin-bottom: 1rem;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.25);
-    transition: border-color 0.2s ease;
-}
-.glass-card:hover {
-    border-color: rgba(99,102,241,0.25);
-}
-
 /* Glass pill tabs */
 .pill-tabs {
     display: flex;
     gap: 0.5rem;
     padding: 0.375rem;
-    background: rgba(18, 18, 26, 0.6);
+    background: var(--bg-card);
     backdrop-filter: blur(12px);
-    border: 1px solid rgba(99,102,241,0.1);
-    border-radius: 12px;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
     margin-bottom: 1.5rem;
 }
 .pill-tab {
     padding: 0.5rem 1.25rem;
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     font-size: 0.8rem;
     font-weight: 500;
-    color: #94a3b8;
-    transition: all 0.2s ease;
+    color: var(--text-secondary);
+    transition: all var(--transition-fast);
     border: 1px solid transparent;
     background: transparent;
     text-align: center;
     flex: 1;
 }
 .pill-tab.active {
-    background: linear-gradient(135deg, rgba(99,102,241,0.2), rgba(14,165,233,0.15));
-    color: #f1f5f9;
-    border-color: rgba(99,102,241,0.3);
-    box-shadow: 0 0 12px rgba(99,102,241,0.15);
+    background: linear-gradient(135deg, var(--accent-primary-subtle), var(--accent-secondary-subtle));
+    color: var(--text-primary);
+    border-color: var(--border-active);
+    box-shadow: var(--shadow-glow);
 }
 
 /* Drop zone */
 .drop-zone {
-    background: rgba(18, 18, 26, 0.5);
+    background: var(--bg-card);
     backdrop-filter: blur(16px);
-    border: 2px dashed rgba(99,102,241,0.2);
-    border-radius: 12px;
+    border: 2px dashed var(--border-subtle);
+    border-radius: var(--radius-md);
     padding: 2.5rem 1.5rem;
     text-align: center;
-    transition: all 0.2s ease;
+    transition: all var(--transition-fast);
     margin-bottom: 1rem;
 }
 .drop-zone:hover {
-    border-color: rgba(99,102,241,0.4);
-    background: rgba(18, 18, 26, 0.7);
+    border-color: var(--border-active);
+    background: var(--bg-elevated);
 }
 .drop-zone-icon {
     width: 48px;
     height: 48px;
     margin: 0 auto 1rem;
-    border-radius: 12px;
-    background: rgba(99,102,241,0.1);
+    border-radius: var(--radius-md);
+    background: var(--accent-primary-subtle);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -132,13 +84,13 @@ header[data-testid="stHeader"] { background: transparent; }
 
 /* Prediction result card */
 .prediction-result {
-    background: rgba(18, 18, 26, 0.8);
+    background: var(--bg-card);
     backdrop-filter: blur(20px);
-    border: 1px solid rgba(99,102,241,0.2);
-    border-radius: 16px;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
     padding: 2rem;
     text-align: center;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    box-shadow: var(--shadow-card);
     position: relative;
     overflow: hidden;
 }
@@ -149,21 +101,20 @@ header[data-testid="stHeader"] { background: transparent; }
     left: 0;
     right: 0;
     height: 3px;
-    background: linear-gradient(135deg, #6366f1, #0ea5e9);
+    background: var(--gradient-primary);
 }
 .prediction-value {
     font-size: 2.5rem;
     font-weight: 700;
-    color: #f1f5f9;
     margin: 0.5rem 0;
-    background: linear-gradient(135deg, #6366f1, #0ea5e9);
+    background: var(--gradient-primary);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
 }
 .prediction-label {
     font-size: 0.75rem;
-    color: #64748b;
+    color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.1em;
     font-weight: 600;
@@ -177,19 +128,19 @@ header[data-testid="stHeader"] { background: transparent; }
 .confidence-bar-bg {
     width: 100%;
     height: 8px;
-    background: rgba(99,102,241,0.1);
+    background: var(--accent-primary-subtle);
     border-radius: 4px;
     overflow: hidden;
 }
 .confidence-bar-fill {
     height: 100%;
-    background: linear-gradient(135deg, #6366f1, #0ea5e9);
+    background: var(--gradient-primary);
     border-radius: 4px;
-    transition: width 0.4s ease;
+    transition: width var(--transition-normal);
 }
 .confidence-text {
     font-size: 0.8rem;
-    color: #94a3b8;
+    color: var(--text-secondary);
     margin-top: 0.4rem;
     text-align: center;
 }
@@ -202,37 +153,37 @@ header[data-testid="stHeader"] { background: transparent; }
     font-size: 0.85rem;
 }
 .glass-table thead th {
-    background: rgba(99,102,241,0.08);
-    color: #94a3b8;
+    background: var(--accent-primary-subtle);
+    color: var(--text-secondary);
     font-weight: 600;
     font-size: 0.7rem;
     text-transform: uppercase;
     letter-spacing: 0.08em;
     padding: 0.75rem 1rem;
-    border-bottom: 1px solid rgba(99,102,241,0.12);
+    border-bottom: 1px solid var(--border-subtle);
     text-align: left;
 }
-.glass-table thead th:first-child { border-radius: 8px 0 0 0; }
-.glass-table thead th:last-child { border-radius: 0 8px 0 0; }
+.glass-table thead th:first-child { border-radius: var(--radius-sm) 0 0 0; }
+.glass-table thead th:last-child { border-radius: 0 var(--radius-sm) 0 0; }
 .glass-table tbody td {
     padding: 0.625rem 1rem;
-    color: #f1f5f9;
-    border-bottom: 1px solid rgba(99,102,241,0.06);
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-subtle);
 }
 .glass-table tbody tr:hover td {
-    background: rgba(99,102,241,0.04);
+    background: var(--accent-primary-subtle);
 }
 
 /* Form inputs */
 .stNumberInput > div, .stSelectbox > div, .stTextInput > div {
-    background: rgba(18, 18, 26, 0.6);
-    border-radius: 8px;
+    background: var(--bg-card);
+    border-radius: var(--radius-sm);
 }
 .stNumberInput input, .stSelectbox select, .stTextInput input {
-    color: #f1f5f9 !important;
-    background: rgba(22, 22, 31, 0.8) !important;
-    border: 1px solid rgba(99,102,241,0.15) !important;
-    border-radius: 8px !important;
+    color: var(--text-primary) !important;
+    background: var(--bg-elevated) !important;
+    border: 1px solid var(--border-subtle) !important;
+    border-radius: var(--radius-sm) !important;
 }
 
 /* Model info bar */
@@ -240,21 +191,21 @@ header[data-testid="stHeader"] { background: transparent; }
     display: flex;
     align-items: center;
     gap: 1.5rem;
-    background: rgba(18, 18, 26, 0.6);
-    border: 1px solid rgba(99,102,241,0.1);
-    border-radius: 12px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
     padding: 1rem 1.5rem;
     margin-bottom: 1.5rem;
 }
 .model-info-label {
     font-size: 0.7rem;
-    color: #64748b;
+    color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.08em;
 }
 .model-info-value {
     font-size: 0.9rem;
-    color: #f1f5f9;
+    color: var(--text-primary);
     font-weight: 600;
 }
 
@@ -264,22 +215,22 @@ header[data-testid="stHeader"] { background: transparent; }
     align-items: center;
     justify-content: center;
     padding: 0.625rem 1.5rem;
-    border-radius: 10px;
+    border-radius: var(--radius-md);
     font-size: 0.85rem;
     font-weight: 500;
-    background: linear-gradient(135deg, #6366f1, #0ea5e9);
-    color: #ffffff;
+    background: var(--gradient-primary);
+    color: var(--text-on-accent);
     border: none;
     cursor: pointer;
-    transition: box-shadow 0.2s ease;
+    transition: box-shadow var(--transition-fast);
 }
-.gradient-btn:hover { box-shadow: 0 0 20px rgba(99,102,241,0.3); }
+.gradient-btn:hover { box-shadow: var(--shadow-glow); }
 
 /* Key factors list */
 .factor-item {
     padding: 0.5rem 0.75rem;
-    border-left: 2px solid rgba(99,102,241,0.3);
-    color: #94a3b8;
+    border-left: 2px solid var(--border-active);
+    color: var(--text-secondary);
     font-size: 0.85rem;
     margin-bottom: 0.4rem;
 }
@@ -288,18 +239,18 @@ header[data-testid="stHeader"] { background: transparent; }
 .page-title {
     font-size: 1.75rem;
     font-weight: 700;
-    color: #f1f5f9;
+    color: var(--text-primary);
     margin-bottom: 0.25rem;
 }
 .page-subtitle {
     font-size: 0.9rem;
-    color: #64748b;
+    color: var(--text-muted);
     margin-bottom: 1.5rem;
 }
 
 .glass-caption {
     font-size: 0.78rem;
-    color: #64748b;
+    color: var(--text-muted);
     margin-top: 0.25rem;
 }
 
@@ -309,10 +260,10 @@ header[data-testid="stHeader"] { background: transparent; }
 
 /* Alert overrides */
 div[data-testid="stAlert"] {
-    background: rgba(18, 18, 26, 0.6) !important;
-    border: 1px solid rgba(99,102,241,0.15) !important;
-    border-radius: 10px !important;
-    color: #f1f5f9 !important;
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border-subtle) !important;
+    border-radius: var(--radius-md) !important;
+    color: var(--text-primary) !important;
 }
 
 /* File uploader */
@@ -320,13 +271,13 @@ div[data-testid="stFileUploader"] {
     background: transparent;
 }
 div[data-testid="stFileUploader"] section {
-    background: rgba(18, 18, 26, 0.5);
-    border: 2px dashed rgba(99,102,241,0.2);
-    border-radius: 12px;
+    background: var(--bg-card);
+    border: 2px dashed var(--border-subtle);
+    border-radius: var(--radius-md);
     padding: 1.5rem;
 }
 div[data-testid="stFileUploader"] section:hover {
-    border-color: rgba(99,102,241,0.4);
+    border-color: var(--border-active);
 }
 </style>
 """
@@ -337,11 +288,8 @@ div[data-testid="stFileUploader"] section:hover {
 # ---------------------------------------------------------------------------
 
 def _guard() -> None:
-    if "uploaded_data" not in st.session_state:
-        st.warning("Please upload data first.")
-        st.stop()
-    if not st.session_state.get("best_model_name"):
-        st.warning("Train and select a model before making predictions.")
+    if "uploaded_data" not in st.session_state or not st.session_state.get("best_model_name"):
+        st.info("Train a model first to make predictions. This page supports batch predictions from uploaded files and single-row interactive predictions with real-time SHAP explanations.")
         st.stop()
 
 
@@ -426,8 +374,8 @@ def _render_batch_upload() -> None:
         st.markdown(
             f'<div class="glass-card">'
             f'<div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:1rem;">'
-            f'<span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#22c55e;"></span>'
-            f'<span style="color:#f1f5f9; font-weight:500;">Loaded {len(new_df)} rows, {len(new_df.columns)} columns</span>'
+            f'<span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--accent-success);"></span>'
+            f'<span style="color:var(--text-primary); font-weight:500;">Loaded {len(new_df)} rows, {len(new_df.columns)} columns</span>'
             f'</div></div>',
             unsafe_allow_html=True,
         )
@@ -484,7 +432,7 @@ def _render_batch_results(results: pd.DataFrame) -> None:
             fig = px.bar(x=counts.index.astype(str), y=counts.values, labels={"x": "Class", "y": "Count"})
             fig.update_layout(
                 paper_bgcolor="rgba(0,0,0,0)",
-                plot_bgcolor="rgba(22,22,31,0.6)",
+                plot_bgcolor="rgba(0,0,0,0)",
                 font=dict(color="#94a3b8"),
             )
             st.markdown('<div class="glass-card">', unsafe_allow_html=True)
@@ -508,7 +456,7 @@ def _render_single_prediction() -> None:
 
     if not feature_list:
         st.markdown(
-            '<div class="glass-card"><p style="color:#94a3b8; margin:0;">Feature list not available.</p></div>',
+            '<div class="glass-card"><p style="color:var(--text-secondary); margin:0;">Feature list not available.</p></div>',
             unsafe_allow_html=True,
         )
         return
@@ -629,6 +577,7 @@ def _render_pred_tabs() -> str:
 # ---------------------------------------------------------------------------
 
 def _page() -> None:
+    inject_shared_css()
     _guard()
     st.markdown(_CSS, unsafe_allow_html=True)
 
@@ -650,7 +599,7 @@ def _page() -> None:
 
     # Navigation
     st.markdown('<div style="height:2rem;"></div>', unsafe_allow_html=True)
-    st.markdown('<div style="height:1px; background:rgba(99,102,241,0.1); margin:0.5rem 0 1.5rem;"></div>', unsafe_allow_html=True)
+    st.markdown('<div style="height:1px; background:var(--border-subtle); margin:0.5rem 0 1.5rem;"></div>', unsafe_allow_html=True)
     col_back, col_next = st.columns(2)
     with col_back:
         if st.button("Back to Explainability", use_container_width=True):
@@ -660,4 +609,15 @@ def _page() -> None:
             st.switch_page("pages/08_chat.py")
 
 
-_page()
+
+def _is_streamlit_running() -> bool:
+    """Return True only when executing inside a Streamlit runtime."""
+    try:
+        from streamlit.runtime.scriptrunner import get_script_run_ctx
+        return get_script_run_ctx() is not None
+    except Exception:
+        return False
+
+
+if _is_streamlit_running():
+    _page()

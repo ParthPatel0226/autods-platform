@@ -41,24 +41,18 @@ class TestFinanceTools:
     def test_ks_statistic(self, finance_df):
         from agents.tools.domain_tools import ks_statistic
 
+        np.random.seed(42)
         proba = np.random.uniform(0, 1, len(finance_df))
-        result = ks_statistic(
-            pd.DataFrame({"score": proba, "target": finance_df["default"]}),
-            score_column="score",
-            target_column="target",
-        )
+        result = ks_statistic(finance_df["default"], proba)
         assert isinstance(result, dict)
-        assert "ks_statistic" in result or "ks" in result or len(result) > 0
+        assert len(result) > 0
 
     def test_gini_coefficient(self, finance_df):
         from agents.tools.domain_tools import gini_coefficient
 
+        np.random.seed(42)
         proba = np.random.uniform(0, 1, len(finance_df))
-        result = gini_coefficient(
-            pd.DataFrame({"score": proba, "target": finance_df["default"]}),
-            score_column="score",
-            target_column="target",
-        )
+        result = gini_coefficient(finance_df["default"], proba)
         assert isinstance(result, dict)
 
     def test_psi_calculation(self):
@@ -67,25 +61,25 @@ class TestFinanceTools:
         np.random.seed(42)
         expected = np.random.normal(0, 1, 1000)
         actual = np.random.normal(0.2, 1.1, 1000)
-        df = pd.DataFrame({"feature": np.concatenate([expected, actual])})
-        result = psi_calculation(
-            pd.DataFrame({"feature": expected}),
-            pd.DataFrame({"feature": actual}),
-            "feature",
-        )
+        result = psi_calculation(expected, actual)
         assert isinstance(result, dict)
 
 
 class TestFinanceAdverseAction:
     def test_adverse_action_codes(self):
-        from explainability.adverse_action import generate_adverse_action_notice
+        from explainability.adverse_action import generate_adverse_action_codes
 
-        feature_contributions = {
-            "credit_score": -0.35,
-            "debt_to_income": -0.25,
-            "employment_length": -0.15,
-            "num_accounts": 0.10,
-            "annual_income": 0.05,
-        }
-        result = generate_adverse_action_notice(feature_contributions, top_n=4)
-        assert isinstance(result, (dict, list))
+        feature_names = ["credit_score", "debt_to_income", "employment_length",
+                         "num_accounts", "annual_income"]
+        shap_values = np.array([-0.35, -0.25, -0.15, 0.10, 0.05])
+        instance = pd.Series([650, 0.4, 5, 8, 55000], index=feature_names)
+
+        result = generate_adverse_action_codes(
+            model=None,
+            instance=instance,
+            shap_values=shap_values,
+            feature_names=feature_names,
+            top_n=4,
+        )
+        assert isinstance(result, list)
+        assert len(result) <= 4

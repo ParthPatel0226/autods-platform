@@ -40,37 +40,39 @@ class TestEcommerceDomainDetection:
 
 
 class TestEcommerceTools:
-    def test_rfm_scoring(self, ecommerce_df):
-        from agents.tools.domain_tools import rfm_scoring
+    def test_rfm_segmentation(self, ecommerce_df):
+        from agents.tools.domain_tools import rfm_segmentation
 
-        result = rfm_scoring(
+        result = rfm_segmentation(
             ecommerce_df,
-            customer_id_col="customer_id",
+            customer_col="customer_id",
             date_col="order_date",
             amount_col="order_amount",
         )
-        assert isinstance(result, dict)
+        assert isinstance(result, pd.DataFrame)
+        assert len(result) > 0
 
-    def test_clv_estimation(self, ecommerce_df):
-        from agents.tools.domain_tools import clv_estimation
+    def test_clv_calculation(self, ecommerce_df):
+        from agents.tools.domain_tools import clv_calculation
 
-        result = clv_estimation(
+        result = clv_calculation(
             ecommerce_df,
-            customer_id_col="customer_id",
-            date_col="order_date",
+            customer_col="customer_id",
             amount_col="order_amount",
+            date_col="order_date",
         )
-        assert isinstance(result, dict)
+        assert isinstance(result, pd.DataFrame)
+        assert len(result) > 0
 
 
 class TestEcommerceEdgeCases:
     def test_single_customer_rfm(self):
-        from agents.tools.domain_tools import rfm_scoring
+        from agents.tools.domain_tools import rfm_segmentation
 
         df = pd.DataFrame({
             "customer_id": [1] * 5,
             "order_date": pd.date_range("2024-01-01", periods=5),
             "order_amount": [10.0, 20.0, 30.0, 40.0, 50.0],
         })
-        result = rfm_scoring(df, "customer_id", "order_date", "order_amount")
-        assert isinstance(result, dict)
+        result = rfm_segmentation(df, "customer_id", "order_date", "order_amount")
+        assert isinstance(result, pd.DataFrame)

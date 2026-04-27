@@ -14,6 +14,8 @@ from typing import Any
 import pandas as pd
 import streamlit as st
 
+from dashboard.components.shared_css import inject_shared_css
+
 logger = logging.getLogger(__name__)
 
 _SUPPORTED_EXTENSIONS = ["csv", "tsv", "xlsx", "xls", "parquet", "json", "jsonl"]
@@ -69,54 +71,10 @@ _SAMPLE_DATASETS: list[dict[str, Any]] = [
 
 _CSS = """
 <style>
-/* -- design tokens ---------------------------------------------------- */
-:root {
-    --bg-primary: #0a0a0f;
-    --bg-card: #12121a;
-    --bg-card-hover: #1a1a25;
-    --bg-elevated: #16161f;
-    --border-subtle: rgba(99,102,241,0.12);
-    --border-active: rgba(99,102,241,0.4);
-    --text-primary: #f1f5f9;
-    --text-secondary: #94a3b8;
-    --text-muted: #64748b;
-    --accent-primary: #6366f1;
-    --accent-secondary: #0ea5e9;
-    --accent-success: #22c55e;
-    --accent-warning: #f59e0b;
-    --gradient-primary: linear-gradient(135deg, #6366f1, #0ea5e9);
-    --radius-sm: 8px;
-    --radius-md: 12px;
-    --radius-lg: 16px;
-    --shadow-card: 0 4px 24px rgba(0,0,0,0.25);
-    --shadow-glow: 0 0 20px rgba(99,102,241,0.15);
-    --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-normal: 300ms cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* -- keyframes -------------------------------------------------------- */
-@keyframes fadeInUp {
-    from { opacity: 0; transform: translateY(16px); }
-    to   { opacity: 1; transform: translateY(0); }
-}
+/* -- page-specific keyframe ------------------------------------------- */
 @keyframes borderDash {
     to { stroke-dashoffset: 0; }
 }
-@keyframes shimmer {
-    0%   { background-position: -200% 0; }
-    100% { background-position: 200% 0; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after {
-        animation-duration: 0.01ms !important;
-        transition-duration: 0.01ms !important;
-    }
-}
-
-/* -- page background -------------------------------------------------- */
-[data-testid="stAppViewContainer"] { background: var(--bg-primary) !important; }
-[data-testid="stSidebar"] { background: #08080d !important; }
 
 /* -- page heading ----------------------------------------------------- */
 .upload-heading {
@@ -149,7 +107,7 @@ _CSS = """
 }
 .upload-zone-icon {
     width: 56px; height: 56px;
-    background: rgba(99,102,241,0.10);
+    background: var(--accent-primary-subtle);
     border: 1.5px solid var(--border-active);
     border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
@@ -199,12 +157,12 @@ _CSS = """
     border-radius: 999px;
     font-size: 0.7rem; font-weight: 600;
     letter-spacing: 0.04em; text-transform: uppercase;
-    background: rgba(99,102,241,0.08);
-    color: #a5b4fc;
+    background: var(--accent-primary-subtle);
+    color: var(--accent-primary);
     border: 1px solid var(--border-subtle);
     transition: background var(--transition-fast);
 }
-.badge:hover { background: rgba(99,102,241,0.15); }
+.badge:hover { background: var(--accent-primary-light); }
 
 /* -- section header --------------------------------------------------- */
 .section-header {
@@ -255,7 +213,7 @@ _CSS = """
 }
 .sample-card.active {
     border-color: var(--accent-primary);
-    background: rgba(99,102,241,0.06);
+    background: var(--accent-primary-subtle);
     box-shadow: var(--shadow-glow);
 }
 .sc-name {
@@ -274,8 +232,8 @@ _CSS = """
     font-size: 0.67rem; font-weight: 700;
     letter-spacing: 0.03em;
 }
-.sc-pill.cls { background: rgba(99,102,241,0.12); color: #818cf8; }
-.sc-pill.reg { background: rgba(14,165,233,0.12); color: #38bdf8; }
+.sc-pill.cls { background: var(--accent-primary-subtle); color: var(--accent-primary); }
+.sc-pill.reg { background: var(--accent-secondary-subtle, rgba(14,165,233,0.12)); color: var(--accent-secondary); }
 .sc-rows {
     font-size: 0.7rem; color: var(--text-muted);
 }
@@ -314,9 +272,9 @@ _CSS = """
     display: flex; align-items: center; justify-content: center;
     flex-shrink: 0;
 }
-.mc-icon.rows { background: rgba(99,102,241,0.10); }
-.mc-icon.cols { background: rgba(14,165,233,0.10); }
-.mc-icon.mem  { background: rgba(34,197,94,0.10); }
+.mc-icon.rows { background: var(--accent-primary-subtle); }
+.mc-icon.cols { background: var(--accent-secondary-subtle, rgba(14,165,233,0.10)); }
+.mc-icon.mem  { background: var(--accent-success-subtle, rgba(34,197,94,0.10)); }
 /* geometric icon shapes */
 .mc-icon-shape { display: flex; flex-direction: column; gap: 3px; }
 .mc-icon-shape span {
@@ -352,7 +310,7 @@ _CSS = """
 }
 .data-table-wrap th {
     background: var(--bg-elevated);
-    color: #a5b4fc;
+    color: var(--accent-primary);
     font-size: 0.73rem; font-weight: 700;
     letter-spacing: 0.05em; text-transform: uppercase;
     padding: 10px 14px;
@@ -360,12 +318,12 @@ _CSS = """
     position: sticky; top: 0; z-index: 2;
 }
 .data-table-wrap tr:nth-child(even) td {
-    background: rgba(255,255,255,0.015);
+    background: var(--bg-elevated);
 }
 .data-table-wrap td {
     font-size: 0.82rem; color: var(--text-primary);
     padding: 10px 14px;
-    border-bottom: 1px solid rgba(99,102,241,0.06);
+    border-bottom: 1px solid var(--border-subtle);
 }
 
 /* type pills */
@@ -373,17 +331,17 @@ _CSS = """
     display: inline-block; padding: 1px 8px;
     border-radius: 999px; font-size: 0.72rem; font-weight: 600;
 }
-.type-num  { background: rgba(96,165,250,0.10); color: #60a5fa; }
-.type-cat  { background: rgba(192,132,252,0.10); color: #c084fc; }
-.type-dt   { background: rgba(52,211,153,0.10); color: #34d399; }
-.type-bool { background: rgba(251,191,36,0.10); color: #fbbf24; }
-.type-oth  { background: rgba(100,116,139,0.10); color: var(--text-muted); }
+.type-num  { background: var(--type-num-bg, rgba(96,165,250,0.10)); color: var(--type-num-color, #60a5fa); }
+.type-cat  { background: var(--type-cat-bg, rgba(192,132,252,0.10)); color: var(--type-cat-color, #c084fc); }
+.type-dt   { background: var(--type-dt-bg, rgba(52,211,153,0.10)); color: var(--type-dt-color, #34d399); }
+.type-bool { background: var(--type-bool-bg, rgba(251,191,36,0.10)); color: var(--type-bool-color, #fbbf24); }
+.type-oth  { background: var(--type-oth-bg, rgba(100,116,139,0.10)); color: var(--text-muted); }
 
 /* progress bar (missing %) */
 .pbar-wrap { display: flex; align-items: center; gap: 8px; }
 .pbar-track {
     flex: 1; height: 6px;
-    background: rgba(255,255,255,0.06);
+    background: var(--bg-elevated);
     border-radius: 999px; overflow: hidden;
 }
 .pbar-fill {
@@ -392,7 +350,7 @@ _CSS = """
 }
 .pbar-fill.green  { background: var(--accent-success); }
 .pbar-fill.amber  { background: var(--accent-warning); }
-.pbar-fill.red    { background: #ef4444; }
+.pbar-fill.red    { background: var(--accent-danger); }
 .pbar-pct {
     font-size: 0.73rem; color: var(--text-muted);
     min-width: 38px; text-align: right;
@@ -425,14 +383,14 @@ _CSS = """
     letter-spacing: 0.03em !important;
     padding: 14px 32px !important;
     min-height: 44px !important;
-    box-shadow: 0 4px 18px rgba(99,102,241,0.35) !important;
+    box-shadow: var(--shadow-glow) !important;
     transition: opacity var(--transition-fast),
                 box-shadow var(--transition-fast),
                 transform var(--transition-fast) !important;
 }
 [data-testid="stButton"] > button[kind="primary"]:hover {
     opacity: 0.92 !important;
-    box-shadow: 0 6px 24px rgba(99,102,241,0.5) !important;
+    box-shadow: var(--shadow-glow-strong, 0 6px 24px var(--accent-primary)) !important;
     transform: translateY(-1px) !important;
 }
 [data-testid="stButton"] > button[kind="primary"]:focus-visible {
@@ -716,6 +674,7 @@ def _render_sample_cards() -> str | None:
 # ---------------------------------------------------------------------------
 
 def _page() -> None:
+    inject_shared_css()
     st.markdown(_CSS, unsafe_allow_html=True)
 
     # -- Page heading
@@ -858,4 +817,15 @@ def _page() -> None:
         st.switch_page("pages/02_configure.py")
 
 
-_page()
+
+def _is_streamlit_running() -> bool:
+    """Return True only when executing inside a Streamlit runtime."""
+    try:
+        from streamlit.runtime.scriptrunner import get_script_run_ctx
+        return get_script_run_ctx() is not None
+    except Exception:
+        return False
+
+
+if _is_streamlit_running():
+    _page()

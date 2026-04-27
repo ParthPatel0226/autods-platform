@@ -1,0 +1,32 @@
+# ─────────────────────────────────────────────────────────────────────
+# AutoDS Streamlit Theme
+# Place this file at: .streamlit/config.toml in your project root
+# ─────────────────────────────────────────────────────────────────────
+
+[theme]
+# Match the landing page's cosmic violet aesthetic
+base = "dark"
+primaryColor = "#A855F7"               # violet (matches landing page accent)
+backgroundColor = "#07091A"            # deep cosmic navy (matches landing --bg)
+secondaryBackgroundColor = "#11173D"   # surface (matches landing --bg-2)
+textColor = "#F4F5FF"                  # ink (matches landing --ink)
+font = "sans-serif"
+
+# Typography uses Inter Tight via custom CSS (loaded in app.py)
+
+[server]
+headless = true
+runOnSave = true
+port = 8501
+enableCORS = false
+enableXsrfProtection = true
+
+[browser]
+gatherUsageStats = false
+
+[client]
+showErrorDetails = true
+toolbarMode = "minimal"
+
+[ui]
+hideTopBar = false

@@ -16,7 +16,7 @@ class TestModelSelectionHeuristics:
 
     def test_classification_selects_appropriate_algorithms(self):
         """Classification problems should include tree-based and linear models."""
-        from agents.modeling_agent import _select_algorithms
+        from agents.modeling_agent import _resolve_algorithms
         from core.state import create_initial_state
 
         state = create_initial_state("test-model")
@@ -24,13 +24,13 @@ class TestModelSelectionHeuristics:
         state["detected_domain"] = "generic"
         state["user_mode"] = "auto"
 
-        algorithms = _select_algorithms(state)
+        algorithms = _resolve_algorithms(state)
         assert isinstance(algorithms, list)
         assert len(algorithms) >= 2
 
     def test_regression_selects_appropriate_algorithms(self):
         """Regression problems should include linear and tree-based models."""
-        from agents.modeling_agent import _select_algorithms
+        from agents.modeling_agent import _resolve_algorithms
         from core.state import create_initial_state
 
         state = create_initial_state("test-model-reg")
@@ -38,13 +38,13 @@ class TestModelSelectionHeuristics:
         state["detected_domain"] = "generic"
         state["user_mode"] = "auto"
 
-        algorithms = _select_algorithms(state)
+        algorithms = _resolve_algorithms(state)
         assert isinstance(algorithms, list)
         assert len(algorithms) >= 2
 
     def test_finance_domain_adds_interpretable_models(self):
         """Finance domain should prioritize interpretable models."""
-        from agents.modeling_agent import _select_algorithms
+        from agents.modeling_agent import _resolve_algorithms
         from core.state import create_initial_state
 
         state = create_initial_state("test-model-fin")
@@ -52,7 +52,7 @@ class TestModelSelectionHeuristics:
         state["detected_domain"] = "finance"
         state["user_mode"] = "auto"
 
-        algorithms = _select_algorithms(state)
+        algorithms = _resolve_algorithms(state)
         assert isinstance(algorithms, list)
         # Finance should include logistic regression for interpretability
         algo_names = [a.lower() if isinstance(a, str) else str(a).lower() for a in algorithms]

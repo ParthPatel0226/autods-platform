@@ -134,6 +134,47 @@ Five validators run at system boundaries:
 - **Model Validator** -- performance thresholds, overfitting detection
 - **Data Drift Checker** -- KS test, PSI calculation
 
+## Design System & User Interface
+
+The dashboard features a **professional dual-theme design system** with 80+ CSS custom properties:
+
+### Theme System
+- **Light Mode** (default) -- white backgrounds, slate neutrals, high contrast
+- **Dark Mode** -- deep navy backgrounds (#0c0f1a), optimized for extended use
+- **Implementation** -- theme values baked into `:root` CSS via `shared_css.py`, no JavaScript
+- **Toggle** -- sidebar button syncs theme across all pages instantly
+
+### Design Tokens
+- **Backgrounds**: primary, card, elevated, inset, overlay
+- **Text**: primary, secondary, muted, inverse
+- **Accents**: primary (#2563eb blue), secondary (#0891b2 cyan), plus success/warning/danger/info/purple
+- **Typography**: Plus Jakarta Sans (display), Inter (body), JetBrains Mono (code) via Google Fonts
+- **Spacing**: 1-12 scale (0.25rem to 3rem)
+- **Shadows**: xs through lg, plus glow and focus rings
+- **Transitions**: fast (120ms), normal (200ms), slow (350ms) with cubic-bezier easing
+
+### Component Library
+- `.glass-card` -- elevated card with subtle borders and shadows
+- `.pill-tabs` / `.pill-tab` -- tab-like controls with pill styling
+- `.glass-table` -- data table with row hover effects
+- `.badge-*` / `.status-dot-*` -- status indicators and badges
+- Reusable animations: fadeIn, slideUp, shimmer, pulse, borderPulse
+
+### Landing Page Design
+- Dark gradient hero banner (135deg: #1e3a5f → #0f172a → #1a1040)
+- Animated gradient title text with floating stat pills
+- Bento-grid feature cards with top-border gradient on hover
+- Drag-and-drop upload zone with format chips
+- Sample dataset quick-start chips
+- 5-column stats strip showing platform capabilities
+
+### Chart Theming
+Helper function `get_plotly_layout(is_dark)` provides theme-aware Plotly configuration with:
+- Dynamic background colors matching theme
+- Proper text colors and font selections
+- Grid and axis colors matching neutrals
+- Consistent color palette across 8 chart colors
+
 ## Key Design Decisions
 
 1. **LLM decides, Python executes** -- Claude chooses analyses; registered tool functions compute.
@@ -144,6 +185,7 @@ Five validators run at system boundaries:
 6. **Graceful degradation** -- if one analysis fails, skip and continue.
 7. **Reproducibility** -- random seed, data hash, requirements snapshot, full state export.
 8. **Cost optimization** -- batch LLM decisions, cache responses, temperature 0, token tracking.
+9. **Design consistency** -- shared CSS system via `shared_css.py`, zero hardcoded colors in pages.
 
 ## Data Flow
 
