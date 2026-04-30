@@ -21,6 +21,7 @@ import streamlit as st
 
 from core.constants import MODE_AUTO, MODE_EXPERT, MODE_GUIDED, PLATFORM_VERSION
 from dashboard.components.shared_css import inject_shared_css, render_theme_toggle, section_label
+from dashboard.components.sidebar_nav import render as render_sidebar
 
 logger = logging.getLogger(__name__)
 
@@ -37,10 +38,8 @@ st.set_page_config(
 # ---------------------------------------------------------------------------
 # Auth gate — blocks here if not logged in
 # ---------------------------------------------------------------------------
-from auth import require_auth, logout as auth_logout
-from db import get_current_user
-
-user = require_auth()
+from dashboard.components.auth_service import require_auth as _require_auth
+_require_auth()
 
 # ---------------------------------------------------------------------------
 # Inject shared design-token CSS first, then page-specific overrides
@@ -769,7 +768,7 @@ def _process_upload(uploaded_file: Any) -> None:
 
 
 def main() -> None:
-    _sidebar()
+    render_sidebar()
     if "uploaded_data" not in st.session_state:
         _landing_page()
     else:

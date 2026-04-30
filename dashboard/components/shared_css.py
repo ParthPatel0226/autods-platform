@@ -1000,8 +1000,86 @@ def inject_shared_css() -> bool:
     palette = _DARK if is_dark else _LIGHT
 
     st.markdown(_build_css(palette), unsafe_allow_html=True)
+    st.markdown(_SNAV_CSS, unsafe_allow_html=True)
 
     return is_dark
+
+
+# ---------------------------------------------------------------------------
+# Sidebar-nav component CSS  (injected by inject_shared_css)
+# ---------------------------------------------------------------------------
+
+_SNAV_CSS = """
+<style>
+/* ===== Sidebar Navigation (snav-*) ===== */
+.snav-brand {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) 0 var(--space-2);
+}
+.snav-logo-mark {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-md);
+    background: var(--gradient-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(139,92,246,0.40);
+}
+.snav-logo-name {
+    font-family: var(--font-body);
+    font-size: var(--text-lg);
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.02em;
+}
+.snav-logo-sub {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+    margin-top: 1px;
+}
+.snav-section-label {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    padding: var(--space-3) 0 var(--space-2);
+}
+.snav-workspace-card {
+    font-family: var(--font-body);
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    padding: var(--space-2) var(--space-3);
+    margin-bottom: var(--space-2);
+}
+.snav-status-ok   { color: var(--accent-success); }
+.snav-status-idle { color: var(--text-muted); }
+.snav-pipeline { display: flex; flex-direction: column; gap: 2px; }
+.snav-step-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+.snav-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: var(--radius-full);
+    flex-shrink: 0;
+}
+.snav-dot-done    { background: var(--accent-success); }
+.snav-dot-current { background: var(--accent-primary); box-shadow: 0 0 6px var(--accent-primary); }
+.snav-dot-pending { background: var(--border-default); }
+</style>
+"""
 
 
 def render_theme_toggle() -> None:
