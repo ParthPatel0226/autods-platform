@@ -1,0 +1,1505 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AutoDS — Feature Engineering (Sample)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter+Tight:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  /* ============ Tokens (cosmic — same as previous tabs) ============ */
+  :root, [data-theme="dark"] {
+    --bg-base: #07091A; --bg-elev: #0E1130;
+    --bg-card: rgba(17, 23, 61, 0.55);
+    --bg-card-strong: rgba(17, 23, 61, 0.85);
+    --border-subtle: rgba(139, 92, 246, 0.12);
+    --border-default: rgba(139, 92, 246, 0.22);
+    --border-strong: rgba(139, 92, 246, 0.45);
+    --indigo: #6366F1; --violet: #8B5CF6; --purple: #A855F7;
+    --pink: #EC4899; --cyan: #22D3EE; --green: #34D399;
+    --amber: #FBBF24; --red: #F87171;
+    --text-primary: #F4F4FB; --text-secondary: #C5C7E0;
+    --text-muted: #8489AE; --text-faint: #5C617F;
+    --gradient-text: linear-gradient(135deg, #C5C7FF 0%, #A855F7 50%, #EC4899 100%);
+    --gradient-button: linear-gradient(135deg, #6366F1 0%, #A855F7 100%);
+    --aurora-1: radial-gradient(60% 60% at 20% 10%, rgba(99,102,241,.35) 0%, transparent 60%);
+    --aurora-2: radial-gradient(50% 50% at 85% 30%, rgba(168,85,247,.30) 0%, transparent 65%);
+    --aurora-3: radial-gradient(40% 40% at 50% 100%, rgba(236,72,153,.25) 0%, transparent 60%);
+    --star-opacity: 0.6;
+    --shadow-glow: 0 0 60px -10px rgba(139,92,246,0.35);
+  }
+  [data-theme="light"] {
+    --bg-base: #F7F6FB; --bg-elev: #FFFFFF;
+    --bg-card: rgba(255, 255, 255, 0.72);
+    --bg-card-strong: rgba(255, 255, 255, 0.92);
+    --border-subtle: rgba(99, 102, 241, 0.10);
+    --border-default: rgba(99, 102, 241, 0.22);
+    --border-strong: rgba(139, 92, 246, 0.45);
+    --text-primary: #1A1B2E; --text-secondary: #4A4D6E;
+    --text-muted: #6E7295; --text-faint: #A1A4BD;
+    --gradient-text: linear-gradient(135deg, #6366F1 0%, #8B5CF6 45%, #EC4899 100%);
+    --aurora-1: radial-gradient(60% 60% at 20% 10%, rgba(99,102,241,.18) 0%, transparent 60%);
+    --aurora-2: radial-gradient(50% 50% at 85% 30%, rgba(168,85,247,.14) 0%, transparent 65%);
+    --aurora-3: radial-gradient(40% 40% at 50% 100%, rgba(236,72,153,.10) 0%, transparent 60%);
+    --star-opacity: 0;
+  }
+  :root {
+    --font-display: 'Instrument Serif', serif;
+    --font-body: 'Inter Tight', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg-base);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    font-size: 14px;
+    line-height: 1.55;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  body::before {
+    content: ""; position: fixed; inset: 0;
+    background: var(--aurora-1), var(--aurora-2), var(--aurora-3);
+    pointer-events: none; z-index: 0;
+  }
+  .starfield {
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background-image:
+      radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,0.7) 50%, transparent 100%),
+      radial-gradient(1px 1px at 70% 60%, rgba(255,255,255,0.5) 50%, transparent 100%),
+      radial-gradient(1px 1px at 40% 80%, rgba(255,255,255,0.6) 50%, transparent 100%),
+      radial-gradient(1.5px 1.5px at 85% 15%, rgba(197,199,255,0.6) 50%, transparent 100%),
+      radial-gradient(1px 1px at 10% 70%, rgba(255,255,255,0.4) 50%, transparent 100%),
+      radial-gradient(1px 1px at 60% 25%, rgba(168,85,247,0.5) 50%, transparent 100%),
+      radial-gradient(1px 1px at 30% 50%, rgba(255,255,255,0.5) 50%, transparent 100%);
+    background-size: 300px 300px;
+    animation: starDrift 120s linear infinite;
+    opacity: var(--star-opacity);
+  }
+  @keyframes starDrift {
+    from { transform: translateY(0); }
+    to { transform: translateY(-300px); }
+  }
+
+  /* ============ App frame ============ */
+  .app-frame {
+    position: relative; z-index: 1;
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    min-height: 100vh;
+  }
+
+  /* ============ Sidebar ============ */
+  .sidebar {
+    background: rgba(7, 9, 26, 0.75);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border-right: 1px solid var(--border-subtle);
+    padding: 22px 16px;
+    display: flex; flex-direction: column;
+    gap: 18px;
+    position: sticky; top: 0; height: 100vh;
+    overflow-y: auto;
+  }
+  [data-theme="light"] .sidebar { background: rgba(255,255,255,0.6); }
+  .sidebar::-webkit-scrollbar { width: 4px; }
+  .sidebar::-webkit-scrollbar-thumb { background: var(--border-default); border-radius: 4px; }
+
+  .brand {
+    display: flex; align-items: center; gap: 10px;
+    padding: 4px 8px 14px;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .brand-mark {
+    width: 30px; height: 30px;
+    background: var(--gradient-button);
+    border-radius: 8px;
+    box-shadow: 0 0 18px rgba(139,92,246,0.5);
+    display: grid; place-items: center;
+    font-family: var(--font-display);
+    font-size: 18px; color: white; font-style: italic;
+  }
+  .brand-name {
+    font-family: var(--font-display); font-size: 21px; letter-spacing: 0.5px;
+  }
+
+  .nav-section { display: flex; flex-direction: column; gap: 2px; }
+  .nav-label {
+    font-family: var(--font-body); font-size: 10.5px; font-weight: 600;
+    letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-faint);
+    padding: 0 8px 6px;
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 10px; border-radius: 8px;
+    font-size: 13px; color: var(--text-secondary);
+    cursor: pointer; transition: all 0.15s ease;
+  }
+  .nav-item:hover { background: rgba(139,92,246,0.08); color: var(--text-primary); }
+  .nav-item .icon { color: var(--text-muted); display: grid; place-items: center; }
+
+  .project-context {
+    margin: 6px 8px 8px; padding: 10px 12px;
+    background: rgba(139,92,246,0.06);
+    border: 1px solid var(--border-subtle); border-radius: 8px;
+  }
+  .project-context-label {
+    font-size: 9.5px; letter-spacing: 1.2px; text-transform: uppercase;
+    color: var(--text-faint); margin-bottom: 4px;
+  }
+  .project-context-name {
+    font-size: 12.5px; font-weight: 500; color: var(--text-primary);
+  }
+
+  .pipeline-step {
+    display: flex; align-items: center; gap: 10px;
+    padding: 7px 10px; border-radius: 8px;
+    font-size: 12.5px; color: var(--text-muted);
+    transition: all 0.15s ease;
+  }
+  .pipeline-step .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--text-faint); flex-shrink: 0;
+  }
+  .pipeline-step.done { color: var(--text-secondary); }
+  .pipeline-step.done .dot { background: var(--green); box-shadow: 0 0 8px rgba(52,211,153,0.6); }
+  .pipeline-step.active {
+    background: rgba(139,92,246,0.10);
+    color: var(--text-primary); font-weight: 500;
+  }
+  .pipeline-step.active .dot {
+    background: var(--violet);
+    box-shadow: 0 0 12px rgba(139,92,246,0.8);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.3); }
+  }
+
+  .sidebar-footer { margin-top: auto; padding-top: 14px; border-top: 1px solid var(--border-subtle); }
+  .user-chip {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 10px; border-radius: 8px;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .user-chip:hover { background: rgba(139,92,246,0.08); }
+  .user-avatar {
+    width: 30px; height: 30px; border-radius: 50%;
+    background: var(--gradient-button); display: grid; place-items: center;
+    font-size: 13px; font-weight: 600; color: white;
+  }
+  .user-name { font-size: 12.5px; font-weight: 500; color: var(--text-primary); }
+  .user-email { font-size: 10.5px; color: var(--text-muted); }
+
+  /* ============ Main ============ */
+  .main { padding: 20px 36px 60px; }
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 4px 0 22px;
+  }
+  .crumbs {
+    display: flex; align-items: center; gap: 8px;
+    font-family: var(--font-mono); font-size: 12.5px;
+    color: var(--text-muted); letter-spacing: 0.4px;
+  }
+  .crumbs .sep { color: var(--text-faint); }
+  .crumbs .cur { color: var(--text-primary); }
+
+  .topbar-actions { display: flex; align-items: center; gap: 10px; }
+  .icon-btn {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: var(--bg-card); border: 1px solid var(--border-subtle);
+    display: grid; place-items: center; cursor: pointer; color: var(--text-secondary);
+    transition: all 0.15s ease; backdrop-filter: blur(12px);
+  }
+  .icon-btn:hover { background: var(--bg-card-strong); color: var(--text-primary); border-color: var(--border-default); }
+  .theme-toggle .icon-moon { display: block; }
+  .theme-toggle .icon-sun { display: none; }
+  [data-theme="light"] .theme-toggle .icon-moon { display: none; }
+  [data-theme="light"] .theme-toggle .icon-sun { display: block; }
+
+  /* Phase toggle in topbar */
+  .phase-toggle {
+    display: inline-flex; gap: 4px; padding: 4px;
+    background: var(--bg-card); border: 1px solid var(--border-subtle);
+    border-radius: 999px; backdrop-filter: blur(12px);
+  }
+  .phase-toggle button {
+    background: transparent; border: 0; cursor: pointer;
+    padding: 6px 14px; border-radius: 999px;
+    font-family: var(--font-body); font-size: 12px; font-weight: 500;
+    color: var(--text-muted); transition: all 0.15s ease;
+  }
+  .phase-toggle button:hover { color: var(--text-primary); }
+  .phase-toggle button.active {
+    background: var(--gradient-button); color: white;
+    box-shadow: 0 0 14px rgba(139,92,246,0.4);
+  }
+
+  /* ============ Hero ============ */
+  .hero { margin-bottom: 28px; }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 4px 12px 4px 8px;
+    background: var(--bg-card); border: 1px solid var(--border-default);
+    border-radius: 999px; font-size: 11.5px; color: var(--text-secondary);
+    margin-bottom: 16px; backdrop-filter: blur(12px);
+    font-family: var(--font-mono); letter-spacing: 0.6px; text-transform: uppercase;
+  }
+  .eyebrow svg { width: 14px; height: 14px; color: var(--violet); }
+  .hero h1 {
+    font-family: var(--font-display); font-size: 56px;
+    line-height: 1; letter-spacing: -0.5px; margin: 0 0 12px;
+    color: var(--text-primary);
+  }
+  .hero h1 em {
+    font-style: italic;
+    background: var(--gradient-text);
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .hero p { margin: 0; font-size: 16px; color: var(--text-muted); max-width: 720px; }
+
+  /* ============ Phases ============ */
+  .phase { display: none; }
+  .phase.active { display: block; }
+
+  /* ============ Mode pill (matches EDA tab) ============ */
+  .fe-mode-pill {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 5px 14px 5px 10px;
+    background: rgba(139,92,246,0.1);
+    border: 1px solid var(--border-default); border-radius: 999px;
+    font-family: var(--font-mono); font-size: 11px;
+    color: var(--violet); letter-spacing: 0.6px;
+    text-transform: uppercase; margin-bottom: 22px;
+  }
+  .fe-mode-pill .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--violet); }
+
+  /* ============ Section blocks (matches EDA q-card pattern) ============ */
+  .fe-sec {
+    background: var(--bg-card); border: 1px solid var(--border-default);
+    border-radius: 18px; padding: 26px 28px; margin-bottom: 20px;
+    backdrop-filter: blur(14px); transition: all 0.22s ease;
+    position: relative; overflow: hidden;
+  }
+  .fe-sec:hover { border-color: var(--border-strong); }
+  .fe-sec-head { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 16px; }
+  .fe-sec-num {
+    width: 32px; height: 32px; flex-shrink: 0;
+    border-radius: 50%; display: grid; place-items: center;
+    background: rgba(139,92,246,0.12);
+    border: 1px solid var(--border-default);
+    font-family: var(--font-mono); font-size: 12px;
+    color: var(--violet); font-weight: 500;
+  }
+  .fe-sec-title {
+    font-family: var(--font-display); font-size: 24px;
+    line-height: 1.1; color: var(--text-primary);
+  }
+  .fe-sec-title em {
+    font-style: italic;
+    background: var(--gradient-text);
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .fe-sec-meta {
+    margin-top: 4px; font-size: 12px; color: var(--text-muted);
+    font-family: var(--font-mono); letter-spacing: 0.4px;
+  }
+
+  .fe-sec-tip {
+    display: flex; align-items: flex-start; gap: 8px;
+    padding: 10px 14px;
+    background: rgba(34, 211, 238, 0.06);
+    border: 1px solid rgba(34, 211, 238, 0.18);
+    border-radius: 10px;
+    font-size: 12.5px; color: var(--text-secondary);
+    margin-bottom: 18px;
+  }
+  .fe-sec-tip svg { width: 14px; height: 14px; color: var(--cyan); flex-shrink: 0; margin-top: 2px; }
+
+  /* ============ Quick actions ============ */
+  .fe-quick {
+    display: flex; flex-wrap: wrap; gap: 8px;
+    margin-bottom: 14px;
+  }
+  .fe-quick-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 7px 12px; border-radius: 999px;
+    background: rgba(139,92,246,0.08);
+    border: 1px solid var(--border-subtle);
+    font-family: var(--font-mono); font-size: 11px;
+    color: var(--text-secondary); cursor: pointer;
+    transition: all 0.15s ease;
+    letter-spacing: 0.4px;
+  }
+  .fe-quick-btn:hover {
+    background: rgba(139,92,246,0.15);
+    color: var(--text-primary); border-color: var(--border-default);
+  }
+
+  /* ============ Filter row ============ */
+  .fe-filter {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 14px; flex-wrap: wrap;
+  }
+  .fe-search {
+    flex: 1; min-width: 200px; position: relative;
+  }
+  .fe-search input {
+    width: 100%; padding: 9px 12px 9px 34px;
+    background: rgba(7,9,26,0.4);
+    border: 1px solid var(--border-subtle); border-radius: 10px;
+    color: var(--text-primary); font-family: var(--font-body); font-size: 13px;
+  }
+  [data-theme="light"] .fe-search input { background: rgba(255,255,255,0.6); }
+  .fe-search input:focus {
+    outline: none; border-color: var(--violet);
+    box-shadow: 0 0 0 3px rgba(139,92,246,0.15);
+  }
+  .fe-search svg {
+    position: absolute; left: 11px; top: 50%; transform: translateY(-50%);
+    width: 14px; height: 14px; color: var(--text-muted);
+  }
+  .fe-chip {
+    padding: 7px 12px; border-radius: 999px;
+    background: var(--bg-card); border: 1px solid var(--border-subtle);
+    font-size: 12px; color: var(--text-secondary); cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .fe-chip:hover { color: var(--text-primary); border-color: var(--border-default); }
+  .fe-chip.active {
+    background: rgba(139,92,246,0.12);
+    border-color: var(--border-strong);
+    color: var(--text-primary);
+  }
+
+  /* ============ Column accordion ============ */
+  .fe-col-list { display: flex; flex-direction: column; gap: 8px; }
+  .fe-col {
+    background: rgba(7,9,26,0.4);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.22s ease;
+  }
+  [data-theme="light"] .fe-col { background: rgba(255,255,255,0.55); }
+  .fe-col:hover { border-color: var(--border-default); }
+  .fe-col.expanded {
+    border-color: var(--border-strong);
+    box-shadow: 0 0 30px -10px rgba(139,92,246,0.3);
+  }
+  .fe-col.target { border-left: 3px solid var(--violet); }
+
+  .fe-col-head {
+    display: grid;
+    grid-template-columns: 200px 84px 86px 1fr 24px;
+    gap: 14px; align-items: center;
+    padding: 14px 18px; cursor: pointer;
+  }
+  .fe-col-name {
+    font-family: var(--font-mono); font-size: 13px; font-weight: 500;
+    color: var(--text-primary);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .fe-col-target-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 2px 8px; border-radius: 10px;
+    background: rgba(168,85,247,0.15); border: 1px solid rgba(168,85,247,0.30);
+    color: var(--purple); font-family: var(--font-mono);
+    font-size: 9.5px; font-weight: 600;
+    letter-spacing: 0.6px; text-transform: uppercase;
+    margin-top: 4px; width: fit-content;
+  }
+  .fe-type {
+    display: inline-block; padding: 3px 9px; border-radius: 5px;
+    font-family: var(--font-mono); font-size: 10px;
+    font-weight: 500; letter-spacing: 0.4px; text-align: center;
+    text-transform: uppercase;
+  }
+  .fe-type.numeric { background: rgba(34,211,238,0.12); color: var(--cyan); }
+  .fe-type.categorical { background: rgba(168,85,247,0.12); color: var(--purple); }
+  .fe-type.text { background: rgba(251,191,36,0.12); color: var(--amber); }
+  .fe-type.datetime { background: rgba(52,211,153,0.12); color: var(--green); }
+  .fe-type.boolean { background: rgba(236,72,153,0.12); color: var(--pink); }
+  .fe-miss {
+    font-family: var(--font-mono); font-size: 12.5px; font-weight: 500;
+    text-align: center;
+  }
+  .fe-miss.high { color: var(--red); }
+  .fe-miss.medium { color: var(--amber); }
+  .fe-miss.low { color: var(--text-muted); }
+  .fe-pills {
+    display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end;
+  }
+  .fe-pill {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 4px 10px; border-radius: 999px;
+    font-family: var(--font-mono); font-size: 10.5px;
+    font-weight: 500; letter-spacing: 0.4px; white-space: nowrap;
+    border: 1px solid transparent;
+  }
+  .fe-pill.imp { background: rgba(99,102,241,0.12); color: #8B92F8; border-color: rgba(99,102,241,0.22); }
+  .fe-pill.enc { background: rgba(168,85,247,0.12); color: #C28BF8; border-color: rgba(168,85,247,0.22); }
+  .fe-pill.scl { background: rgba(34,211,238,0.12); color: var(--cyan); border-color: rgba(34,211,238,0.22); }
+  .fe-pill.out { background: rgba(251,191,36,0.12); color: var(--amber); border-color: rgba(251,191,36,0.22); }
+  .fe-pill.drop { background: rgba(248,113,113,0.10); color: var(--red); border-color: rgba(248,113,113,0.22); }
+  .fe-pill.tgt { background: rgba(168,85,247,0.12); color: var(--purple); border-color: rgba(168,85,247,0.22); }
+  .fe-pill.new { background: rgba(52,211,153,0.10); color: var(--green); border-color: rgba(52,211,153,0.22); }
+
+  .fe-arrow {
+    color: var(--text-muted); transition: transform 0.22s;
+    font-family: var(--font-mono);
+  }
+  .fe-col.expanded .fe-arrow { transform: rotate(90deg); color: var(--violet); }
+
+  /* Expanded body */
+  .fe-col-body {
+    display: none;
+    padding: 18px 18px 20px;
+    border-top: 1px solid var(--border-subtle);
+    background: rgba(7,9,26,0.2);
+  }
+  [data-theme="light"] .fe-col-body { background: rgba(255,255,255,0.4); }
+  .fe-col.expanded .fe-col-body { display: block; }
+  .fe-grid4 {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;
+    margin-bottom: 14px;
+  }
+  @media (max-width: 880px) { .fe-grid4 { grid-template-columns: repeat(2, 1fr); } }
+  .fe-field label {
+    display: block; font-family: var(--font-mono); font-size: 10px;
+    letter-spacing: 0.8px; text-transform: uppercase;
+    color: var(--text-muted); margin-bottom: 6px;
+  }
+  .fe-select {
+    width: 100%; padding: 9px 12px;
+    background: rgba(7,9,26,0.5);
+    border: 1px solid var(--border-subtle); border-radius: 8px;
+    color: var(--text-primary); font-family: var(--font-body); font-size: 13px;
+    cursor: pointer; appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'><path d='M2 4l3 3 3-3' stroke='%238489AE' stroke-width='1.4' fill='none'/></svg>");
+    background-repeat: no-repeat; background-position: right 11px center;
+    padding-right: 28px;
+  }
+  [data-theme="light"] .fe-select { background-color: rgba(255,255,255,0.7); }
+  .fe-select:focus { outline: none; border-color: var(--violet); box-shadow: 0 0 0 3px rgba(139,92,246,0.15); }
+  .fe-rec {
+    display: flex; align-items: center; gap: 4px;
+    margin-top: 6px; font-size: 10.5px; color: var(--violet);
+    font-family: var(--font-mono); letter-spacing: 0.4px;
+  }
+  .fe-rec::before { content: "★"; }
+
+  .fe-reasoning {
+    display: flex; align-items: flex-start; gap: 8px;
+    padding: 10px 14px;
+    background: rgba(139,92,246,0.06);
+    border: 1px solid var(--border-subtle); border-radius: 10px;
+    font-size: 12px; color: var(--text-secondary); line-height: 1.55;
+  }
+  .fe-reasoning::before {
+    content: "✦"; color: var(--violet); flex-shrink: 0; margin-top: 1px;
+  }
+
+  /* ============ Domain feature cards ============ */
+  .fe-feat {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    gap: 16px; padding: 16px 18px;
+    background: rgba(7,9,26,0.4);
+    border: 1px solid var(--border-subtle); border-radius: 12px;
+    margin-bottom: 10px; transition: all 0.18s ease;
+  }
+  [data-theme="light"] .fe-feat { background: rgba(255,255,255,0.55); }
+  .fe-feat:hover { border-color: var(--border-default); }
+  .fe-feat.disabled { opacity: 0.55; }
+  .fe-feat-left { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+  .fe-feat-name {
+    font-family: var(--font-mono); font-size: 13px; font-weight: 500;
+    color: var(--text-primary);
+  }
+  .fe-feat-desc { font-size: 12.5px; color: var(--text-secondary); line-height: 1.5; }
+  .fe-feat-req {
+    display: inline-flex; align-items: center; gap: 6px;
+    margin-top: 4px;
+    font-family: var(--font-mono); font-size: 10.5px;
+    letter-spacing: 0.4px;
+  }
+  .fe-feat-req::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .fe-feat-req.met { color: var(--green); }
+  .fe-feat-req.missing { color: var(--amber); }
+
+  /* Toggle switch */
+  .fe-toggle {
+    position: relative; width: 42px; height: 22px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 11px; cursor: pointer;
+    transition: background 0.18s ease; flex-shrink: 0;
+  }
+  [data-theme="light"] .fe-toggle { background: rgba(0,0,0,0.10); }
+  .fe-toggle.on { background: var(--green); box-shadow: 0 0 16px -2px rgba(52,211,153,0.5); }
+  .fe-toggle.disabled-toggle { cursor: not-allowed; opacity: 0.5; }
+  .fe-toggle-dot {
+    position: absolute; top: 2px; left: 2px;
+    width: 18px; height: 18px; border-radius: 50%;
+    background: white; transition: transform 0.18s ease;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  }
+  .fe-toggle.on .fe-toggle-dot { transform: translateX(20px); }
+
+  /* ============ AI chat composer (matches EDA pattern) ============ */
+  .fe-ai-composer {
+    margin-top: 16px; padding: 18px 20px;
+    background: linear-gradient(135deg, rgba(139,92,246,0.08), rgba(99,102,241,0.06));
+    border: 1px solid rgba(139,92,246,0.25); border-radius: 14px;
+  }
+  .fe-ai-head {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 4px;
+    font-family: var(--font-mono); font-size: 11px;
+    color: var(--violet); letter-spacing: 0.6px; text-transform: uppercase;
+  }
+  .fe-ai-head svg { width: 14px; height: 14px; }
+  .fe-ai-title {
+    font-family: var(--font-display); font-size: 20px;
+    color: var(--text-primary); margin: 4px 0 4px;
+  }
+  .fe-ai-title em {
+    font-style: italic;
+    background: var(--gradient-text);
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .fe-ai-sub { font-size: 12.5px; color: var(--text-muted); margin-bottom: 14px; }
+  .fe-ai-row { display: flex; gap: 10px; }
+  .fe-ai-input {
+    flex: 1; padding: 11px 14px;
+    background: rgba(7,9,26,0.5);
+    border: 1px solid var(--border-subtle); border-radius: 10px;
+    color: var(--text-primary); font-family: var(--font-body); font-size: 13px;
+  }
+  [data-theme="light"] .fe-ai-input { background: rgba(255,255,255,0.7); }
+  .fe-ai-input:focus { outline: none; border-color: var(--violet); box-shadow: 0 0 0 3px rgba(139,92,246,0.15); }
+  .fe-ai-send {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 11px 18px;
+    background: var(--gradient-button); color: white; border: 0;
+    border-radius: 10px; font-family: var(--font-body); font-size: 13px; font-weight: 500;
+    cursor: pointer; box-shadow: 0 0 18px rgba(139,92,246,0.35);
+    transition: all 0.18s;
+  }
+  .fe-ai-send:hover { transform: translateY(-1px); box-shadow: 0 0 24px rgba(139,92,246,0.5); }
+
+  /* ============ Custom builder ============ */
+  .fe-builder {
+    padding: 18px 20px;
+    border: 1.5px dashed var(--border-default);
+    border-radius: 14px;
+    background: rgba(99,102,241,0.04);
+  }
+  .fe-builder-title {
+    font-family: var(--font-display); font-size: 20px;
+    color: var(--text-primary); margin-bottom: 4px;
+  }
+  .fe-builder-sub {
+    font-size: 12.5px; color: var(--text-muted); margin-bottom: 14px;
+  }
+  .fe-builder-sub code {
+    font-family: var(--font-mono); font-size: 11.5px;
+    color: var(--cyan); background: rgba(34,211,238,0.08);
+    padding: 1px 6px; border-radius: 4px;
+  }
+  .fe-builder-form {
+    display: grid; grid-template-columns: 200px 1fr 100px; gap: 8px;
+  }
+  @media (max-width: 700px) { .fe-builder-form { grid-template-columns: 1fr; } }
+  .fe-builder-form input {
+    padding: 10px 12px;
+    background: rgba(7,9,26,0.5);
+    border: 1px solid var(--border-subtle); border-radius: 10px;
+    color: var(--text-primary); font-size: 13px;
+  }
+  [data-theme="light"] .fe-builder-form input { background: rgba(255,255,255,0.7); }
+  .fe-builder-form input:nth-child(2) { font-family: var(--font-mono); }
+  .fe-builder-form input:focus { outline: none; border-color: var(--violet); box-shadow: 0 0 0 3px rgba(139,92,246,0.15); }
+  .fe-builder-form button {
+    background: var(--gradient-button); color: white; border: 0;
+    border-radius: 10px; font-family: var(--font-body); font-size: 13px; font-weight: 500;
+    cursor: pointer; transition: all 0.18s;
+  }
+  .fe-builder-form button:hover { transform: translateY(-1px); box-shadow: 0 0 18px rgba(139,92,246,0.4); }
+
+  /* ============ Sticky action bar (matches EDA) ============ */
+  .fe-action-bar {
+    position: sticky; bottom: 18px;
+    margin-top: 28px;
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 20px;
+    background: var(--bg-card-strong);
+    border: 1px solid var(--border-default); border-radius: 14px;
+    backdrop-filter: blur(18px);
+    box-shadow: 0 8px 30px -10px rgba(0,0,0,0.4);
+    z-index: 5;
+  }
+  .fe-action-status {
+    flex: 1; font-size: 12.5px; color: var(--text-secondary);
+    font-family: var(--font-mono); letter-spacing: 0.4px;
+  }
+  .fe-action-status strong { color: var(--text-primary); font-weight: 500; }
+  .btn-ghost {
+    padding: 11px 18px; background: transparent;
+    border: 1px solid var(--border-default); border-radius: 10px;
+    font-family: var(--font-body); font-size: 13px; font-weight: 500;
+    color: var(--text-secondary); cursor: pointer; transition: all 0.18s;
+  }
+  .btn-ghost:hover { color: var(--text-primary); border-color: var(--border-strong); }
+  .btn-primary {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 11px 22px;
+    background: var(--gradient-button); color: white; border: 0;
+    border-radius: 10px; font-family: var(--font-body); font-size: 13px; font-weight: 500;
+    cursor: pointer; box-shadow: 0 0 24px rgba(139,92,246,0.4); transition: all 0.18s;
+  }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 0 32px rgba(139,92,246,0.6); }
+
+  /* ============ Phase 2 review elements ============ */
+  .fe-review-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+    margin-top: 4px;
+  }
+  .fe-review-stat {
+    text-align: center;
+    padding: 18px 16px;
+    background: rgba(7,9,26,0.4);
+    border: 1px solid var(--border-subtle); border-radius: 12px;
+  }
+  [data-theme="light"] .fe-review-stat { background: rgba(255,255,255,0.55); }
+  .fe-review-num {
+    font-family: var(--font-display); font-size: 36px;
+    color: var(--text-primary); line-height: 1; margin-bottom: 6px;
+  }
+  .fe-review-num em {
+    font-style: italic;
+    background: var(--gradient-text);
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .fe-review-num .strike { text-decoration: line-through; color: var(--text-muted); font-size: 22px; margin-right: 6px; }
+  .fe-review-num .add { color: var(--green); }
+  .fe-review-label {
+    font-family: var(--font-mono); font-size: 10.5px;
+    text-transform: uppercase; letter-spacing: 0.8px;
+    color: var(--text-muted);
+  }
+
+  .fe-table { width: 100%; border-collapse: separate; border-spacing: 0; }
+  .fe-table th {
+    text-align: left; padding: 10px 12px;
+    font-family: var(--font-mono); font-size: 10px;
+    text-transform: uppercase; letter-spacing: 0.8px;
+    color: var(--text-muted); font-weight: 500;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .fe-table td {
+    padding: 12px;
+    font-size: 13px; border-bottom: 1px solid rgba(139,92,246,0.06);
+  }
+  .fe-table tr:hover td { background: rgba(139,92,246,0.04); }
+  .fe-table tr:last-child td { border-bottom: 0; }
+  .fe-cell-mono { font-family: var(--font-mono); font-size: 12px; font-weight: 500; }
+  .fe-cell-mono.tgt { color: var(--purple); }
+  .fe-after { font-family: var(--font-mono); font-size: 11.5px; color: var(--green); font-weight: 500; }
+  .fe-same { font-family: var(--font-mono); font-size: 11.5px; color: var(--text-faint); }
+
+  .fe-tag-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+  .fe-tag-grid .fe-pill { font-size: 11px; padding: 5px 12px; }
+  .fe-tag-grid .fe-pill small { opacity: 0.6; margin-left: 5px; font-size: 9.5px; }
+
+  details.fe-ai-reason {
+    margin-top: 18px;
+    padding: 14px 18px;
+    background: rgba(139,92,246,0.06);
+    border: 1px solid rgba(139,92,246,0.18); border-radius: 12px;
+  }
+  details.fe-ai-reason summary {
+    list-style: none; cursor: pointer;
+    display: flex; align-items: center; gap: 8px;
+    font-family: var(--font-mono); font-size: 11.5px;
+    color: var(--violet); letter-spacing: 0.4px;
+  }
+  details.fe-ai-reason summary::-webkit-details-marker { display: none; }
+  details.fe-ai-reason summary::before { content: "✦"; }
+  details.fe-ai-reason summary::after {
+    content: "▸"; margin-left: auto; color: var(--text-muted);
+    transition: transform 0.18s;
+  }
+  details.fe-ai-reason[open] summary::after { transform: rotate(90deg); }
+  details.fe-ai-reason[open] summary { margin-bottom: 12px; }
+  details.fe-ai-reason p {
+    margin: 6px 0; font-size: 13px; color: var(--text-secondary); line-height: 1.65;
+  }
+  details.fe-ai-reason p strong { color: var(--text-primary); font-weight: 500; }
+
+  /* Responsive */
+  @media (max-width: 1024px) {
+    .fe-col-head { grid-template-columns: 1fr 80px 80px; gap: 10px; }
+    .fe-col-head > .fe-pills { display: none; }
+    .fe-review-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 900px) {
+    .app-frame { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+    .main { padding: 24px 20px 60px; }
+    .hero h1 { font-size: 40px; }
+  }
+</style>
+</head>
+<body>
+<div class="starfield"></div>
+
+<div class="app-frame">
+  <!-- ============ Sidebar ============ -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">A</div>
+      <div class="brand-name">AutoDS</div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Workspace</div>
+      <div class="nav-item">
+        <div class="icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
+        Home
+      </div>
+      <div class="nav-item">
+        <div class="icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></div>
+        Projects
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Pipeline</div>
+      <div class="project-context">
+        <div class="project-context-label">Active Project</div>
+        <div class="project-context-name">Patient Readmission Risk</div>
+      </div>
+      <div class="pipeline-step done"><span class="dot"></span>Upload</div>
+      <div class="pipeline-step done"><span class="dot"></span>Configure</div>
+      <div class="pipeline-step done"><span class="dot"></span>EDA</div>
+      <div class="pipeline-step active"><span class="dot"></span>Features</div>
+      <div class="pipeline-step"><span class="dot"></span>Modeling</div>
+      <div class="pipeline-step"><span class="dot"></span>Explainability</div>
+      <div class="pipeline-step"><span class="dot"></span>Predict</div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Tools</div>
+      <div class="nav-item">
+        <div class="icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></div>
+        Chat
+      </div>
+      <div class="nav-item">
+        <div class="icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div>
+        Download
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="user-chip">
+        <div class="user-avatar">P</div>
+        <div>
+          <div class="user-name">Parth</div>
+          <div class="user-email">parth@autods.app</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ============ Main ============ -->
+  <main class="main">
+    <div class="topbar">
+      <div class="crumbs">
+        <span>Patient Readmission Risk</span>
+        <span class="sep">/</span>
+        <span class="cur">Feature Engineering</span>
+      </div>
+      <div class="topbar-actions">
+        <div class="phase-toggle">
+          <button class="active" data-phase="configure">Configure</button>
+          <button data-phase="review">Review</button>
+        </div>
+        <button class="icon-btn theme-toggle" id="themeToggle" title="Toggle theme">
+          <svg class="icon-moon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <svg class="icon-sun" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- ============ Hero ============ -->
+    <section class="hero">
+      <div class="eyebrow">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+        Step 4 of 7 — Feature Engineering
+      </div>
+      <h1 id="heroTitle">Engineer your <em>features.</em></h1>
+      <p id="heroSubtitle">Per-column transformations with domain-aware recommendations. AutoDS suggests, you approve.</p>
+    </section>
+
+    <!-- ============ PHASE 1 — Configure ============ -->
+    <div class="phase active" id="phase-configure">
+      <div class="fe-mode-pill">
+        <span class="dot"></span>
+        Guided Mode · Healthcare context · 12 columns
+      </div>
+
+      <!-- Section 01: Per-column transformations -->
+      <div class="fe-sec">
+        <div class="fe-sec-head">
+          <div class="fe-sec-num">01</div>
+          <div style="flex:1;">
+            <div class="fe-sec-title">Per-column <em>transformations</em></div>
+            <div class="fe-sec-meta">12 columns · click any column to refine its decisions</div>
+          </div>
+        </div>
+        <div class="fe-sec-tip">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="2" x2="12" y2="6"/><circle cx="12" cy="12" r="4"/><line x1="12" y1="18" x2="12" y2="22"/></svg>
+          AutoDS pre-fills recommendations based on column type, missingness, distribution, and the healthcare domain.
+        </div>
+
+        <!-- Quick actions -->
+        <div class="fe-quick">
+          <button class="fe-quick-btn">★ Auto-fill all</button>
+          <button class="fe-quick-btn">↻ Reset</button>
+          <button class="fe-quick-btn">◉ Show only missing</button>
+          <button class="fe-quick-btn">⊘ Mark IDs for drop</button>
+        </div>
+
+        <!-- Filter -->
+        <div class="fe-filter">
+          <div class="fe-search">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input type="text" placeholder="Search columns by name..." />
+          </div>
+          <span class="fe-chip active">All · 12</span>
+          <span class="fe-chip">Numeric · 5</span>
+          <span class="fe-chip">Categorical · 5</span>
+          <span class="fe-chip">Has missing · 3</span>
+        </div>
+
+        <!-- Column list -->
+        <div class="fe-col-list">
+
+          <!-- Survived (target) -->
+          <div class="fe-col target">
+            <div class="fe-col-head">
+              <div>
+                <div class="fe-col-name">Survived</div>
+                <span class="fe-col-target-badge">★ Target</span>
+              </div>
+              <div><span class="fe-type numeric">int64</span></div>
+              <div class="fe-miss low">0.0%</div>
+              <div class="fe-pills">
+                <span class="fe-pill tgt">Target — no transform</span>
+              </div>
+              <span class="fe-arrow">▸</span>
+            </div>
+          </div>
+
+          <!-- PassengerId -->
+          <div class="fe-col">
+            <div class="fe-col-head">
+              <div><div class="fe-col-name">PassengerId</div></div>
+              <div><span class="fe-type numeric">int64</span></div>
+              <div class="fe-miss low">0.0%</div>
+              <div class="fe-pills">
+                <span class="fe-pill drop">Drop · ID column</span>
+              </div>
+              <span class="fe-arrow">▸</span>
+            </div>
+          </div>
+
+          <!-- Pclass -->
+          <div class="fe-col">
+            <div class="fe-col-head">
+              <div><div class="fe-col-name">Pclass</div></div>
+              <div><span class="fe-type numeric">int64</span></div>
+              <div class="fe-miss low">0.0%</div>
+              <div class="fe-pills">
+                <span class="fe-pill enc">Ordinal</span>
+                <span class="fe-pill scl">Robust</span>
+              </div>
+              <span class="fe-arrow">▸</span>
+            </div>
+          </div>
+
+          <!-- Name -->
+          <div class="fe-col">
+            <div class="fe-col-head">
+              <div><div class="fe-col-name">Name</div></div>
+              <div><span class="fe-type text">object</span></div>
+              <div class="fe-miss low">0.0%</div>
+              <div class="fe-pills">
+                <span class="fe-pill enc">Extract Title</span>
+                <span class="fe-pill drop">Drop original</span>
+              </div>
+              <span class="fe-arrow">▸</span>
+            </div>
+          </div>
+
+          <!-- Sex -->
+          <div class="fe-col">
+            <div class="fe-col-head">
+              <div><div class="fe-col-name">Sex</div></div>
+              <div><span class="fe-type categorical">object</span></div>
+              <div class="fe-miss low">0.0%</div>
+              <div class="fe-pills">
+                <span class="fe-pill enc">Label</span>
+              </div>
+              <span class="fe-arrow">▸</span>
+            </div>
+          </div>
+
+          <!-- Age — expanded -->
+          <div class="fe-col expanded">
+            <div class="fe-col-head">
+              <div><div class="fe-col-name">Age</div></div>
+              <div><span class="fe-type numeric">float64</span></div>
+              <div class="fe-miss high">19.9%</div>
+              <div class="fe-pills">
+                <span class="fe-pill imp">Median</span>
+                <span class="fe-pill scl">Robust</span>
+                <span class="fe-pill out">Cap IQR</span>
+              </div>
+              <span class="fe-arrow">▸</span>
+            </div>
+            <div class="fe-col-body">
+              <div class="fe-grid4">
+                <div class="fe-field">
+                  <label>Imputation</label>
+                  <select class="fe-select">
+                    <option>None (drop rows)</option>
+                    <option>Mean</option>
+                    <option selected>Median ★</option>
+                    <option>Mode</option>
+                    <option>KNN (k=5)</option>
+                    <option>Iterative (MICE)</option>
+                  </select>
+                  <div class="fe-rec">Right-skewed distribution</div>
+                </div>
+                <div class="fe-field">
+                  <label>Encoding</label>
+                  <select class="fe-select">
+                    <option selected>None (numeric)</option>
+                    <option>Binning · 5 bins</option>
+                    <option>Binning · 10 bins</option>
+                    <option>Log transform</option>
+                  </select>
+                </div>
+                <div class="fe-field">
+                  <label>Scaling</label>
+                  <select class="fe-select">
+                    <option>None</option>
+                    <option>Standard (z-score)</option>
+                    <option>MinMax</option>
+                    <option selected>Robust ★</option>
+                  </select>
+                  <div class="fe-rec">Outliers present</div>
+                </div>
+                <div class="fe-field">
+                  <label>Outliers</label>
+                  <select class="fe-select">
+                    <option>Keep</option>
+                    <option selected>Cap (Winsorize IQR) ★</option>
+                    <option>Cap (Percentile 1-99)</option>
+                    <option>Remove rows</option>
+                  </select>
+                  <div class="fe-rec">Preserves edge cases</div>
+                </div>
+              </div>
+              <div class="fe-reasoning">
+                Age has 19.9% missing values and a right-skewed distribution (skew = 0.39). Median imputation handles skew better than mean. Robust scaling + IQR capping preserves extreme but plausible values like infant and elderly passengers.
+              </div>
+            </div>
+          </div>
+
+          <!-- SibSp -->
+          <div class="fe-col">
+            <div class="fe-col-head">
+              <div><div class="fe-col-name">SibSp</div></div>
+              <div><span class="fe-type numeric">int64</span></div>
+              <div class="fe-miss low">0.0%</div>
+              <div class="fe-pills">
+                <span class="fe-pill scl">Robust</span>
+              </div>
+              <span class="fe-arrow">▸</span>
+            </div>
+          </div>
+
+          <!-- Parch -->
+          <div class="fe-col">
+            <div class="fe-col-head">
+              <div><div class="fe-col-name">Parch</div></div>
+              <div><span class="fe-type numeric">int64</span></div>
+              <div class="fe-miss low">0.0%</div>
+              <div class="fe-pills">
+                <span class="fe-pill scl">Robust</span>
+              </div>
+              <span class="fe-arrow">▸</span>
+            </div>
+          </div>
+
+          <!-- Ticket -->
+          <div class="fe-col">
+            <div class="fe-col-head">
+              <div><div class="fe-col-name">Ticket</div></div>
+              <div><span class="fe-type text">object</span></div>
+              <div class="fe-miss low">0.0%</div>
+              <div class="fe-pills">
+                <span class="fe-pill drop">Drop · high cardinality</span>
+              </div>
+              <span class="fe-arrow">▸</span>
+            </div>
+          </div>
+
+          <!-- Fare -->
+          <div class="fe-col">
+            <div class="fe-col-head">
+              <div><div class="fe-col-name">Fare</div></div>
+              <div><span class="fe-type numeric">float64</span></div>
+              <div class="fe-miss low">0.0%</div>
+              <div class="fe-pills">
+                <span class="fe-pill scl">Robust</span>
+                <span class="fe-pill out">Cap IQR</span>
+              </div>
+              <span class="fe-arrow">▸</span>
+            </div>
+          </div>
+
+          <!-- Cabin -->
+          <div class="fe-col">
+            <div class="fe-col-head">
+              <div><div class="fe-col-name">Cabin</div></div>
+              <div><span class="fe-type categorical">object</span></div>
+              <div class="fe-miss high">77.1%</div>
+              <div class="fe-pills">
+                <span class="fe-pill imp">Flag missing</span>
+                <span class="fe-pill enc">Extract Deck</span>
+              </div>
+              <span class="fe-arrow">▸</span>
+            </div>
+          </div>
+
+          <!-- Embarked -->
+          <div class="fe-col">
+            <div class="fe-col-head">
+              <div><div class="fe-col-name">Embarked</div></div>
+              <div><span class="fe-type categorical">object</span></div>
+              <div class="fe-miss medium">0.2%</div>
+              <div class="fe-pills">
+                <span class="fe-pill imp">Mode</span>
+                <span class="fe-pill enc">One-Hot</span>
+              </div>
+              <span class="fe-arrow">▸</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Section 02: Domain features -->
+      <div class="fe-sec">
+        <div class="fe-sec-head">
+          <div class="fe-sec-num">02</div>
+          <div style="flex:1;">
+            <div class="fe-sec-title">Domain-specific <em>features</em></div>
+            <div class="fe-sec-meta">🏥 Healthcare · auto-detected from your domain config</div>
+          </div>
+        </div>
+        <div class="fe-sec-tip">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="2" x2="12" y2="6"/><circle cx="12" cy="12" r="4"/><line x1="12" y1="18" x2="12" y2="22"/></svg>
+          Validated clinical features that have been shown to improve outcomes in healthcare ML. Toggle off any you don't need.
+        </div>
+
+        <div class="fe-feat">
+          <div class="fe-feat-left">
+            <div class="fe-feat-name">charlson_index</div>
+            <div class="fe-feat-desc">Charlson Comorbidity Index — weighted sum of comorbid conditions, validated for 1-year mortality risk in clinical research.</div>
+            <div class="fe-feat-req met">requires diagnosis or condition columns · detected</div>
+          </div>
+          <div class="fe-toggle on" onclick="this.classList.toggle('on')"><div class="fe-toggle-dot"></div></div>
+        </div>
+
+        <div class="fe-feat">
+          <div class="fe-feat-left">
+            <div class="fe-feat-name">age_group</div>
+            <div class="fe-feat-desc">Binned age groups using clinical thresholds — pediatric (&lt;18), adult (18–65), elderly (65+).</div>
+            <div class="fe-feat-req met">requires Age column · detected</div>
+          </div>
+          <div class="fe-toggle on" onclick="this.classList.toggle('on')"><div class="fe-toggle-dot"></div></div>
+        </div>
+
+        <div class="fe-feat disabled">
+          <div class="fe-feat-left">
+            <div class="fe-feat-name">bmi_category</div>
+            <div class="fe-feat-desc">WHO BMI classification (underweight / normal / overweight / obese).</div>
+            <div class="fe-feat-req missing">requires Height + Weight · not found</div>
+          </div>
+          <div class="fe-toggle disabled-toggle"><div class="fe-toggle-dot"></div></div>
+        </div>
+
+        <div class="fe-feat">
+          <div class="fe-feat-left">
+            <div class="fe-feat-name">family_size</div>
+            <div class="fe-feat-desc">Total family aboard (SibSp + Parch + 1) — proxy for social support, common in survival modeling.</div>
+            <div class="fe-feat-req met">requires SibSp + Parch · both detected</div>
+          </div>
+          <div class="fe-toggle on" onclick="this.classList.toggle('on')"><div class="fe-toggle-dot"></div></div>
+        </div>
+
+        <!-- AI chat composer -->
+        <div class="fe-ai-composer">
+          <div class="fe-ai-head">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            Custom request
+          </div>
+          <div class="fe-ai-title">Ask AI to add a <em>feature.</em></div>
+          <div class="fe-ai-sub">Describe what you want — AutoDS proposes the derived column and adds it to your pipeline.</div>
+          <div class="fe-ai-row">
+            <input class="fe-ai-input" placeholder='e.g., "flag first-class women" or "combine Age and Pclass"' />
+            <button class="fe-ai-send">
+              Generate
+              <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 03: Custom builder -->
+      <div class="fe-sec">
+        <div class="fe-sec-head">
+          <div class="fe-sec-num">03</div>
+          <div style="flex:1;">
+            <div class="fe-sec-title">Custom <em>derived features</em></div>
+            <div class="fe-sec-meta">Optional · build your own from existing columns</div>
+          </div>
+        </div>
+
+        <div class="fe-builder">
+          <div class="fe-builder-title">Build a new <em>column</em></div>
+          <div class="fe-builder-sub">Use column names and operators (+, −, ×, ÷, **). Example: <code>Fare / (SibSp + Parch + 1)</code></div>
+          <div class="fe-builder-form">
+            <input type="text" placeholder="feature_name" />
+            <input type="text" placeholder="expression" />
+            <button>Add</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 04: Interaction features -->
+      <div class="fe-sec">
+        <div class="fe-sec-head">
+          <div class="fe-sec-num">04</div>
+          <div style="flex:1;">
+            <div class="fe-sec-title">Interaction <em>features</em></div>
+            <div class="fe-sec-meta">AI-suggested feature crosses based on importance signals</div>
+          </div>
+        </div>
+
+        <div class="fe-feat">
+          <div class="fe-feat-left">
+            <div class="fe-feat-name">Age × Pclass</div>
+            <div class="fe-feat-desc">Multiplicative interaction — captures whether the age effect differs by passenger class.</div>
+            <div class="fe-feat-req met">★ suggested · high importance in similar datasets</div>
+          </div>
+          <div class="fe-toggle on" onclick="this.classList.toggle('on')"><div class="fe-toggle-dot"></div></div>
+        </div>
+
+        <div class="fe-feat">
+          <div class="fe-feat-left">
+            <div class="fe-feat-name">Sex × Pclass</div>
+            <div class="fe-feat-desc">Captures the well-known "women and children first" effect varying by class.</div>
+            <div class="fe-feat-req met">★ suggested · domain knowledge</div>
+          </div>
+          <div class="fe-toggle on" onclick="this.classList.toggle('on')"><div class="fe-toggle-dot"></div></div>
+        </div>
+
+        <div class="fe-feat">
+          <div class="fe-feat-left">
+            <div class="fe-feat-name">is_alone</div>
+            <div class="fe-feat-desc">Binary indicator: 1 if family_size == 1, else 0.</div>
+            <div class="fe-feat-req met">★ suggested · derived from family_size</div>
+          </div>
+          <div class="fe-toggle" onclick="this.classList.toggle('on')"><div class="fe-toggle-dot"></div></div>
+        </div>
+
+        <!-- Global FE chat composer at the bottom of Section 04 -->
+        <div class="fe-ai-composer" style="margin-top: 18px;">
+          <div class="fe-ai-head">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            Ask anything about this plan
+          </div>
+          <div class="fe-ai-title">Anything else for <em>feature engineering?</em></div>
+          <div class="fe-ai-sub">Describe any change in plain English — column-level, domain features, scaling strategy, drops. AutoDS will update the plan and you can review before approving.</div>
+          <div class="fe-ai-row">
+            <input class="fe-ai-input" placeholder='e.g., "use KNN imputation for all numeric columns" or "drop columns with >50% missing"' />
+            <button class="fe-ai-send">
+              Send
+              <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </button>
+          </div>
+          <!-- Suggestion pills -->
+          <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:14px;">
+            <span class="fe-quick-btn" style="cursor:pointer;">↗ Try KNN imputation everywhere</span>
+            <span class="fe-quick-btn" style="cursor:pointer;">↗ Add polynomial features for Age &amp; Fare</span>
+            <span class="fe-quick-btn" style="cursor:pointer;">↗ Use one-hot for all categoricals</span>
+            <span class="fe-quick-btn" style="cursor:pointer;">↗ Drop columns with &gt;50% missing</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action bar -->
+      <div class="fe-action-bar">
+        <div class="fe-action-status"><strong>11 of 12</strong> columns configured · <strong>6</strong> new features queued · estimated runtime ~30s</div>
+        <button class="btn-ghost">← Back to EDA</button>
+        <button class="btn-primary" onclick="setPhase('review')">Review & Approve →</button>
+      </div>
+    </div>
+
+    <!-- ============ PHASE 2 — Review ============ -->
+    <div class="phase" id="phase-review">
+
+      <!-- Section: Output shape -->
+      <div class="fe-sec">
+        <div class="fe-sec-head">
+          <div class="fe-sec-num">✓</div>
+          <div style="flex:1;">
+            <div class="fe-sec-title">Output <em>shape</em></div>
+            <div class="fe-sec-meta">Final dataset dimensions after feature engineering</div>
+          </div>
+        </div>
+        <div class="fe-review-grid">
+          <div class="fe-review-stat">
+            <div class="fe-review-num">891</div>
+            <div class="fe-review-label">Rows · unchanged</div>
+          </div>
+          <div class="fe-review-stat">
+            <div class="fe-review-num"><span class="strike">12</span><em>18</em></div>
+            <div class="fe-review-label">Columns · 12 → 18</div>
+          </div>
+          <div class="fe-review-stat">
+            <div class="fe-review-num"><em>0</em></div>
+            <div class="fe-review-label">Missing values · after</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section: Diff table -->
+      <div class="fe-sec">
+        <div class="fe-sec-head">
+          <div class="fe-sec-num">↺</div>
+          <div style="flex:1;">
+            <div class="fe-sec-title">Column <em>transformations</em></div>
+            <div class="fe-sec-meta">Per-column plan — green = new transformation applied</div>
+          </div>
+        </div>
+        <table class="fe-table">
+          <thead>
+            <tr>
+              <th>Column</th>
+              <th>Imputation</th>
+              <th>Encoding</th>
+              <th>Scaling</th>
+              <th>Outliers</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="fe-cell-mono tgt">Survived ★</span></td>
+              <td colspan="4"><span class="fe-same">no transform — target</span></td>
+              <td><span class="fe-pill tgt">Target</span></td>
+            </tr>
+            <tr>
+              <td><span class="fe-cell-mono">PassengerId</span></td>
+              <td colspan="4"><span class="fe-same">—</span></td>
+              <td><span class="fe-pill drop">Drop</span></td>
+            </tr>
+            <tr>
+              <td><span class="fe-cell-mono">Pclass</span></td>
+              <td><span class="fe-same">—</span></td>
+              <td><span class="fe-after">Ordinal</span></td>
+              <td><span class="fe-after">Robust</span></td>
+              <td><span class="fe-same">keep</span></td>
+              <td></td>
+            </tr>
+            <tr>
+              <td><span class="fe-cell-mono">Name</span></td>
+              <td><span class="fe-same">—</span></td>
+              <td><span class="fe-after">Extract Title</span></td>
+              <td><span class="fe-same">—</span></td>
+              <td><span class="fe-same">—</span></td>
+              <td><span class="fe-pill drop">Drop original</span></td>
+            </tr>
+            <tr>
+              <td><span class="fe-cell-mono">Sex</span></td>
+              <td><span class="fe-same">—</span></td>
+              <td><span class="fe-after">Label</span></td>
+              <td><span class="fe-same">—</span></td>
+              <td><span class="fe-same">—</span></td>
+              <td></td>
+            </tr>
+            <tr>
+              <td><span class="fe-cell-mono">Age</span></td>
+              <td><span class="fe-after">Median</span></td>
+              <td><span class="fe-same">—</span></td>
+              <td><span class="fe-after">Robust</span></td>
+              <td><span class="fe-after">Cap IQR</span></td>
+              <td></td>
+            </tr>
+            <tr>
+              <td><span class="fe-cell-mono">SibSp / Parch</span></td>
+              <td><span class="fe-same">—</span></td>
+              <td><span class="fe-same">—</span></td>
+              <td><span class="fe-after">Robust</span></td>
+              <td><span class="fe-same">keep</span></td>
+              <td></td>
+            </tr>
+            <tr>
+              <td><span class="fe-cell-mono">Ticket</span></td>
+              <td colspan="4"><span class="fe-same">—</span></td>
+              <td><span class="fe-pill drop">Drop</span></td>
+            </tr>
+            <tr>
+              <td><span class="fe-cell-mono">Fare</span></td>
+              <td><span class="fe-same">—</span></td>
+              <td><span class="fe-same">—</span></td>
+              <td><span class="fe-after">Robust</span></td>
+              <td><span class="fe-after">Cap IQR</span></td>
+              <td></td>
+            </tr>
+            <tr>
+              <td><span class="fe-cell-mono">Cabin</span></td>
+              <td><span class="fe-after">Flag missing</span></td>
+              <td><span class="fe-after">Extract Deck</span></td>
+              <td><span class="fe-same">—</span></td>
+              <td><span class="fe-same">—</span></td>
+              <td></td>
+            </tr>
+            <tr>
+              <td><span class="fe-cell-mono">Embarked</span></td>
+              <td><span class="fe-after">Mode</span></td>
+              <td><span class="fe-after">One-Hot</span></td>
+              <td><span class="fe-same">—</span></td>
+              <td><span class="fe-same">—</span></td>
+              <td></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Section: New features -->
+      <div class="fe-sec">
+        <div class="fe-sec-head">
+          <div class="fe-sec-num">+</div>
+          <div style="flex:1;">
+            <div class="fe-sec-title">New <em>features created</em></div>
+            <div class="fe-sec-meta">8 new columns from domain knowledge, extraction, and interactions</div>
+          </div>
+        </div>
+        <div class="fe-tag-grid">
+          <span class="fe-pill new">charlson_index <small>domain</small></span>
+          <span class="fe-pill new">age_group <small>domain</small></span>
+          <span class="fe-pill new">family_size <small>domain</small></span>
+          <span class="fe-pill new">name_title <small>extracted</small></span>
+          <span class="fe-pill new">cabin_deck <small>extracted</small></span>
+          <span class="fe-pill new">cabin_missing_flag <small>extracted</small></span>
+          <span class="fe-pill new">age_x_pclass <small>interaction</small></span>
+          <span class="fe-pill new">sex_x_pclass <small>interaction</small></span>
+        </div>
+      </div>
+
+      <!-- Section: Dropped -->
+      <div class="fe-sec">
+        <div class="fe-sec-head">
+          <div class="fe-sec-num">−</div>
+          <div style="flex:1;">
+            <div class="fe-sec-title">Columns <em>dropped</em></div>
+            <div class="fe-sec-meta">4 removed — reasons listed</div>
+          </div>
+        </div>
+        <div class="fe-tag-grid">
+          <span class="fe-pill drop">PassengerId · ID column</span>
+          <span class="fe-pill drop">Name · extracted to name_title</span>
+          <span class="fe-pill drop">Ticket · high cardinality</span>
+          <span class="fe-pill drop">Cabin · extracted to deck + flag</span>
+        </div>
+
+        <details class="fe-ai-reason">
+          <summary>View AI reasoning</summary>
+          <p><strong>Imputation strategy:</strong> Median was chosen for Age because the distribution is right-skewed (skew = 0.39), and 19.9% missingness is too high for listwise deletion. KNN imputation would be marginally more accurate but adds compute cost for minimal gain.</p>
+          <p><strong>Encoding decisions:</strong> Label encoding for Sex (binary, 2 values) avoids the dummy trap. Ordinal encoding for Pclass because (1, 2, 3) have natural order. One-Hot for Embarked (3 unordered categories, low cardinality).</p>
+          <p><strong>Domain features:</strong> Charlson Index flagged because the healthcare domain config detected potential comorbidity columns. family_size and Age × Pclass interactions came from the tool registry's healthcare recommendations and known survival-model patterns.</p>
+          <p><strong>Outliers:</strong> IQR capping for Age and Fare preserves extreme but plausible values (infant passengers, first-class fares) while reducing leverage in linear models.</p>
+        </details>
+      </div>
+
+      <!-- Action bar -->
+      <div class="fe-action-bar">
+        <div class="fe-action-status"><strong>Plan ready</strong> · 7 transformed · 4 dropped · 8 new · 0 missing values after</div>
+        <button class="btn-ghost" onclick="setPhase('configure')">← Modify</button>
+        <button class="btn-primary">
+          Approve & Continue to Modeling
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  // Theme toggle
+  const html = document.documentElement;
+  document.getElementById('themeToggle').addEventListener('click', () => {
+    const cur = html.getAttribute('data-theme') || 'dark';
+    html.setAttribute('data-theme', cur === 'dark' ? 'light' : 'dark');
+  });
+
+  // Phase toggle
+  function setPhase(p) {
+    document.querySelectorAll('.phase').forEach(el => el.classList.remove('active'));
+    document.getElementById('phase-' + p).classList.add('active');
+    document.querySelectorAll('.phase-toggle button').forEach(b => b.classList.toggle('active', b.dataset.phase === p));
+    if (p === 'configure') {
+      document.getElementById('heroTitle').innerHTML = 'Engineer your <em>features.</em>';
+      document.getElementById('heroSubtitle').textContent = 'Per-column transformations with domain-aware recommendations. AutoDS suggests, you approve.';
+    } else {
+      document.getElementById('heroTitle').innerHTML = 'Review your <em>plan.</em>';
+      document.getElementById('heroSubtitle').textContent = '7 transformations · 4 columns dropped · 8 new features · 100% completeness.';
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  document.querySelectorAll('.phase-toggle button').forEach(b => {
+    b.addEventListener('click', () => setPhase(b.dataset.phase));
+  });
+
+  // Column accordion
+  document.querySelectorAll('.fe-col-head').forEach(head => {
+    head.addEventListener('click', e => {
+      if (e.target.closest('select')) return;
+      head.parentElement.classList.toggle('expanded');
+    });
+  });
+
+  // Filter chips
+  document.querySelectorAll('.fe-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('.fe-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+    });
+  });
+</script>
+</body>
+</html>

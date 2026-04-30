@@ -1,0 +1,1561 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AutoDS — Upload (Sample)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter+Tight:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  /* ======================= Design Tokens ======================= */
+  :root, [data-theme="dark"] {
+    --bg-base: #07091A;
+    --bg-elev: #0E1130;
+    --bg-card: rgba(17, 23, 61, 0.55);
+    --bg-card-strong: rgba(17, 23, 61, 0.85);
+    --border-subtle: rgba(139, 92, 246, 0.12);
+    --border-default: rgba(139, 92, 246, 0.22);
+    --border-strong: rgba(139, 92, 246, 0.45);
+    --indigo: #6366F1; --violet: #8B5CF6; --purple: #A855F7;
+    --pink: #EC4899; --cyan: #22D3EE; --green: #34D399;
+    --amber: #FBBF24; --red: #F87171;
+    --text-primary: #F4F4FB; --text-secondary: #C5C7E0;
+    --text-muted: #8489AE; --text-faint: #5C617F;
+    --gradient-text: linear-gradient(135deg, #C5C7FF 0%, #A855F7 50%, #EC4899 100%);
+    --gradient-button: linear-gradient(135deg, #6366F1 0%, #A855F7 100%);
+    --aurora-1: radial-gradient(60% 60% at 20% 10%, rgba(99,102,241,.35) 0%, transparent 60%);
+    --aurora-2: radial-gradient(50% 50% at 85% 30%, rgba(168,85,247,.30) 0%, transparent 65%);
+    --aurora-3: radial-gradient(40% 40% at 50% 100%, rgba(236,72,153,.25) 0%, transparent 60%);
+    --star-opacity: 0.6;
+    --shadow-glow: 0 0 60px -10px rgba(139,92,246,0.35);
+  }
+  [data-theme="light"] {
+    --bg-base: #F7F6FB; --bg-elev: #FFFFFF;
+    --bg-card: rgba(255, 255, 255, 0.72);
+    --bg-card-strong: rgba(255, 255, 255, 0.92);
+    --border-subtle: rgba(99, 102, 241, 0.10);
+    --border-default: rgba(99, 102, 241, 0.22);
+    --border-strong: rgba(139, 92, 246, 0.45);
+    --text-primary: #1A1B2E; --text-secondary: #4A4D6E;
+    --text-muted: #6E7295; --text-faint: #A1A4BD;
+    --gradient-text: linear-gradient(135deg, #6366F1 0%, #8B5CF6 45%, #EC4899 100%);
+    --aurora-1: radial-gradient(60% 60% at 20% 10%, rgba(99,102,241,.18) 0%, transparent 60%);
+    --aurora-2: radial-gradient(50% 50% at 85% 30%, rgba(168,85,247,.14) 0%, transparent 65%);
+    --aurora-3: radial-gradient(40% 40% at 50% 100%, rgba(236,72,153,.10) 0%, transparent 60%);
+    --star-opacity: 0;
+    --shadow-glow: 0 0 60px -10px rgba(139,92,246,0.20);
+  }
+  :root {
+    --font-display: 'Instrument Serif', serif;
+    --font-body: 'Inter Tight', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+    --radius-sm: 8px; --radius-md: 14px; --radius-lg: 20px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg-base); color: var(--text-primary);
+    font-family: var(--font-body); font-size: 15px; line-height: 1.55;
+    -webkit-font-smoothing: antialiased; overflow-x: hidden; position: relative;
+    transition: background 0.5s ease, color 0.3s ease;
+  }
+  body::before {
+    content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background: var(--aurora-1), var(--aurora-2), var(--aurora-3);
+  }
+  .starfield {
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background-image:
+      radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,0.7) 50%, transparent 100%),
+      radial-gradient(1px 1px at 70% 60%, rgba(255,255,255,0.5) 50%, transparent 100%),
+      radial-gradient(1px 1px at 40% 80%, rgba(255,255,255,0.6) 50%, transparent 100%),
+      radial-gradient(1.5px 1.5px at 85% 15%, rgba(197,199,255,0.6) 50%, transparent 100%),
+      radial-gradient(1px 1px at 60% 25%, rgba(168,85,247,0.5) 50%, transparent 100%);
+    background-size: 300px 300px;
+    animation: starDrift 120s linear infinite;
+    opacity: var(--star-opacity); transition: opacity 0.5s ease;
+  }
+  @keyframes starDrift { from { transform: translateY(0); } to { transform: translateY(-300px); } }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 3px rgba(139,92,246,0.25), 0 0 16px rgba(139,92,246,0.6); }
+    50% { box-shadow: 0 0 0 6px rgba(139,92,246,0.12), 0 0 22px rgba(139,92,246,0.8); }
+  }
+
+  /* ===================== Layout ===================== */
+  .app-frame {
+    position: relative; z-index: 1;
+    display: grid; grid-template-columns: 240px 1fr; min-height: 100vh;
+  }
+
+  /* sidebar (compact, with active project state) */
+  .sidebar {
+    background: var(--bg-card-strong); backdrop-filter: blur(18px);
+    border-right: 1px solid var(--border-subtle);
+    padding: 22px 16px; display: flex; flex-direction: column; gap: 18px;
+    position: sticky; top: 0; height: 100vh; overflow-y: auto;
+  }
+  .brand { display: flex; align-items: center; gap: 10px;
+           padding: 4px 8px 14px; border-bottom: 1px solid var(--border-subtle); }
+  .brand-mark { width: 30px; height: 30px; background: var(--gradient-button);
+                border-radius: 8px; box-shadow: 0 0 18px rgba(139,92,246,0.5);
+                display: grid; place-items: center; font-family: var(--font-display);
+                font-size: 18px; color: white; font-style: italic; }
+  .brand-name { font-family: var(--font-display); font-size: 21px; }
+  .nav-section { display: flex; flex-direction: column; gap: 2px; }
+  .nav-label { font-size: 10.5px; font-weight: 600; letter-spacing: 1.5px;
+               text-transform: uppercase; color: var(--text-faint); padding: 0 10px 8px; }
+  .nav-item { display: flex; align-items: center; gap: 11px; padding: 8px 10px;
+              border-radius: 8px; color: var(--text-secondary); font-size: 13.5px;
+              cursor: pointer; transition: all 0.18s ease; border: 1px solid transparent;
+              user-select: none; }
+  .nav-item:hover { background: rgba(139,92,246,0.08); color: var(--text-primary); }
+  .nav-item.active { background: rgba(139,92,246,0.16); border-color: var(--border-default);
+                     color: var(--text-primary); box-shadow: 0 0 24px -8px rgba(139,92,246,0.5); }
+  .nav-item .icon { width: 16px; height: 16px; display: grid; place-items: center;
+                    color: var(--violet); flex-shrink: 0; }
+  .project-context { padding: 8px 10px; margin-bottom: 6px;
+                     background: rgba(139,92,246,0.06);
+                     border: 1px solid var(--border-subtle); border-radius: 8px; }
+  .project-context-label { font-size: 10px; color: var(--text-faint);
+                           letter-spacing: 1.2px; text-transform: uppercase; }
+  .project-context-name { font-size: 13px; color: var(--text-primary);
+                          font-weight: 500; margin-top: 2px; }
+  .pipeline-step {
+    display: flex; align-items: center; gap: 11px;
+    padding: 8px 10px 8px 28px; border-radius: 8px;
+    color: var(--text-secondary); font-size: 13px; cursor: pointer; position: relative;
+  }
+  .pipeline-step::before {
+    content: ""; position: absolute; left: 18px; top: -2px; bottom: -2px;
+    width: 1px; background: var(--border-subtle);
+  }
+  .pipeline-step:first-child::before { top: 12px; }
+  .pipeline-step:last-child::before { bottom: 50%; }
+  .pipeline-step .dot {
+    position: absolute; left: 13px; top: 50%; transform: translateY(-50%);
+    width: 11px; height: 11px; border-radius: 50%;
+    background: var(--bg-elev); border: 1.5px solid var(--text-faint); z-index: 1;
+  }
+  .pipeline-step.done .dot { background: var(--green); border-color: var(--green);
+                              box-shadow: 0 0 10px rgba(52,211,153,0.5); }
+  .pipeline-step.active .dot { background: var(--violet); border-color: var(--violet);
+                                animation: pulse 1.8s ease-in-out infinite; }
+  .pipeline-step.active { color: var(--text-primary); font-weight: 500; }
+  .pipeline-step.done { color: var(--text-muted); }
+  .pipeline-step:hover { background: rgba(139,92,246,0.06); }
+  .sidebar-footer { margin-top: auto; padding-top: 14px;
+                    border-top: 1px solid var(--border-subtle);
+                    display: flex; flex-direction: column; gap: 6px; }
+  .user-chip { display: flex; align-items: center; gap: 10px; padding: 8px 10px;
+               border-radius: 10px; background: rgba(139,92,246,0.06);
+               border: 1px solid var(--border-subtle); }
+  .user-avatar { width: 28px; height: 28px; border-radius: 50%;
+                 background: var(--gradient-button); display: grid; place-items: center;
+                 font-size: 12px; font-weight: 600; color: white; }
+  .user-name { font-size: 13px; color: var(--text-primary); }
+  .user-email { font-size: 10.5px; color: var(--text-muted); }
+
+  /* ===================== Main ===================== */
+  .main { padding: 36px 56px 80px; max-width: 1280px; width: 100%; }
+
+  .topbar { display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 32px; }
+  .crumbs { display: flex; align-items: center; gap: 8px; font-size: 12.5px;
+            color: var(--text-muted); font-family: var(--font-mono);
+            letter-spacing: 0.4px; }
+  .crumbs span.sep { color: var(--text-faint); }
+  .crumbs span.cur { color: var(--text-primary); }
+  .topbar-actions { display: flex; gap: 12px; align-items: center; }
+  .icon-btn { width: 36px; height: 36px; display: grid; place-items: center;
+              border-radius: 10px; background: var(--bg-card);
+              border: 1px solid var(--border-subtle); color: var(--text-secondary);
+              cursor: pointer; backdrop-filter: blur(12px); transition: all 0.18s ease; }
+  .icon-btn:hover { border-color: var(--border-strong); color: var(--text-primary); }
+  .theme-toggle { background: transparent !important; cursor: pointer;
+                  position: relative; overflow: hidden; }
+  .theme-toggle .icon-moon, .theme-toggle .icon-sun {
+    position: absolute; top: 50%; left: 50%;
+    transition: transform 0.4s cubic-bezier(.5, 1.5, .5, 1), opacity 0.3s ease;
+  }
+  [data-theme="dark"] .theme-toggle .icon-moon { transform: translate(-50%, -50%) rotate(0deg); opacity: 1; }
+  [data-theme="dark"] .theme-toggle .icon-sun  { transform: translate(-50%, -50%) rotate(180deg) scale(0); opacity: 0; }
+  [data-theme="light"] .theme-toggle .icon-moon { transform: translate(-50%, -50%) rotate(-180deg) scale(0); opacity: 0; }
+  [data-theme="light"] .theme-toggle .icon-sun  { transform: translate(-50%, -50%) rotate(0deg); opacity: 1; color: #F59E0B; }
+
+  /* ===================== Hero ===================== */
+  .hero { margin-bottom: 36px; }
+  .hero-eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 4px 12px 4px 8px; background: var(--bg-card);
+    border: 1px solid var(--border-default); border-radius: 999px;
+    font-size: 11.5px; color: var(--text-secondary); margin-bottom: 18px;
+    backdrop-filter: blur(12px); font-family: var(--font-mono);
+    letter-spacing: 0.6px; text-transform: uppercase;
+  }
+  .hero-eyebrow svg { width: 14px; height: 14px; color: var(--violet); }
+  .hero h1 { font-family: var(--font-display); font-size: 56px;
+             line-height: 1; letter-spacing: -0.5px; margin-bottom: 12px; }
+  .hero h1 em { font-style: italic;
+                background: var(--gradient-text);
+                -webkit-background-clip: text; background-clip: text;
+                -webkit-text-fill-color: transparent; }
+  .hero p { font-size: 16px; color: var(--text-muted); max-width: 720px; }
+
+  /* ===================== Source tabs ===================== */
+  .source-tabs {
+    display: flex; gap: 6px; margin-bottom: 24px; padding: 6px;
+    background: var(--bg-card); border: 1px solid var(--border-default);
+    border-radius: 14px; backdrop-filter: blur(14px); width: fit-content;
+  }
+  .src-tab { display: flex; align-items: center; gap: 8px; padding: 10px 18px;
+             border-radius: 10px; background: transparent; border: none;
+             color: var(--text-muted); font-family: var(--font-body);
+             font-size: 13.5px; font-weight: 500; cursor: pointer;
+             transition: all 0.2s ease; }
+  .src-tab:hover { color: var(--text-primary); background: rgba(139,92,246,0.06); }
+  .src-tab.active { background: var(--gradient-button); color: white;
+                    box-shadow: 0 0 18px rgba(139,92,246,0.4); }
+  .src-tab svg { width: 16px; height: 16px; }
+
+  /* ===================== Panels ===================== */
+  .panel { display: none; margin-bottom: 56px; }
+  .panel.active { display: block; }
+  .panel-grid { display: grid; grid-template-columns: 1fr 320px; gap: 24px; align-items: start; }
+
+  /* DROP ZONE */
+  .drop-zone {
+    background: var(--bg-card); border: 2px dashed var(--border-default);
+    border-radius: 20px; padding: 56px 32px; text-align: center;
+    backdrop-filter: blur(14px); transition: all 0.25s ease; cursor: pointer;
+  }
+  .drop-zone:hover, .drop-zone.dragover {
+    border-color: var(--violet); background: rgba(139,92,246,0.06);
+    box-shadow: var(--shadow-glow);
+  }
+  .drop-icon { width: 64px; height: 64px; margin: 0 auto 18px;
+               border-radius: 50%; background: rgba(139,92,246,0.12);
+               border: 1px solid var(--border-default);
+               display: grid; place-items: center; color: var(--violet); }
+  .drop-icon svg { width: 28px; height: 28px; }
+  .drop-title { font-size: 18px; font-weight: 500; color: var(--text-primary);
+                margin-bottom: 6px; }
+  .drop-subtitle { font-size: 13px; color: var(--text-muted); margin-bottom: 22px; }
+  .drop-cta {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--gradient-button); color: white; padding: 12px 24px;
+    border: none; border-radius: 10px; font-family: var(--font-body);
+    font-size: 14px; font-weight: 500; cursor: pointer;
+    box-shadow: 0 0 24px rgba(139,92,246,0.4); margin-bottom: 18px;
+  }
+  .drop-formats { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+  .fmt-chip { padding: 4px 10px; background: rgba(139,92,246,0.06);
+              border: 1px solid var(--border-subtle); border-radius: 999px;
+              font-family: var(--font-mono); font-size: 10.5px;
+              color: var(--text-secondary); letter-spacing: 0.5px; }
+
+  /* CONNECTION FORMS */
+  .conn-card {
+    background: var(--bg-card); border: 1px solid var(--border-default);
+    border-radius: 20px; padding: 28px; backdrop-filter: blur(14px);
+  }
+  .conn-card h3 { font-family: var(--font-display); font-size: 22px;
+                  margin-bottom: 6px; }
+  .conn-card .conn-sub { font-size: 13px; color: var(--text-muted);
+                          margin-bottom: 24px; }
+  .field { margin-bottom: 16px; }
+  .field-label { display: block; font-size: 12px; color: var(--text-secondary);
+                 margin-bottom: 6px; font-weight: 500;
+                 letter-spacing: 0.3px; }
+  .field-input, .field-select {
+    width: 100%; padding: 10px 14px; font-family: var(--font-body);
+    font-size: 13px; color: var(--text-primary);
+    background: rgba(7,9,26,0.4); border: 1px solid var(--border-default);
+    border-radius: 10px; transition: all 0.18s ease;
+  }
+  [data-theme="light"] .field-input, [data-theme="light"] .field-select {
+    background: rgba(255,255,255,0.6);
+  }
+  .field-input:focus, .field-select:focus {
+    outline: none; border-color: var(--violet);
+    box-shadow: 0 0 0 3px rgba(139,92,246,0.15);
+  }
+  .field-input::placeholder { color: var(--text-faint); }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .conn-providers { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+                    gap: 8px; margin-bottom: 22px; }
+  .prov-tile {
+    padding: 12px 10px; background: rgba(139,92,246,0.06);
+    border: 1px solid var(--border-subtle); border-radius: 10px;
+    text-align: center; cursor: pointer; transition: all 0.18s ease;
+  }
+  .prov-tile:hover { border-color: var(--border-strong); transform: translateY(-1px); }
+  .prov-tile.selected { background: rgba(139,92,246,0.15); border-color: var(--violet);
+                        box-shadow: 0 0 14px -4px var(--violet); }
+  .prov-icon { font-size: 22px; margin-bottom: 4px; }
+  .prov-name { font-family: var(--font-mono); font-size: 10.5px;
+               color: var(--text-secondary); letter-spacing: 0.4px; }
+  .conn-test {
+    display: flex; gap: 10px; align-items: center; margin-top: 6px;
+  }
+  .btn-secondary {
+    padding: 10px 20px; background: var(--bg-card-strong);
+    border: 1px solid var(--border-default); color: var(--text-primary);
+    border-radius: 10px; font-family: var(--font-body); font-size: 13px;
+    font-weight: 500; cursor: pointer; transition: all 0.18s ease;
+  }
+  .btn-secondary:hover { border-color: var(--border-strong); }
+  .conn-status {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 10px; border-radius: 999px;
+    font-family: var(--font-mono); font-size: 10px;
+    text-transform: uppercase; letter-spacing: 0.6px;
+  }
+  .conn-status.ok { color: var(--green); border: 1px solid rgba(52,211,153,0.4);
+                    background: rgba(52,211,153,0.08); }
+
+  /* SIDE INFO PANEL */
+  .info-panel {
+    background: var(--bg-card); border: 1px solid var(--border-subtle);
+    border-radius: 16px; padding: 18px 20px; backdrop-filter: blur(14px);
+  }
+  .info-panel h4 { font-size: 13px; font-weight: 600; margin-bottom: 10px;
+                    color: var(--text-primary); display: flex; align-items: center; gap: 6px; }
+  .info-panel h4 svg { width: 14px; height: 14px; color: var(--violet); }
+  .info-panel p { font-size: 12.5px; color: var(--text-muted);
+                   line-height: 1.55; margin-bottom: 12px; }
+  .info-panel ul { list-style: none; padding: 0; }
+  .info-panel li { font-size: 12.5px; color: var(--text-secondary);
+                    padding: 4px 0; padding-left: 14px; position: relative; }
+  .info-panel li::before { content: "•"; position: absolute; left: 4px; color: var(--violet); }
+  .info-panel + .info-panel { margin-top: 16px; }
+
+  /* RECENT FILES STRIP */
+  .recent-strip { margin: 0 0 32px; }
+  .strip-label { font-family: var(--font-mono); font-size: 11px;
+                 letter-spacing: 1.5px; text-transform: uppercase;
+                 color: var(--text-faint); margin-bottom: 12px; }
+  .recent-grid { display: flex; gap: 10px; flex-wrap: wrap; }
+  .recent-pill {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 8px 14px; background: var(--bg-card);
+    border: 1px solid var(--border-default); border-radius: 999px;
+    font-size: 12.5px; cursor: pointer; transition: all 0.2s ease;
+    backdrop-filter: blur(8px);
+  }
+  .recent-pill:hover { border-color: var(--border-strong); transform: translateY(-1px); }
+  .recent-pill svg { width: 13px; height: 13px; color: var(--violet); }
+  .recent-pill .meta { font-family: var(--font-mono); font-size: 10px;
+                        color: var(--text-muted); padding-left: 6px;
+                        border-left: 1px solid var(--border-subtle); margin-left: 2px; }
+
+  /* SAMPLE GALLERY */
+  .sample-section { margin: 56px 0; }
+  .sec-divider {
+    display: flex; align-items: center; gap: 14px; margin-bottom: 24px;
+  }
+  .sec-divider .label {
+    font-family: var(--font-mono); font-size: 11px;
+    letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--violet); padding: 4px 12px;
+    background: rgba(139,92,246,0.08); border-radius: 999px;
+    border: 1px solid var(--border-subtle); white-space: nowrap;
+  }
+  .sec-divider .line { height: 1px; flex: 1; background: var(--border-subtle); }
+  .sec-title { font-family: var(--font-display); font-size: 32px; margin-bottom: 6px; }
+  .sec-title em { font-style: italic;
+                  background: var(--gradient-text);
+                  -webkit-background-clip: text; background-clip: text;
+                  -webkit-text-fill-color: transparent; }
+  .sec-sub { font-size: 14px; color: var(--text-muted); margin-bottom: 22px; }
+
+  .sample-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+                  gap: 16px; }
+  .sample-card {
+    background: var(--bg-card); border: 1px solid var(--border-default);
+    border-radius: 16px; padding: 20px; cursor: pointer;
+    transition: all 0.25s ease; backdrop-filter: blur(14px);
+    position: relative; overflow: hidden;
+  }
+  .sample-card::before {
+    content: ""; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: var(--gradient-button); opacity: 0; transition: opacity 0.25s;
+  }
+  .sample-card:hover { transform: translateY(-3px); border-color: var(--border-strong);
+                       box-shadow: var(--shadow-glow); }
+  .sample-card:hover::before { opacity: 1; }
+  .sample-head { display: flex; justify-content: space-between; align-items: flex-start;
+                  margin-bottom: 8px; gap: 8px; }
+  .sample-name { font-size: 15px; font-weight: 500; }
+  .sample-domain {
+    font-family: var(--font-mono); font-size: 9.5px;
+    padding: 3px 8px; border-radius: 999px; letter-spacing: 0.5px;
+    text-transform: uppercase; flex-shrink: 0;
+  }
+  .sample-domain.classification { color: var(--violet); border: 1px solid rgba(168,85,247,0.4); background: rgba(168,85,247,0.1); }
+  .sample-domain.regression { color: var(--cyan); border: 1px solid rgba(34,211,238,0.4); background: rgba(34,211,238,0.1); }
+  .sample-domain.healthcare { color: var(--green); border: 1px solid rgba(52,211,153,0.4); background: rgba(52,211,153,0.1); }
+  .sample-domain.finance { color: var(--cyan); border: 1px solid rgba(34,211,238,0.4); background: rgba(34,211,238,0.1); }
+  .sample-domain.ecommerce { color: var(--amber); border: 1px solid rgba(251,191,36,0.4); background: rgba(251,191,36,0.1); }
+  .sample-domain.hr { color: var(--pink); border: 1px solid rgba(236,72,153,0.4); background: rgba(236,72,153,0.1); }
+  .sample-desc { font-size: 12.5px; color: var(--text-muted);
+                 line-height: 1.5; margin-bottom: 14px; min-height: 36px; }
+  .sample-stats { display: flex; gap: 14px; padding-top: 12px;
+                   border-top: 1px solid var(--border-subtle); }
+  .sample-stat { font-family: var(--font-mono); font-size: 10.5px; color: var(--text-secondary); }
+  .sample-stat .v { color: var(--text-primary); font-weight: 500; padding-right: 4px; }
+
+  /* ===================== Multi-source ===================== */
+  .multisource {
+    background: var(--bg-card); border: 1px solid var(--border-default);
+    border-radius: 20px; padding: 0; backdrop-filter: blur(14px); margin: 56px 0;
+    overflow: hidden;
+  }
+  .ms-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 24px; cursor: pointer;
+    border-bottom: 1px solid transparent; transition: border-color 0.25s ease;
+  }
+  .multisource.expanded .ms-header { border-bottom-color: var(--border-subtle); }
+  .ms-title { display: flex; align-items: center; gap: 12px; }
+  .ms-title h3 { font-family: var(--font-display); font-size: 22px; }
+  .ms-tag {
+    font-family: var(--font-mono); font-size: 9.5px; padding: 3px 8px;
+    background: rgba(139,92,246,0.1); border: 1px solid var(--border-subtle);
+    border-radius: 999px; color: var(--violet); letter-spacing: 0.6px;
+    text-transform: uppercase;
+  }
+  .ms-toggle {
+    width: 32px; height: 32px; display: grid; place-items: center;
+    background: rgba(139,92,246,0.06); border: 1px solid var(--border-subtle);
+    border-radius: 50%; transition: all 0.25s ease;
+  }
+  .multisource.expanded .ms-toggle { transform: rotate(45deg); }
+  .ms-toggle svg { width: 14px; height: 14px; color: var(--text-secondary); }
+  .ms-body { display: none; padding: 0 24px 24px; }
+  .multisource.expanded .ms-body { display: block; }
+
+  .ms-files {
+    display: flex; flex-direction: column; gap: 10px; margin: 18px 0 22px;
+  }
+  .ms-file {
+    display: grid; grid-template-columns: auto 1fr auto auto auto;
+    gap: 14px; align-items: center;
+    padding: 12px 16px; background: rgba(139,92,246,0.04);
+    border: 1px solid var(--border-subtle); border-radius: 12px;
+    transition: all 0.2s ease;
+  }
+  .ms-file.primary {
+    background: rgba(139,92,246,0.1);
+    border-color: var(--border-strong); box-shadow: 0 0 14px -4px var(--violet);
+  }
+  .ms-icon {
+    width: 36px; height: 36px; border-radius: 9px;
+    background: rgba(139,92,246,0.12); display: grid; place-items: center;
+    color: var(--violet);
+  }
+  .ms-icon svg { width: 16px; height: 16px; }
+  .ms-info {}
+  .ms-info .fname { font-size: 13.5px; font-weight: 500; }
+  .ms-info .fmeta { font-family: var(--font-mono); font-size: 10.5px;
+                    color: var(--text-muted); margin-top: 2px; }
+  .ms-role-toggle {
+    display: flex; gap: 4px; padding: 3px;
+    background: rgba(7,9,26,0.4); border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+  }
+  [data-theme="light"] .ms-role-toggle { background: rgba(255,255,255,0.5); }
+  .ms-role-btn {
+    padding: 4px 12px; border: none; background: transparent;
+    color: var(--text-muted); font-size: 11px; font-weight: 500;
+    border-radius: 6px; cursor: pointer; font-family: var(--font-body);
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .ms-role-btn.selected {
+    background: var(--gradient-button); color: white;
+    box-shadow: 0 0 8px rgba(139,92,246,0.4);
+  }
+  .ms-rows { font-family: var(--font-mono); font-size: 10.5px;
+             color: var(--text-secondary); padding: 4px 8px;
+             background: rgba(139,92,246,0.04); border-radius: 6px; }
+  .ms-action {
+    width: 28px; height: 28px; display: grid; place-items: center;
+    border-radius: 7px; background: rgba(139,92,246,0.04);
+    border: 1px solid var(--border-subtle); cursor: pointer; color: var(--text-muted);
+  }
+  .ms-action:hover { background: rgba(248,113,113,0.1); border-color: rgba(248,113,113,0.4);
+                     color: var(--red); }
+
+  .ms-add {
+    border: 1px dashed var(--border-default); border-radius: 12px;
+    padding: 14px; text-align: center; cursor: pointer;
+    color: var(--text-muted); font-size: 13px; transition: all 0.2s ease;
+    background: rgba(139,92,246,0.02);
+  }
+  .ms-add:hover { border-color: var(--violet); color: var(--violet);
+                   background: rgba(139,92,246,0.06); }
+
+  .ms-join-config {
+    background: rgba(139,92,246,0.04);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px; padding: 18px; margin-top: 22px;
+  }
+  .ms-join-title { font-size: 13px; font-weight: 600; margin-bottom: 12px;
+                   display: flex; align-items: center; gap: 8px; color: var(--text-primary); }
+  .ms-join-row { display: grid; grid-template-columns: 1fr auto 1fr 1fr;
+                  gap: 10px; align-items: center; margin-bottom: 8px; }
+  .ms-arrow { color: var(--text-faint); }
+  .ms-detected {
+    font-family: var(--font-mono); font-size: 9.5px;
+    color: var(--green); padding: 2px 8px;
+    background: rgba(52,211,153,0.08); border: 1px solid rgba(52,211,153,0.3);
+    border-radius: 999px; margin-left: 8px; letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  /* ===================== Post-upload ===================== */
+  .upload-result { display: none; margin-top: 32px; }
+  .upload-result.show { display: block; animation: fadeUp 0.4s ease; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  .result-header {
+    display: flex; justify-content: space-between; align-items: flex-end;
+    margin-bottom: 24px; gap: 24px; flex-wrap: wrap;
+  }
+  .result-title h2 { font-family: var(--font-display); font-size: 30px; line-height: 1.1; }
+  .result-title h2 em { font-style: italic;
+                         background: var(--gradient-text);
+                         -webkit-background-clip: text; background-clip: text;
+                         -webkit-text-fill-color: transparent; }
+  .result-title p { font-size: 13px; color: var(--text-muted); margin-top: 4px;
+                    font-family: var(--font-mono); letter-spacing: 0.4px; }
+
+  .domain-detected {
+    display: flex; align-items: center; gap: 14px;
+    padding: 12px 20px; background: var(--bg-card);
+    border: 1px solid var(--border-default); border-radius: 14px;
+    backdrop-filter: blur(14px);
+  }
+  .dd-label { font-family: var(--font-mono); font-size: 10px;
+              letter-spacing: 1.2px; text-transform: uppercase; color: var(--text-faint); }
+  .dd-value {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 16px; font-weight: 500;
+  }
+  .dd-confidence {
+    font-family: var(--font-mono); font-size: 11px;
+    color: var(--green); padding: 3px 8px;
+    background: rgba(52,211,153,0.1); border-radius: 999px;
+    border: 1px solid rgba(52,211,153,0.3);
+  }
+
+  .metric-row { display: grid; grid-template-columns: repeat(4, 1fr);
+                 gap: 14px; margin-bottom: 28px; }
+  .metric-card {
+    background: var(--bg-card); border: 1px solid var(--border-default);
+    border-radius: 14px; padding: 20px; backdrop-filter: blur(14px);
+    position: relative; overflow: hidden;
+  }
+  .metric-card::after {
+    content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+    background: var(--gradient-button); opacity: 0.7;
+  }
+  .metric-label { font-family: var(--font-mono); font-size: 10.5px;
+                   letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; }
+  .metric-value { font-family: var(--font-display); font-size: 36px; line-height: 1; }
+  .metric-sub { font-size: 11px; color: var(--text-muted); margin-top: 4px;
+                font-family: var(--font-mono); }
+
+  /* Quality glance */
+  .quality-section {
+    background: var(--bg-card); border: 1px solid var(--border-default);
+    border-radius: 16px; padding: 22px; margin-bottom: 28px;
+    backdrop-filter: blur(14px);
+  }
+  .quality-row { display: grid; grid-template-columns: repeat(4, 1fr);
+                  gap: 18px; }
+  .qg-item { display: flex; flex-direction: column; gap: 6px; }
+  .qg-label { font-family: var(--font-mono); font-size: 10px;
+               color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+  .qg-bar { height: 6px; background: rgba(139,92,246,0.1);
+             border-radius: 3px; overflow: hidden; position: relative; }
+  .qg-fill { height: 100%; background: var(--gradient-button);
+              border-radius: 3px; box-shadow: 0 0 6px rgba(139,92,246,0.5); }
+  .qg-fill.warn { background: linear-gradient(135deg, var(--amber), var(--red)); }
+  .qg-fill.ok { background: linear-gradient(135deg, var(--green), var(--cyan)); }
+  .qg-value { display: flex; justify-content: space-between; align-items: baseline; }
+  .qg-num { font-family: var(--font-display); font-size: 22px; }
+  .qg-tag { font-family: var(--font-mono); font-size: 9.5px; padding: 2px 7px;
+             border-radius: 999px; letter-spacing: 0.5px; text-transform: uppercase; }
+  .qg-tag.good { color: var(--green); background: rgba(52,211,153,0.1);
+                  border: 1px solid rgba(52,211,153,0.3); }
+  .qg-tag.warn { color: var(--amber); background: rgba(251,191,36,0.1);
+                  border: 1px solid rgba(251,191,36,0.3); }
+
+  /* Schema table */
+  .schema-section { margin-bottom: 28px; }
+  .table-wrap { background: var(--bg-card); border: 1px solid var(--border-default);
+                 border-radius: 14px; overflow: hidden; backdrop-filter: blur(14px); }
+  table.schema { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table.schema thead { background: rgba(139,92,246,0.06);
+                       border-bottom: 1px solid var(--border-subtle); }
+  table.schema th {
+    text-align: left; padding: 12px 18px; font-family: var(--font-mono);
+    font-size: 10px; font-weight: 600; letter-spacing: 1.2px;
+    text-transform: uppercase; color: var(--text-muted);
+  }
+  table.schema td { padding: 12px 18px; border-bottom: 1px solid var(--border-subtle);
+                     color: var(--text-secondary); }
+  table.schema tr:last-child td { border-bottom: none; }
+  table.schema tr:hover { background: rgba(139,92,246,0.04); }
+  .col-name { color: var(--text-primary); font-weight: 500; }
+  .dtype-pill {
+    font-family: var(--font-mono); font-size: 10px; padding: 2px 8px;
+    border-radius: 6px; letter-spacing: 0.4px;
+  }
+  .dtype-pill.int { color: var(--cyan); background: rgba(34,211,238,0.1);
+                     border: 1px solid rgba(34,211,238,0.3); }
+  .dtype-pill.float { color: var(--violet); background: rgba(139,92,246,0.1);
+                       border: 1px solid rgba(139,92,246,0.3); }
+  .dtype-pill.object { color: var(--amber); background: rgba(251,191,36,0.1);
+                        border: 1px solid rgba(251,191,36,0.3); }
+  .dtype-pill.bool { color: var(--green); background: rgba(52,211,153,0.1);
+                      border: 1px solid rgba(52,211,153,0.3); }
+  .miss-bar { display: inline-flex; align-items: center; gap: 8px; }
+  .miss-bar-track { width: 60px; height: 4px;
+                     background: rgba(139,92,246,0.08); border-radius: 2px; overflow: hidden; }
+  .miss-bar-fill { height: 100%; background: var(--violet); border-radius: 2px; }
+  .miss-bar-fill.high { background: var(--pink); }
+  .miss-bar-fill.zero { background: rgba(139,92,246,0.2); }
+  .miss-pct { font-family: var(--font-mono); font-size: 11px; color: var(--text-secondary); }
+  .sample-vals { font-family: var(--font-mono); font-size: 10.5px;
+                  color: var(--text-muted); }
+
+  /* File metadata footer */
+  .file-meta {
+    display: flex; flex-wrap: wrap; gap: 22px; padding: 16px 22px;
+    background: rgba(139,92,246,0.03); border: 1px solid var(--border-subtle);
+    border-radius: 12px; margin-bottom: 28px; backdrop-filter: blur(8px);
+  }
+  .fm-item { display: flex; flex-direction: column; gap: 2px; }
+  .fm-label { font-family: var(--font-mono); font-size: 9.5px;
+               color: var(--text-faint); letter-spacing: 1px; text-transform: uppercase; }
+  .fm-value { font-size: 12.5px; color: var(--text-secondary); font-family: var(--font-mono); }
+
+  /* Bottom CTA */
+  .bottom-cta { display: flex; justify-content: space-between;
+                 align-items: center; padding: 22px 28px; margin-top: 36px;
+                 background: var(--bg-card); border: 1px solid var(--border-default);
+                 border-radius: 16px; backdrop-filter: blur(14px); }
+  .bottom-cta-text { display: flex; flex-direction: column; }
+  .bottom-cta-text strong { font-size: 15px; color: var(--text-primary); }
+  .bottom-cta-text span { font-size: 12px; color: var(--text-muted); }
+  .btn-primary {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 12px 24px; background: var(--gradient-button); color: white;
+    border: none; border-radius: 12px; font-family: var(--font-body);
+    font-size: 14px; font-weight: 500; cursor: pointer;
+    box-shadow: 0 0 24px rgba(139,92,246,0.4); transition: all 0.22s ease;
+  }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 0 32px rgba(139,92,246,0.6); }
+
+  /* Responsive */
+  @media (max-width: 1024px) {
+    .panel-grid { grid-template-columns: 1fr; }
+    .metric-row { grid-template-columns: repeat(2, 1fr); }
+    .quality-row { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 900px) {
+    .app-frame { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+    .main { padding: 24px 20px 60px; }
+    .hero h1 { font-size: 40px; }
+    .source-tabs { flex-wrap: wrap; }
+  }
+</style>
+</head>
+<body>
+<div class="starfield"></div>
+
+<div class="app-frame">
+  <!-- ============ Sidebar ============ -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">A</div>
+      <div class="brand-name">AutoDS</div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Workspace</div>
+      <div class="nav-item">
+        <div class="icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
+        Home
+      </div>
+      <div class="nav-item">
+        <div class="icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></div>
+        Projects
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Pipeline</div>
+      <div class="project-context">
+        <div class="project-context-label">Active Project</div>
+        <div class="project-context-name">Patient Readmission Risk</div>
+      </div>
+      <div class="pipeline-step active"><span class="dot"></span>Upload</div>
+      <div class="pipeline-step"><span class="dot"></span>Configure</div>
+      <div class="pipeline-step"><span class="dot"></span>EDA</div>
+      <div class="pipeline-step"><span class="dot"></span>Features</div>
+      <div class="pipeline-step"><span class="dot"></span>Modeling</div>
+      <div class="pipeline-step"><span class="dot"></span>Explainability</div>
+      <div class="pipeline-step"><span class="dot"></span>Predict</div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Tools</div>
+      <div class="nav-item">
+        <div class="icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></div>
+        Chat
+      </div>
+      <div class="nav-item">
+        <div class="icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div>
+        Download
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="user-chip">
+        <div class="user-avatar">P</div>
+        <div>
+          <div class="user-name">Parth</div>
+          <div class="user-email">parth@autods.app</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ============ Main ============ -->
+  <main class="main">
+    <div class="topbar">
+      <div class="crumbs">
+        <span>Patient Readmission Risk</span>
+        <span class="sep">/</span>
+        <span class="cur">Upload</span>
+      </div>
+      <div class="topbar-actions">
+        <button class="icon-btn theme-toggle" id="themeToggle" title="Toggle theme">
+          <svg class="icon-moon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <svg class="icon-sun" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+        </button>
+        <div class="icon-btn"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
+      </div>
+    </div>
+
+    <!-- Hero -->
+    <section class="hero">
+      <div class="hero-eyebrow">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Step 1 of 7 — Data Ingestion
+      </div>
+      <h1>Connect your <em>data source.</em></h1>
+      <p>Drop a file, connect a database, pull from cloud storage, or fetch from an API. AutoDS supports 30+ sources and auto-joins multiple tables when you need them.</p>
+    </section>
+
+    <!-- Source tabs -->
+    <div class="source-tabs">
+      <button class="src-tab active" data-panel="manual">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Manual upload
+      </button>
+      <button class="src-tab" data-panel="cloud">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+        Cloud storage
+      </button>
+      <button class="src-tab" data-panel="database">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+        Database
+      </button>
+      <button class="src-tab" data-panel="api">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        API & Web
+      </button>
+    </div>
+
+    <!-- Recent uploads (above panels, only if any exist) -->
+    <div class="recent-strip">
+      <div class="strip-label">Recent uploads</div>
+      <div class="recent-grid">
+        <div class="recent-pill">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          readmissions_2024.csv <span class="meta">2 min ago</span>
+        </div>
+        <div class="recent-pill">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          credit_q3.parquet <span class="meta">2 days ago</span>
+        </div>
+        <div class="recent-pill">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          retail_clv.csv <span class="meta">5 hr ago</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Manual Panel ===== -->
+    <div class="panel active" id="panel-manual">
+      <div class="panel-grid">
+        <div class="drop-zone" id="dropZone">
+          <div class="drop-icon">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          </div>
+          <div class="drop-title">Drag and drop, or click to browse</div>
+          <div class="drop-subtitle">Up to 200 MB per file</div>
+          <button class="drop-cta">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Upload file
+          </button>
+          <div class="drop-formats">
+            <span class="fmt-chip">CSV</span>
+            <span class="fmt-chip">TSV</span>
+            <span class="fmt-chip">XLSX</span>
+            <span class="fmt-chip">XLS</span>
+            <span class="fmt-chip">PARQUET</span>
+            <span class="fmt-chip">JSON</span>
+            <span class="fmt-chip">JSONL</span>
+            <span class="fmt-chip">FEATHER</span>
+            <span class="fmt-chip">ORC</span>
+          </div>
+        </div>
+
+        <div>
+          <div class="info-panel">
+            <h4>
+              <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+              Tips for best results
+            </h4>
+            <ul>
+              <li>First row should be column headers</li>
+              <li>One row per observation</li>
+              <li>Mixed types in a column will be auto-detected and cleaned</li>
+              <li>UTF-8 encoding is preferred</li>
+            </ul>
+          </div>
+          <div class="info-panel">
+            <h4>
+              <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              Privacy
+            </h4>
+            <p>Files stay in your session. Nothing is uploaded to third-party services.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Multi-source -->
+      <div class="multisource expanded" id="multisource">
+        <div class="ms-header" id="msHeader">
+          <div class="ms-title">
+            <h3>Multi-source join</h3>
+            <span class="ms-tag">+2 files</span>
+          </div>
+          <div class="ms-toggle">
+            <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </div>
+        </div>
+
+        <div class="ms-body">
+          <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 4px;">
+            Pick one file as the <strong style="color: var(--violet);">primary</strong>; others become secondary tables joined on detected keys. Roles can be reassigned at any time.
+          </p>
+
+          <div class="ms-files">
+            <div class="ms-file primary">
+              <div class="ms-icon">
+                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              </div>
+              <div class="ms-info">
+                <div class="fname">patients.csv</div>
+                <div class="fmeta">CSV · 1.2 MB · UTF-8</div>
+              </div>
+              <div class="ms-rows">24,380 rows</div>
+              <div class="ms-role-toggle">
+                <button class="ms-role-btn selected">Primary</button>
+                <button class="ms-role-btn">Secondary</button>
+              </div>
+              <div class="ms-action" title="Remove">
+                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </div>
+            </div>
+            <div class="ms-file">
+              <div class="ms-icon">
+                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              </div>
+              <div class="ms-info">
+                <div class="fname">visits.csv</div>
+                <div class="fmeta">CSV · 4.8 MB · UTF-8</div>
+              </div>
+              <div class="ms-rows">98,142 rows</div>
+              <div class="ms-role-toggle">
+                <button class="ms-role-btn">Primary</button>
+                <button class="ms-role-btn selected">Secondary</button>
+              </div>
+              <div class="ms-action">
+                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </div>
+            </div>
+            <div class="ms-file">
+              <div class="ms-icon">
+                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              </div>
+              <div class="ms-info">
+                <div class="fname">labs.parquet</div>
+                <div class="fmeta">Parquet · 2.1 MB</div>
+              </div>
+              <div class="ms-rows">312,558 rows</div>
+              <div class="ms-role-toggle">
+                <button class="ms-role-btn">Primary</button>
+                <button class="ms-role-btn selected">Secondary</button>
+              </div>
+              <div class="ms-action">
+                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </div>
+            </div>
+            <div class="ms-add">
+              <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="vertical-align: middle; margin-right: 4px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Add another file
+            </div>
+          </div>
+
+          <div class="ms-join-config">
+            <div class="ms-join-title">
+              <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
+              Detected joins
+            </div>
+            <div class="ms-join-row">
+              <div style="font-family: var(--font-mono); font-size: 12px;"><strong style="color: var(--violet)">patients</strong>.<span style="color: var(--text-primary)">patient_id</span></div>
+              <div class="ms-arrow">→</div>
+              <div style="font-family: var(--font-mono); font-size: 12px;"><strong>visits</strong>.<span style="color: var(--text-primary)">patient_id</span><span class="ms-detected">auto · 100% match</span></div>
+              <select class="field-select" style="padding: 6px 10px; font-size: 11px;">
+                <option>LEFT JOIN</option>
+                <option>INNER</option>
+                <option>RIGHT</option>
+                <option>FULL</option>
+              </select>
+            </div>
+            <div class="ms-join-row">
+              <div style="font-family: var(--font-mono); font-size: 12px;"><strong style="color: var(--violet)">patients</strong>.<span style="color: var(--text-primary)">patient_id</span></div>
+              <div class="ms-arrow">→</div>
+              <div style="font-family: var(--font-mono); font-size: 12px;"><strong>labs</strong>.<span style="color: var(--text-primary)">subject_id</span><span class="ms-detected" style="color: var(--amber); border-color: rgba(251,191,36,0.3); background: rgba(251,191,36,0.08);">fuzzy · 94% match</span></div>
+              <select class="field-select" style="padding: 6px 10px; font-size: 11px;">
+                <option>LEFT JOIN</option>
+                <option>INNER</option>
+                <option>RIGHT</option>
+                <option>FULL</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Cloud Panel ===== -->
+    <div class="panel" id="panel-cloud">
+      <div class="panel-grid">
+        <div class="conn-card">
+          <h3>Connect to <em style="font-family: var(--font-display); font-style: italic; background: var(--gradient-text); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">cloud storage</em></h3>
+          <p class="conn-sub">Pull objects directly from your cloud bucket. Read-only credentials only.</p>
+
+          <div class="conn-providers">
+            <div class="prov-tile selected">
+              <div class="prov-icon">🪣</div>
+              <div class="prov-name">AWS S3</div>
+            </div>
+            <div class="prov-tile">
+              <div class="prov-icon">☁️</div>
+              <div class="prov-name">Google GCS</div>
+            </div>
+            <div class="prov-tile">
+              <div class="prov-icon">🟦</div>
+              <div class="prov-name">Azure Blob</div>
+            </div>
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <label class="field-label">Bucket name</label>
+              <input class="field-input" placeholder="my-data-bucket" />
+            </div>
+            <div class="field">
+              <label class="field-label">Region</label>
+              <input class="field-input" placeholder="us-east-1" value="us-east-1" />
+            </div>
+          </div>
+          <div class="field">
+            <label class="field-label">Object key or prefix</label>
+            <input class="field-input" placeholder="path/to/file.csv or folder/" />
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label class="field-label">Access Key ID</label>
+              <input class="field-input" placeholder="AKIA…" />
+            </div>
+            <div class="field">
+              <label class="field-label">Secret Access Key</label>
+              <input class="field-input" type="password" placeholder="••••••••" />
+            </div>
+          </div>
+
+          <div class="conn-test">
+            <button class="btn-secondary">Test connection</button>
+            <span class="conn-status ok">
+              <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+              Connected
+            </span>
+          </div>
+        </div>
+
+        <div>
+          <div class="info-panel">
+            <h4>
+              <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              Use IAM with least privilege
+            </h4>
+            <p>Create a dedicated IAM user with <code style="font-family:var(--font-mono);font-size:11px;color:var(--violet)">s3:GetObject</code> on this bucket only.</p>
+          </div>
+          <div class="info-panel">
+            <h4>
+              <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              Credentials handling
+            </h4>
+            <p>Keys are stored encrypted in your session and never logged.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Database Panel ===== -->
+    <div class="panel" id="panel-database">
+      <div class="panel-grid">
+        <div class="conn-card">
+          <h3>Connect to a <em style="font-family: var(--font-display); font-style: italic; background: var(--gradient-text); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">database</em></h3>
+          <p class="conn-sub">Read-only credentials are recommended. Run a SQL query or pull a full table.</p>
+
+          <div class="conn-providers">
+            <div class="prov-tile selected"><div class="prov-icon">🐘</div><div class="prov-name">PostgreSQL</div></div>
+            <div class="prov-tile"><div class="prov-icon">🐬</div><div class="prov-name">MySQL</div></div>
+            <div class="prov-tile"><div class="prov-icon">🔷</div><div class="prov-name">SQL Server</div></div>
+            <div class="prov-tile"><div class="prov-icon">🦆</div><div class="prov-name">DuckDB</div></div>
+            <div class="prov-tile"><div class="prov-icon">📊</div><div class="prov-name">BigQuery</div></div>
+            <div class="prov-tile"><div class="prov-icon">❄️</div><div class="prov-name">Snowflake</div></div>
+            <div class="prov-tile"><div class="prov-icon">🔴</div><div class="prov-name">Redshift</div></div>
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <label class="field-label">Host</label>
+              <input class="field-input" placeholder="db.company.com" />
+            </div>
+            <div class="field">
+              <label class="field-label">Port</label>
+              <input class="field-input" placeholder="5432" value="5432" />
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label class="field-label">Database</label>
+              <input class="field-input" placeholder="analytics" />
+            </div>
+            <div class="field">
+              <label class="field-label">Schema (optional)</label>
+              <input class="field-input" placeholder="public" />
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label class="field-label">Username</label>
+              <input class="field-input" placeholder="readonly_user" />
+            </div>
+            <div class="field">
+              <label class="field-label">Password</label>
+              <input class="field-input" type="password" placeholder="••••••••" />
+            </div>
+          </div>
+          <div class="field">
+            <label class="field-label">Query or table name</label>
+            <textarea class="field-input" rows="3" style="font-family: var(--font-mono); font-size: 12px;" placeholder="SELECT * FROM patients WHERE admitted_at >= '2024-01-01' LIMIT 100000"></textarea>
+          </div>
+
+          <div class="conn-test">
+            <button class="btn-secondary">Test connection</button>
+            <button class="btn-secondary">Preview rows</button>
+          </div>
+        </div>
+
+        <div>
+          <div class="info-panel">
+            <h4>
+              <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              Query best practices
+            </h4>
+            <ul>
+              <li>Add a LIMIT for first run</li>
+              <li>Use indexed columns in WHERE</li>
+              <li>SELECT only the columns you need</li>
+            </ul>
+          </div>
+          <div class="info-panel">
+            <h4>
+              <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              SSL on by default
+            </h4>
+            <p>Cloud databases use TLS. For self-hosted, you can override under Advanced.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== API Panel ===== -->
+    <div class="panel" id="panel-api">
+      <div class="panel-grid">
+        <div class="conn-card">
+          <h3>Pull from an <em style="font-family: var(--font-display); font-style: italic; background: var(--gradient-text); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">API or the web</em></h3>
+          <p class="conn-sub">Hit a REST endpoint, scrape a URL, or load from a public data portal.</p>
+
+          <div class="conn-providers">
+            <div class="prov-tile selected"><div class="prov-icon">🌐</div><div class="prov-name">REST API</div></div>
+            <div class="prov-tile"><div class="prov-icon">🕸️</div><div class="prov-name">Web scrape</div></div>
+            <div class="prov-tile"><div class="prov-icon">📈</div><div class="prov-name">Kaggle</div></div>
+            <div class="prov-tile"><div class="prov-icon">🤗</div><div class="prov-name">HuggingFace</div></div>
+            <div class="prov-tile"><div class="prov-icon">📑</div><div class="prov-name">Sheets</div></div>
+            <div class="prov-tile"><div class="prov-icon">🌎</div><div class="prov-name">World Bank</div></div>
+            <div class="prov-tile"><div class="prov-icon">💵</div><div class="prov-name">FRED</div></div>
+            <div class="prov-tile"><div class="prov-icon">📊</div><div class="prov-name">Yahoo Finance</div></div>
+            <div class="prov-tile"><div class="prov-icon">🇺🇸</div><div class="prov-name">US Census</div></div>
+          </div>
+
+          <div class="field">
+            <label class="field-label">Endpoint URL</label>
+            <input class="field-input" placeholder="https://api.example.com/v1/data" style="font-family: var(--font-mono); font-size: 12px;" />
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label class="field-label">Method</label>
+              <select class="field-select">
+                <option>GET</option>
+                <option>POST</option>
+              </select>
+            </div>
+            <div class="field">
+              <label class="field-label">Auth type</label>
+              <select class="field-select">
+                <option>None</option>
+                <option>Bearer token</option>
+                <option>API key (header)</option>
+                <option>Basic auth</option>
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <label class="field-label">Token / Key</label>
+            <input class="field-input" type="password" placeholder="optional" />
+          </div>
+          <div class="field">
+            <label class="field-label">Response root path (JSON)</label>
+            <input class="field-input" placeholder="data.results" style="font-family: var(--font-mono); font-size: 12px;" />
+          </div>
+
+          <div class="conn-test">
+            <button class="btn-secondary">Test request</button>
+            <button class="btn-secondary">Preview JSON</button>
+          </div>
+        </div>
+
+        <div>
+          <div class="info-panel">
+            <h4>
+              <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+              Pagination
+            </h4>
+            <p>If the endpoint paginates, AutoDS will follow next-page links automatically up to 100 pages.</p>
+          </div>
+          <div class="info-panel">
+            <h4>
+              <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              Rate limits
+            </h4>
+            <p>Respect the source's rate limits — we throttle requests automatically.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Sample dataset gallery ===== -->
+    <section class="sample-section">
+      <div class="sec-divider">
+        <span class="label">Or start with a sample</span>
+        <span class="line"></span>
+      </div>
+      <h2 class="sec-title">Curated <em>sample datasets</em></h2>
+      <p class="sec-sub">One-click load. Each dataset is paired with a domain so AutoDS configures itself appropriately.</p>
+
+      <div class="sample-grid">
+        <div class="sample-card">
+          <div class="sample-head">
+            <div class="sample-name">Iris</div>
+            <div class="sample-domain classification">Classification</div>
+          </div>
+          <div class="sample-desc">Classic flower species dataset for multi-class classification.</div>
+          <div class="sample-stats">
+            <div class="sample-stat"><span class="v">150</span>rows</div>
+            <div class="sample-stat"><span class="v">5</span>cols</div>
+            <div class="sample-stat"><span class="v">8 KB</span></div>
+          </div>
+        </div>
+        <div class="sample-card">
+          <div class="sample-head">
+            <div class="sample-name">Titanic</div>
+            <div class="sample-domain classification">Classification</div>
+          </div>
+          <div class="sample-desc">Passenger survival prediction — binary classification with mixed features.</div>
+          <div class="sample-stats">
+            <div class="sample-stat"><span class="v">891</span>rows</div>
+            <div class="sample-stat"><span class="v">12</span>cols</div>
+            <div class="sample-stat"><span class="v">61 KB</span></div>
+          </div>
+        </div>
+        <div class="sample-card">
+          <div class="sample-head">
+            <div class="sample-name">Heart Disease</div>
+            <div class="sample-domain healthcare">Healthcare</div>
+          </div>
+          <div class="sample-desc">Patient risk factors and presence of heart disease — classic medical classification.</div>
+          <div class="sample-stats">
+            <div class="sample-stat"><span class="v">303</span>rows</div>
+            <div class="sample-stat"><span class="v">14</span>cols</div>
+            <div class="sample-stat"><span class="v">19 KB</span></div>
+          </div>
+        </div>
+        <div class="sample-card">
+          <div class="sample-head">
+            <div class="sample-name">Credit Risk</div>
+            <div class="sample-domain finance">Finance</div>
+          </div>
+          <div class="sample-desc">German credit data — predict default risk from applicant attributes.</div>
+          <div class="sample-stats">
+            <div class="sample-stat"><span class="v">1,000</span>rows</div>
+            <div class="sample-stat"><span class="v">21</span>cols</div>
+            <div class="sample-stat"><span class="v">79 KB</span></div>
+          </div>
+        </div>
+        <div class="sample-card">
+          <div class="sample-head">
+            <div class="sample-name">CA Housing</div>
+            <div class="sample-domain regression">Regression</div>
+          </div>
+          <div class="sample-desc">California house price prediction from census-block features.</div>
+          <div class="sample-stats">
+            <div class="sample-stat"><span class="v">20,640</span>rows</div>
+            <div class="sample-stat"><span class="v">9</span>cols</div>
+            <div class="sample-stat"><span class="v">1.4 MB</span></div>
+          </div>
+        </div>
+        <div class="sample-card">
+          <div class="sample-head">
+            <div class="sample-name">Online Retail</div>
+            <div class="sample-domain ecommerce">E-commerce</div>
+          </div>
+          <div class="sample-desc">UK online store transactions — basket analysis and customer LTV.</div>
+          <div class="sample-stats">
+            <div class="sample-stat"><span class="v">541k</span>rows</div>
+            <div class="sample-stat"><span class="v">8</span>cols</div>
+            <div class="sample-stat"><span class="v">44 MB</span></div>
+          </div>
+        </div>
+        <div class="sample-card">
+          <div class="sample-head">
+            <div class="sample-name">Wine Quality</div>
+            <div class="sample-domain regression">Regression</div>
+          </div>
+          <div class="sample-desc">Predict wine quality scores from physicochemical features.</div>
+          <div class="sample-stats">
+            <div class="sample-stat"><span class="v">4,898</span>rows</div>
+            <div class="sample-stat"><span class="v">12</span>cols</div>
+            <div class="sample-stat"><span class="v">263 KB</span></div>
+          </div>
+        </div>
+        <div class="sample-card">
+          <div class="sample-head">
+            <div class="sample-name">Attrition</div>
+            <div class="sample-domain hr">HR</div>
+          </div>
+          <div class="sample-desc">IBM employee attrition — predict who is likely to leave.</div>
+          <div class="sample-stats">
+            <div class="sample-stat"><span class="v">1,470</span>rows</div>
+            <div class="sample-stat"><span class="v">35</span>cols</div>
+            <div class="sample-stat"><span class="v">228 KB</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== Post-upload result preview (shown by default for the demo) ===== -->
+    <div class="upload-result show" id="uploadResult">
+      <div class="result-header">
+        <div class="result-title">
+          <h2>Loaded <em>readmissions_2024.csv</em></h2>
+          <p>Joined with 2 secondary tables · 24,380 unique patients</p>
+        </div>
+        <div class="domain-detected">
+          <div>
+            <div class="dd-label">Detected domain</div>
+            <div class="dd-value">🏥 Healthcare <span class="dd-confidence">94% confident</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- File metadata strip -->
+      <div class="file-meta">
+        <div class="fm-item">
+          <div class="fm-label">Format</div>
+          <div class="fm-value">CSV</div>
+        </div>
+        <div class="fm-item">
+          <div class="fm-label">Encoding</div>
+          <div class="fm-value">UTF-8</div>
+        </div>
+        <div class="fm-item">
+          <div class="fm-label">Separator</div>
+          <div class="fm-value">,</div>
+        </div>
+        <div class="fm-item">
+          <div class="fm-label">Size on disk</div>
+          <div class="fm-value">1.2 MB</div>
+        </div>
+        <div class="fm-item">
+          <div class="fm-label">Loaded in</div>
+          <div class="fm-value">0.42 s</div>
+        </div>
+        <div class="fm-item">
+          <div class="fm-label">Memory</div>
+          <div class="fm-value">5.7 MB</div>
+        </div>
+      </div>
+
+      <!-- Metric row -->
+      <div class="metric-row">
+        <div class="metric-card">
+          <div class="metric-label">Rows</div>
+          <div class="metric-value">24,380</div>
+          <div class="metric-sub">After dedup</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Columns</div>
+          <div class="metric-value">38</div>
+          <div class="metric-sub">14 num · 22 cat · 2 dt</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Sources joined</div>
+          <div class="metric-value">3</div>
+          <div class="metric-sub">patients · visits · labs</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Memory</div>
+          <div class="metric-value">5.7 MB</div>
+          <div class="metric-sub">In-memory pandas</div>
+        </div>
+      </div>
+
+      <!-- Quality glance -->
+      <div class="quality-section">
+        <h3 style="font-size:14px;font-weight:600;margin-bottom:18px;color:var(--text-primary);display:flex;align-items:center;gap:8px;">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color:var(--violet);"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          Data quality at a glance
+        </h3>
+        <div class="quality-row">
+          <div class="qg-item">
+            <div class="qg-label">Missing values</div>
+            <div class="qg-value"><span class="qg-num">3.2%</span><span class="qg-tag good">Good</span></div>
+            <div class="qg-bar"><div class="qg-fill ok" style="width:3.2%;"></div></div>
+          </div>
+          <div class="qg-item">
+            <div class="qg-label">Duplicates</div>
+            <div class="qg-value"><span class="qg-num">0</span><span class="qg-tag good">None</span></div>
+            <div class="qg-bar"><div class="qg-fill ok" style="width:0%;"></div></div>
+          </div>
+          <div class="qg-item">
+            <div class="qg-label">Constant columns</div>
+            <div class="qg-value"><span class="qg-num">2</span><span class="qg-tag warn">Review</span></div>
+            <div class="qg-bar"><div class="qg-fill warn" style="width:5.3%;"></div></div>
+          </div>
+          <div class="qg-item">
+            <div class="qg-label">High cardinality</div>
+            <div class="qg-value"><span class="qg-num">3</span><span class="qg-tag warn">Review</span></div>
+            <div class="qg-bar"><div class="qg-fill warn" style="width:7.9%;"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Schema table -->
+      <div class="schema-section">
+        <h3 style="font-size:14px;font-weight:600;margin-bottom:14px;color:var(--text-primary);">Schema preview</h3>
+        <div class="table-wrap">
+          <table class="schema">
+            <thead>
+              <tr>
+                <th>Column</th>
+                <th>Type</th>
+                <th>Missing</th>
+                <th>Unique</th>
+                <th>Sample values</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="col-name">patient_id</td>
+                <td><span class="dtype-pill int">int64</span></td>
+                <td><div class="miss-bar"><div class="miss-bar-track"><div class="miss-bar-fill zero" style="width:0%"></div></div><span class="miss-pct">0.0%</span></div></td>
+                <td>24,380</td>
+                <td class="sample-vals">10001, 10002, 10003</td>
+              </tr>
+              <tr>
+                <td class="col-name">age</td>
+                <td><span class="dtype-pill float">float64</span></td>
+                <td><div class="miss-bar"><div class="miss-bar-track"><div class="miss-bar-fill" style="width:1%"></div></div><span class="miss-pct">0.5%</span></div></td>
+                <td>87</td>
+                <td class="sample-vals">54.0, 67.0, 38.0</td>
+              </tr>
+              <tr>
+                <td class="col-name">gender</td>
+                <td><span class="dtype-pill object">object</span></td>
+                <td><div class="miss-bar"><div class="miss-bar-track"><div class="miss-bar-fill zero" style="width:0%"></div></div><span class="miss-pct">0.0%</span></div></td>
+                <td>3</td>
+                <td class="sample-vals">"M", "F", "Other"</td>
+              </tr>
+              <tr>
+                <td class="col-name">admission_type</td>
+                <td><span class="dtype-pill object">object</span></td>
+                <td><div class="miss-bar"><div class="miss-bar-track"><div class="miss-bar-fill" style="width:18%"></div></div><span class="miss-pct">8.7%</span></div></td>
+                <td>5</td>
+                <td class="sample-vals">"emergency", "elective", "urgent"</td>
+              </tr>
+              <tr>
+                <td class="col-name">length_of_stay</td>
+                <td><span class="dtype-pill int">int64</span></td>
+                <td><div class="miss-bar"><div class="miss-bar-track"><div class="miss-bar-fill zero" style="width:0%"></div></div><span class="miss-pct">0.0%</span></div></td>
+                <td>42</td>
+                <td class="sample-vals">3, 5, 12</td>
+              </tr>
+              <tr>
+                <td class="col-name">prior_admissions</td>
+                <td><span class="dtype-pill int">int64</span></td>
+                <td><div class="miss-bar"><div class="miss-bar-track"><div class="miss-bar-fill zero" style="width:0%"></div></div><span class="miss-pct">0.0%</span></div></td>
+                <td>14</td>
+                <td class="sample-vals">0, 1, 4</td>
+              </tr>
+              <tr>
+                <td class="col-name">readmitted_30d</td>
+                <td><span class="dtype-pill bool">bool</span></td>
+                <td><div class="miss-bar"><div class="miss-bar-track"><div class="miss-bar-fill zero" style="width:0%"></div></div><span class="miss-pct">0.0%</span></div></td>
+                <td>2</td>
+                <td class="sample-vals">false, true</td>
+              </tr>
+              <tr>
+                <td class="col-name">discharge_dt</td>
+                <td><span class="dtype-pill object">datetime</span></td>
+                <td><div class="miss-bar"><div class="miss-bar-track"><div class="miss-bar-fill zero" style="width:0%"></div></div><span class="miss-pct">0.0%</span></div></td>
+                <td>4,201</td>
+                <td class="sample-vals">2024-03-12, 2024-03-15, 2024-03-18</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:10px;font-family:var(--font-mono);font-size:11px;color:var(--text-faint);">
+          <span>Showing 8 of 38 columns</span>
+          <span style="color:var(--violet);cursor:pointer;">View all →</span>
+        </div>
+      </div>
+
+      <!-- Bottom CTA -->
+      <div class="bottom-cta">
+        <div class="bottom-cta-text">
+          <strong>Ready to configure your analysis?</strong>
+          <span>Confirm domain, pick a target, and choose your mode.</span>
+        </div>
+        <button class="btn-primary">
+          Continue to Configure
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </button>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+  // Theme toggle
+  const themeToggle = document.getElementById('themeToggle');
+  const html = document.documentElement;
+  const saved = localStorage.getItem('autods-theme');
+  if (saved === 'light' || saved === 'dark') html.setAttribute('data-theme', saved);
+  themeToggle.addEventListener('click', () => {
+    const cur = html.getAttribute('data-theme');
+    const next = cur === 'dark' ? 'light' : 'dark';
+    html.setAttribute('data-theme', next);
+    localStorage.setItem('autods-theme', next);
+  });
+
+  // Source tabs
+  const tabs = document.querySelectorAll('.src-tab');
+  const panels = document.querySelectorAll('.panel');
+  tabs.forEach(t => {
+    t.addEventListener('click', () => {
+      tabs.forEach(x => x.classList.remove('active'));
+      t.classList.add('active');
+      const panelId = 'panel-' + t.dataset.panel;
+      panels.forEach(p => p.classList.toggle('active', p.id === panelId));
+    });
+  });
+
+  // Multi-source expand/collapse
+  document.getElementById('msHeader').addEventListener('click', () => {
+    document.getElementById('multisource').classList.toggle('expanded');
+  });
+
+  // Provider tile select
+  document.querySelectorAll('.conn-providers').forEach(grid => {
+    grid.addEventListener('click', e => {
+      const tile = e.target.closest('.prov-tile');
+      if (!tile) return;
+      grid.querySelectorAll('.prov-tile').forEach(x => x.classList.remove('selected'));
+      tile.classList.add('selected');
+    });
+  });
+
+  // Role toggle in multi-source — pick one as primary
+  document.querySelectorAll('.ms-role-toggle').forEach(toggle => {
+    const buttons = toggle.querySelectorAll('.ms-role-btn');
+    buttons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const fileEl = btn.closest('.ms-file');
+        const isPrimary = btn.textContent.trim() === 'Primary';
+        if (isPrimary) {
+          // Demote any existing primary
+          document.querySelectorAll('.ms-file.primary').forEach(f => {
+            if (f !== fileEl) {
+              f.classList.remove('primary');
+              const t = f.querySelector('.ms-role-toggle');
+              t.querySelectorAll('.ms-role-btn').forEach(b => b.classList.remove('selected'));
+              t.querySelectorAll('.ms-role-btn')[1].classList.add('selected');
+            }
+          });
+          fileEl.classList.add('primary');
+        } else {
+          fileEl.classList.remove('primary');
+        }
+        toggle.querySelectorAll('.ms-role-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+      });
+    });
+  });
+</script>
+</body>
+</html>

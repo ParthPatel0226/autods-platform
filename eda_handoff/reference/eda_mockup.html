@@ -1,0 +1,1807 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AutoDS — EDA Interactive (Sample)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter+Tight:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  /* Tokens (same cosmic theme) */
+  :root, [data-theme="dark"] {
+    --bg-base: #07091A; --bg-elev: #0E1130;
+    --bg-card: rgba(17, 23, 61, 0.55);
+    --bg-card-strong: rgba(17, 23, 61, 0.85);
+    --border-subtle: rgba(139, 92, 246, 0.12);
+    --border-default: rgba(139, 92, 246, 0.22);
+    --border-strong: rgba(139, 92, 246, 0.45);
+    --indigo: #6366F1; --violet: #8B5CF6; --purple: #A855F7;
+    --pink: #EC4899; --cyan: #22D3EE; --green: #34D399;
+    --amber: #FBBF24; --red: #F87171;
+    --text-primary: #F4F4FB; --text-secondary: #C5C7E0;
+    --text-muted: #8489AE; --text-faint: #5C617F;
+    --gradient-text: linear-gradient(135deg, #C5C7FF 0%, #A855F7 50%, #EC4899 100%);
+    --gradient-button: linear-gradient(135deg, #6366F1 0%, #A855F7 100%);
+    --aurora-1: radial-gradient(60% 60% at 20% 10%, rgba(99,102,241,.35) 0%, transparent 60%);
+    --aurora-2: radial-gradient(50% 50% at 85% 30%, rgba(168,85,247,.30) 0%, transparent 65%);
+    --aurora-3: radial-gradient(40% 40% at 50% 100%, rgba(236,72,153,.25) 0%, transparent 60%);
+    --star-opacity: 0.6;
+    --shadow-glow: 0 0 60px -10px rgba(139,92,246,0.35);
+  }
+  [data-theme="light"] {
+    --bg-base: #F7F6FB; --bg-elev: #FFFFFF;
+    --bg-card: rgba(255, 255, 255, 0.72);
+    --bg-card-strong: rgba(255, 255, 255, 0.92);
+    --border-subtle: rgba(99, 102, 241, 0.10);
+    --border-default: rgba(99, 102, 241, 0.22);
+    --border-strong: rgba(139, 92, 246, 0.45);
+    --text-primary: #1A1B2E; --text-secondary: #4A4D6E;
+    --text-muted: #6E7295; --text-faint: #A1A4BD;
+    --gradient-text: linear-gradient(135deg, #6366F1 0%, #8B5CF6 45%, #EC4899 100%);
+    --aurora-1: radial-gradient(60% 60% at 20% 10%, rgba(99,102,241,.18) 0%, transparent 60%);
+    --aurora-2: radial-gradient(50% 50% at 85% 30%, rgba(168,85,247,.14) 0%, transparent 65%);
+    --aurora-3: radial-gradient(40% 40% at 50% 100%, rgba(236,72,153,.10) 0%, transparent 60%);
+    --star-opacity: 0;
+  }
+  :root { --font-display: 'Instrument Serif', serif; --font-body: 'Inter Tight', sans-serif; --font-mono: 'JetBrains Mono', monospace; }
+
+  *,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg-base); color: var(--text-primary);
+    font-family: var(--font-body); font-size: 15px; line-height: 1.55;
+    -webkit-font-smoothing: antialiased; overflow-x: hidden; position: relative;
+    min-height: 100vh; transition: background 0.5s ease, color 0.3s ease;
+  }
+  body::before {
+    content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background: var(--aurora-1), var(--aurora-2), var(--aurora-3);
+  }
+  .starfield {
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background-image:
+      radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,0.7) 50%, transparent 100%),
+      radial-gradient(1px 1px at 70% 60%, rgba(255,255,255,0.5) 50%, transparent 100%),
+      radial-gradient(1px 1px at 40% 80%, rgba(255,255,255,0.6) 50%, transparent 100%),
+      radial-gradient(1.5px 1.5px at 85% 15%, rgba(197,199,255,0.6) 50%, transparent 100%),
+      radial-gradient(1px 1px at 60% 25%, rgba(168,85,247,0.5) 50%, transparent 100%);
+    background-size: 300px 300px;
+    animation: starDrift 120s linear infinite;
+    opacity: var(--star-opacity); transition: opacity 0.5s ease;
+  }
+  @keyframes starDrift { from { transform: translateY(0); } to { transform: translateY(-300px); } }
+  @keyframes pulse {
+    0%,100% { box-shadow: 0 0 0 3px rgba(139,92,246,0.25), 0 0 16px rgba(139,92,246,0.6); }
+    50% { box-shadow: 0 0 0 6px rgba(139,92,246,0.12), 0 0 22px rgba(139,92,246,0.8); }
+  }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* Layout */
+  .app-frame { position: relative; z-index: 1; display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
+
+  /* Sidebar (sidebar nav + EDA active) */
+  .sidebar {
+    background: var(--bg-card-strong); backdrop-filter: blur(18px);
+    border-right: 1px solid var(--border-subtle);
+    padding: 22px 16px; display: flex; flex-direction: column; gap: 18px;
+    position: sticky; top: 0; height: 100vh; overflow-y: auto;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; padding: 4px 8px 14px; border-bottom: 1px solid var(--border-subtle); }
+  .brand-mark { width: 30px; height: 30px; background: var(--gradient-button); border-radius: 8px; box-shadow: 0 0 18px rgba(139,92,246,0.5); display: grid; place-items: center; font-family: var(--font-display); font-size: 18px; color: white; font-style: italic; }
+  .brand-name { font-family: var(--font-display); font-size: 21px; }
+  .nav-section { display: flex; flex-direction: column; gap: 2px; }
+  .nav-label { font-size: 10.5px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-faint); padding: 0 10px 8px; }
+  .nav-item { display: flex; align-items: center; gap: 11px; padding: 8px 10px; border-radius: 8px; color: var(--text-secondary); font-size: 13.5px; cursor: pointer; transition: all 0.18s ease; user-select: none; }
+  .nav-item:hover { background: rgba(139,92,246,0.08); color: var(--text-primary); }
+  .nav-item .icon { width: 16px; height: 16px; display: grid; place-items: center; color: var(--violet); flex-shrink: 0; }
+  .project-context { padding: 8px 10px; margin-bottom: 6px; background: rgba(139,92,246,0.06); border: 1px solid var(--border-subtle); border-radius: 8px; }
+  .project-context-label { font-size: 10px; color: var(--text-faint); letter-spacing: 1.2px; text-transform: uppercase; }
+  .project-context-name { font-size: 13px; color: var(--text-primary); font-weight: 500; margin-top: 2px; }
+  .pipeline-step { display: flex; align-items: center; gap: 11px; padding: 8px 10px 8px 28px; border-radius: 8px; color: var(--text-secondary); font-size: 13px; cursor: pointer; position: relative; }
+  .pipeline-step::before { content: ""; position: absolute; left: 18px; top: -2px; bottom: -2px; width: 1px; background: var(--border-subtle); }
+  .pipeline-step:first-child::before { top: 12px; }
+  .pipeline-step:last-child::before { bottom: 50%; }
+  .pipeline-step .dot { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); width: 11px; height: 11px; border-radius: 50%; background: var(--bg-elev); border: 1.5px solid var(--text-faint); z-index: 1; }
+  .pipeline-step.done .dot { background: var(--green); border-color: var(--green); box-shadow: 0 0 10px rgba(52,211,153,0.5); }
+  .pipeline-step.active .dot { background: var(--violet); border-color: var(--violet); animation: pulse 1.8s ease-in-out infinite; }
+  .pipeline-step.active { color: var(--text-primary); font-weight: 500; }
+  .pipeline-step.done { color: var(--text-muted); }
+  .pipeline-step:hover { background: rgba(139,92,246,0.06); }
+  .sidebar-footer { margin-top: auto; padding-top: 14px; border-top: 1px solid var(--border-subtle); display: flex; flex-direction: column; gap: 6px; }
+  .user-chip { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; background: rgba(139,92,246,0.06); border: 1px solid var(--border-subtle); }
+  .user-avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--gradient-button); display: grid; place-items: center; font-size: 12px; font-weight: 600; color: white; }
+  .user-name { font-size: 13px; color: var(--text-primary); }
+  .user-email { font-size: 10.5px; color: var(--text-muted); }
+
+  /* Main */
+  .main { padding: 36px 0 80px; max-width: 1440px; width: 100%; }
+  .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; padding: 0 56px; }
+  .crumbs { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--text-muted); font-family: var(--font-mono); letter-spacing: 0.4px; }
+  .crumbs span.sep { color: var(--text-faint); }
+  .crumbs span.cur { color: var(--text-primary); }
+  .topbar-actions { display: flex; gap: 12px; align-items: center; }
+  .icon-btn { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 10px; background: var(--bg-card); border: 1px solid var(--border-subtle); color: var(--text-secondary); cursor: pointer; backdrop-filter: blur(12px); transition: all 0.18s ease; }
+  .icon-btn:hover { border-color: var(--border-strong); color: var(--text-primary); }
+  .theme-toggle { background: transparent !important; cursor: pointer; position: relative; overflow: hidden; }
+  .theme-toggle .icon-moon, .theme-toggle .icon-sun { position: absolute; top: 50%; left: 50%; transition: transform 0.4s cubic-bezier(.5,1.5,.5,1), opacity 0.3s ease; }
+  [data-theme="dark"] .theme-toggle .icon-moon { transform: translate(-50%,-50%) rotate(0deg); opacity: 1; }
+  [data-theme="dark"] .theme-toggle .icon-sun { transform: translate(-50%,-50%) rotate(180deg) scale(0); opacity: 0; }
+  [data-theme="light"] .theme-toggle .icon-moon { transform: translate(-50%,-50%) rotate(-180deg) scale(0); opacity: 0; }
+  [data-theme="light"] .theme-toggle .icon-sun { transform: translate(-50%,-50%) rotate(0deg); opacity: 1; color: #F59E0B; }
+
+  /* Phase toggle (demo control) */
+  .phase-toggle {
+    display: flex; background: var(--bg-card); border: 1px solid var(--border-default);
+    border-radius: 999px; padding: 4px; backdrop-filter: blur(12px);
+  }
+  .phase-toggle button {
+    background: transparent; border: none; color: var(--text-muted);
+    font-family: var(--font-body); font-size: 12.5px; font-weight: 500;
+    padding: 7px 16px; border-radius: 999px; cursor: pointer; transition: all 0.2s ease;
+  }
+  .phase-toggle button.active {
+    background: var(--gradient-button); color: white;
+    box-shadow: 0 0 18px rgba(139,92,246,0.4);
+  }
+
+  .hero { padding: 0 56px; margin-bottom: 28px; }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 4px 12px 4px 8px; background: var(--bg-card);
+    border: 1px solid var(--border-default); border-radius: 999px;
+    font-size: 11.5px; color: var(--text-secondary); margin-bottom: 16px;
+    backdrop-filter: blur(12px); font-family: var(--font-mono);
+    letter-spacing: 0.6px; text-transform: uppercase;
+  }
+  .eyebrow svg { width: 14px; height: 14px; color: var(--violet); }
+  .hero h1 { font-family: var(--font-display); font-size: 56px; line-height: 1; letter-spacing: -0.5px; margin-bottom: 12px; }
+  .hero h1 em {
+    font-style: italic;
+    background: var(--gradient-text);
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .hero p { font-size: 16px; color: var(--text-muted); max-width: 720px; }
+
+  /* Phase containers */
+  .phase { display: none; padding: 0 56px; }
+  .phase.active { display: block; animation: fadeUp 0.4s ease; }
+
+  /* ============== PHASE 1 — Questions ============== */
+  .ed-mode-pill {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 5px 14px 5px 10px;
+    background: rgba(139,92,246,0.1);
+    border: 1px solid var(--border-default);
+    border-radius: 999px;
+    font-family: var(--font-mono); font-size: 11px;
+    color: var(--violet); letter-spacing: 0.6px;
+    text-transform: uppercase; margin-bottom: 22px;
+  }
+  .ed-mode-pill .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--violet);
+  }
+
+  /* Question cards */
+  .ed-q-card {
+    background: var(--bg-card); border: 1px solid var(--border-default);
+    border-radius: 18px; padding: 26px 28px; margin-bottom: 20px;
+    backdrop-filter: blur(14px); transition: all 0.22s ease;
+    position: relative; overflow: hidden;
+  }
+  .ed-q-card:hover { border-color: var(--border-strong); }
+  .ed-q-card.answered::before {
+    content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+    background: var(--green);
+    box-shadow: 0 0 14px rgba(52,211,153,0.5);
+  }
+
+  .ed-q-head {
+    display: flex; align-items: flex-start; gap: 14px; margin-bottom: 6px;
+  }
+  .ed-q-num {
+    width: 32px; height: 32px; flex-shrink: 0;
+    border-radius: 50%; display: grid; place-items: center;
+    background: rgba(139,92,246,0.12);
+    border: 1px solid var(--border-default);
+    color: var(--violet);
+    font-family: var(--font-mono); font-size: 13px; font-weight: 600;
+  }
+  .ed-q-card.answered .ed-q-num {
+    background: var(--green); border-color: var(--green); color: white;
+  }
+  .ed-q-card.answered .ed-q-num::after { content: "✓"; }
+  .ed-q-card.answered .ed-q-num span { display: none; }
+  .ed-q-meta {
+    display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
+    margin-bottom: 6px;
+  }
+  .ed-domain-pill {
+    font-family: var(--font-mono); font-size: 9.5px;
+    padding: 3px 10px; border-radius: 999px;
+    letter-spacing: 0.6px; text-transform: uppercase;
+  }
+  .ed-domain-pill.healthcare {
+    color: var(--green); background: rgba(52,211,153,0.1);
+    border: 1px solid rgba(52,211,153,0.3);
+  }
+  .ed-domain-pill.general {
+    color: var(--text-muted); background: rgba(139,92,246,0.06);
+    border: 1px solid var(--border-subtle);
+  }
+  .ed-q-title {
+    font-family: var(--font-display); font-size: 22px;
+    line-height: 1.25; color: var(--text-primary);
+  }
+  .ed-q-tip {
+    display: flex; align-items: flex-start; gap: 10px;
+    margin: 14px 0 18px;
+    padding: 10px 14px;
+    background: rgba(251,191,36,0.06);
+    border: 1px solid rgba(251,191,36,0.2);
+    border-radius: 10px;
+    font-size: 12.5px; color: var(--text-secondary);
+    font-style: italic;
+  }
+  .ed-q-tip svg { width: 14px; height: 14px; color: var(--amber); flex-shrink: 0; margin-top: 2px; }
+
+  /* Single-select option list */
+  .ed-options { display: flex; flex-direction: column; gap: 8px; }
+  .ed-option {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 16px;
+    background: rgba(7,9,26,0.3);
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+    cursor: pointer; transition: all 0.15s ease;
+  }
+  [data-theme="light"] .ed-option { background: rgba(255,255,255,0.5); }
+  .ed-option:hover {
+    background: rgba(139,92,246,0.06); border-color: var(--border-default);
+  }
+  .ed-option.selected {
+    background: rgba(139,92,246,0.14);
+    border-color: var(--violet);
+    box-shadow: 0 0 14px -4px var(--violet);
+  }
+  .ed-option-radio {
+    width: 18px; height: 18px; border-radius: 50%;
+    border: 1.5px solid var(--text-faint);
+    display: grid; place-items: center; flex-shrink: 0;
+    transition: all 0.15s ease;
+  }
+  .ed-option.selected .ed-option-radio {
+    border-color: var(--violet);
+  }
+  .ed-option.selected .ed-option-radio::after {
+    content: "";
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    background: var(--violet);
+    box-shadow: 0 0 8px var(--violet);
+  }
+  .ed-option-checkbox {
+    width: 18px; height: 18px; border-radius: 5px;
+    border: 1.5px solid var(--text-faint);
+    display: grid; place-items: center; flex-shrink: 0;
+    transition: all 0.15s ease;
+  }
+  .ed-option.selected .ed-option-checkbox {
+    background: var(--gradient-button);
+    border-color: var(--violet);
+  }
+  .ed-option.selected .ed-option-checkbox::after {
+    content: "✓"; color: white; font-size: 11px; font-weight: 700;
+  }
+  .ed-option-label { font-size: 14px; color: var(--text-primary); flex: 1; }
+  .ed-option-rec {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-family: var(--font-mono); font-size: 9.5px;
+    padding: 2px 8px; background: rgba(168,85,247,0.1);
+    border: 1px solid rgba(168,85,247,0.3); border-radius: 999px;
+    color: var(--purple); letter-spacing: 0.5px; text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .ed-q-followup {
+    margin-top: 14px; padding-top: 14px;
+    border-top: 1px solid var(--border-subtle);
+  }
+  .ed-q-followup label {
+    display: block; font-size: 11.5px; color: var(--text-muted);
+    margin-bottom: 6px; font-family: var(--font-mono);
+    letter-spacing: 0.5px; text-transform: uppercase;
+  }
+  .ed-followup-input {
+    width: 100%; padding: 10px 14px;
+    font-family: var(--font-body); font-size: 13px; color: var(--text-primary);
+    background: rgba(7,9,26,0.4);
+    border: 1px solid var(--border-subtle); border-radius: 10px;
+  }
+  [data-theme="light"] .ed-followup-input { background: rgba(255,255,255,0.6); }
+  .ed-followup-input:focus {
+    outline: none; border-color: var(--violet);
+    box-shadow: 0 0 0 3px rgba(139,92,246,0.15);
+  }
+
+  /* Auto mode recommendation cards */
+  .ed-auto-block {
+    background: var(--bg-card); border: 1px solid var(--border-default);
+    border-radius: 18px; padding: 24px; margin-bottom: 22px;
+    backdrop-filter: blur(14px);
+  }
+  .ed-auto-head {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    margin-bottom: 16px; gap: 14px;
+  }
+  .ed-auto-title {
+    font-family: var(--font-display); font-size: 22px; margin-bottom: 4px;
+  }
+  .ed-auto-title em {
+    font-style: italic;
+    background: var(--gradient-text);
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .ed-auto-sub { font-size: 13px; color: var(--text-muted); }
+  .ed-accept-all {
+    padding: 8px 16px;
+    background: rgba(139,92,246,0.1); border: 1px solid var(--border-default);
+    border-radius: 999px; color: var(--violet);
+    font-family: var(--font-body); font-size: 12px; font-weight: 500;
+    cursor: pointer; flex-shrink: 0;
+  }
+  .ed-rec-list { display: flex; flex-direction: column; gap: 8px; }
+  .ed-rec-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 14px;
+    background: rgba(139,92,246,0.04);
+    border: 1px solid var(--border-subtle); border-radius: 10px;
+    gap: 14px;
+  }
+  .ed-rec-text { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+  .ed-rec-name { font-size: 13.5px; color: var(--text-primary); }
+  .ed-rec-detail { font-family: var(--font-mono); font-size: 10.5px; color: var(--text-muted); }
+  .ed-rec-toggle {
+    display: flex; gap: 4px; padding: 3px;
+    background: rgba(7,9,26,0.4); border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+  }
+  [data-theme="light"] .ed-rec-toggle { background: rgba(255,255,255,0.5); }
+  .ed-rec-btn {
+    padding: 4px 12px; border: none; background: transparent;
+    color: var(--text-muted); font-size: 11px; font-weight: 500;
+    border-radius: 6px; cursor: pointer; font-family: var(--font-body);
+  }
+  .ed-rec-btn.active {
+    background: var(--gradient-button); color: white;
+    box-shadow: 0 0 8px rgba(139,92,246,0.4);
+  }
+
+  .ed-add-input {
+    margin-top: 14px;
+    display: flex; gap: 8px;
+  }
+  .ed-add-input input {
+    flex: 1; padding: 10px 14px;
+    background: rgba(7,9,26,0.4); border: 1px dashed var(--border-default);
+    border-radius: 10px; color: var(--text-primary);
+    font-family: var(--font-body); font-size: 13px;
+  }
+  [data-theme="light"] .ed-add-input input { background: rgba(255,255,255,0.6); }
+  .ed-add-input input:focus { outline: none; border-color: var(--violet); border-style: solid; }
+  .ed-add-input button {
+    padding: 10px 18px; background: var(--bg-card-strong);
+    border: 1px solid var(--border-default); color: var(--text-primary);
+    border-radius: 10px; font-size: 13px; cursor: pointer; font-family: var(--font-body);
+  }
+
+  /* Sticky bottom action bar (questions phase) */
+  .ed-actionbar {
+    position: sticky; bottom: 0;
+    margin-top: 32px; padding: 16px 24px;
+    background: var(--bg-card-strong);
+    border: 1px solid var(--border-default);
+    border-radius: 16px;
+    backdrop-filter: blur(20px);
+    display: flex; justify-content: space-between; align-items: center;
+    box-shadow: 0 -10px 30px -15px rgba(0,0,0,0.3);
+  }
+  .ed-progress-text { font-family: var(--font-mono); font-size: 12px; color: var(--text-muted); }
+  .ed-progress-text strong { color: var(--text-primary); }
+  .ed-run-btn {
+    padding: 12px 26px;
+    background: var(--gradient-button); color: white;
+    border: none; border-radius: 12px;
+    font-family: var(--font-body); font-size: 14px; font-weight: 500;
+    cursor: pointer; box-shadow: 0 0 24px rgba(139,92,246,0.4);
+    transition: all 0.22s ease;
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .ed-run-btn:hover { transform: translateY(-1px); box-shadow: 0 0 32px rgba(139,92,246,0.6); }
+
+  /* ============== PHASE 2 — Results dashboard ============== */
+  .results-grid {
+    display: flex; flex-direction: column; gap: 28px;
+  }
+
+  /* Filters bar — full width, horizontal layout at the bottom */
+  .filters {
+    background: var(--bg-card); border: 1px solid var(--border-default);
+    border-radius: 14px; padding: 18px 22px;
+    backdrop-filter: blur(14px);
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 28px;
+    align-items: start;
+  }
+  @media (max-width: 800px) { .filters { grid-template-columns: 1fr; } }
+  .filters-group { }
+  .filters-group h4 { margin-top: 0 !important; }
+  .filters h4 {
+    font-family: var(--font-mono); font-size: 10px;
+    letter-spacing: 1.2px; text-transform: uppercase;
+    color: var(--text-faint); margin-bottom: 12px;
+  }
+  .filters h4:not(:first-child) { margin-top: 18px; }
+  .filter-checkbox {
+    display: flex; align-items: center; gap: 10px;
+    padding: 6px 0; font-size: 13px; color: var(--text-secondary);
+    cursor: pointer;
+  }
+  .filter-checkbox input { accent-color: var(--violet); }
+  .filter-checkbox-count {
+    margin-left: auto; font-family: var(--font-mono); font-size: 10px;
+    color: var(--text-muted);
+  }
+  .filter-slider {
+    margin-top: 10px;
+  }
+  .filter-slider input { width: 100%; accent-color: var(--violet); }
+  .filter-slider-meta {
+    display: flex; justify-content: space-between; font-family: var(--font-mono);
+    font-size: 10px; color: var(--text-muted); margin-top: 4px;
+  }
+
+  /* Center column */
+  .results-main {}
+
+  /* Insights summary at top */
+  .ed-insights-summary {
+    background: linear-gradient(135deg, rgba(139,92,246,0.08), rgba(168,85,247,0.04));
+    border: 1px solid var(--border-default); border-radius: 18px;
+    padding: 24px 26px; margin-bottom: 28px;
+    backdrop-filter: blur(14px);
+    position: relative; overflow: hidden;
+  }
+  .ed-insights-summary::before {
+    content: ""; position: absolute; right: -40px; top: -40px;
+    width: 200px; height: 200px;
+    background: radial-gradient(circle, rgba(168,85,247,0.18), transparent 60%);
+    pointer-events: none;
+  }
+  .ed-insights-summary h2 {
+    font-family: var(--font-display); font-size: 24px; margin-bottom: 4px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .ed-insights-summary h2 em {
+    font-style: italic;
+    background: var(--gradient-text);
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .ed-insights-meta {
+    font-family: var(--font-mono); font-size: 11px; color: var(--text-muted);
+    margin-bottom: 18px; display: flex; align-items: center; gap: 12px;
+  }
+  .ed-insight-card {
+    display: flex; gap: 14px; padding: 14px 16px; margin-bottom: 8px;
+    background: var(--bg-card); border: 1px solid var(--border-subtle);
+    border-radius: 12px; cursor: pointer; transition: all 0.18s ease;
+  }
+  .ed-insight-card:hover {
+    transform: translateX(2px); border-color: var(--border-strong);
+    background: rgba(139,92,246,0.08);
+  }
+  .ed-insight-num {
+    width: 26px; height: 26px; flex-shrink: 0;
+    background: rgba(139,92,246,0.12); border: 1px solid var(--border-default);
+    border-radius: 50%; display: grid; place-items: center;
+    color: var(--violet); font-family: var(--font-mono); font-size: 11px;
+  }
+  .ed-insight-body { flex: 1; }
+  .ed-insight-text {
+    font-size: 13.5px; color: var(--text-primary); line-height: 1.5;
+    margin-bottom: 6px;
+  }
+  .ed-insight-meta {
+    display: flex; align-items: center; gap: 8px;
+    font-family: var(--font-mono); font-size: 10px;
+  }
+  .ed-insight-conf {
+    padding: 2px 8px; border-radius: 999px; letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  .ed-insight-conf.high {
+    color: var(--green); background: rgba(52,211,153,0.1);
+    border: 1px solid rgba(52,211,153,0.3);
+  }
+  .ed-insight-conf.medium {
+    color: var(--amber); background: rgba(251,191,36,0.1);
+    border: 1px solid rgba(251,191,36,0.3);
+  }
+  .ed-insight-drill {
+    color: var(--violet); cursor: pointer; margin-left: auto;
+  }
+
+  /* Section headers */
+  .ed-sec {
+    display: flex; align-items: baseline; justify-content: space-between;
+    gap: 12px; margin: 36px 0 18px;
+  }
+  .ed-sec h3 {
+    font-family: var(--font-display); font-size: 26px; line-height: 1.1;
+  }
+  .ed-sec h3 em {
+    font-style: italic;
+    background: var(--gradient-text);
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .ed-sec-meta { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); }
+
+  /* Featured chart (correlation heatmap) */
+  .ed-featured {
+    background: var(--bg-card); border: 1px solid var(--border-default);
+    border-radius: 16px; padding: 22px; margin-bottom: 24px;
+    backdrop-filter: blur(14px);
+  }
+  .ed-featured-head {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    margin-bottom: 14px; gap: 14px;
+  }
+  .ed-featured-title { font-size: 16px; font-weight: 500; color: var(--text-primary); }
+  .ed-featured-tag {
+    font-family: var(--font-mono); font-size: 9.5px;
+    padding: 3px 10px; background: rgba(168,85,247,0.1);
+    border: 1px solid rgba(168,85,247,0.3); border-radius: 999px;
+    color: var(--purple); letter-spacing: 0.6px; text-transform: uppercase;
+  }
+  .ed-heatmap {
+    display: grid; grid-template-columns: 100px repeat(7, 1fr);
+    gap: 2px; padding: 12px 0;
+  }
+  .ed-hm-label {
+    font-family: var(--font-mono); font-size: 10px;
+    color: var(--text-muted); padding: 6px 8px;
+    text-align: right;
+  }
+  .ed-hm-cell {
+    aspect-ratio: 1; border-radius: 4px; display: grid; place-items: center;
+    font-family: var(--font-mono); font-size: 10px; color: white;
+    cursor: pointer; transition: transform 0.15s ease;
+  }
+  .ed-hm-cell:hover { transform: scale(1.1); z-index: 1; box-shadow: 0 0 12px rgba(139,92,246,0.5); }
+  .ed-hm-cell.h-100 { background: #6366F1; }
+  .ed-hm-cell.h-80  { background: rgba(99,102,241,0.85); }
+  .ed-hm-cell.h-60  { background: rgba(99,102,241,0.65); }
+  .ed-hm-cell.h-40  { background: rgba(99,102,241,0.45); color: var(--text-primary);}
+  .ed-hm-cell.h-20  { background: rgba(99,102,241,0.25); color: var(--text-primary);}
+  .ed-hm-cell.h-0   { background: rgba(139,92,246,0.08); color: var(--text-muted);}
+  .ed-hm-cell.h-n20 { background: rgba(236,72,153,0.3); color: var(--text-primary);}
+  .ed-hm-cell.h-n60 { background: rgba(236,72,153,0.6); }
+
+  /* Target distribution callout */
+  .ed-target-callout {
+    background: linear-gradient(135deg, rgba(34,211,238,0.06), rgba(99,102,241,0.04));
+    border: 1px solid rgba(34,211,238,0.3);
+    border-radius: 16px; padding: 20px;
+    margin-bottom: 24px; backdrop-filter: blur(14px);
+  }
+  .ed-tc-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; margin-bottom: 14px; }
+  .ed-tc-title { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+  .ed-tc-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .ed-tc-pill {
+    font-family: var(--font-mono); font-size: 10px;
+    padding: 3px 10px; border-radius: 999px;
+    color: var(--cyan); background: rgba(34,211,238,0.1);
+    border: 1px solid rgba(34,211,238,0.3);
+    letter-spacing: 0.6px; text-transform: uppercase;
+  }
+  .ed-tc-pill.warn {
+    color: var(--amber); background: rgba(251,191,36,0.1);
+    border-color: rgba(251,191,36,0.3);
+  }
+  .ed-tc-bars { display: flex; gap: 4px; height: 28px; margin-bottom: 8px; }
+  .ed-tc-bar {
+    border-radius: 4px;
+    display: grid; place-items: center;
+    color: white; font-family: var(--font-mono); font-size: 10.5px;
+  }
+  .ed-tc-bar.no { background: rgba(99,102,241,0.6); }
+  .ed-tc-bar.yes { background: rgba(236,72,153,0.7); }
+  .ed-tc-legend { display: flex; gap: 18px; font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); }
+  .ed-tc-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; }
+
+  /* Charts grid */
+  .ed-charts-grid {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;
+  }
+  @media (max-width: 800px) { .ed-charts-grid { grid-template-columns: 1fr; } }
+  .ed-chart-tile {
+    background: var(--bg-card); border: 1px solid var(--border-default);
+    border-radius: 14px; padding: 18px;
+    cursor: pointer; transition: all 0.22s ease; backdrop-filter: blur(14px);
+  }
+  .ed-chart-tile:hover { transform: translateY(-2px); border-color: var(--border-strong); box-shadow: 0 8px 22px -10px rgba(139,92,246,0.4); }
+  .ed-chart-head {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    gap: 10px; margin-bottom: 12px;
+  }
+  .ed-chart-title { font-size: 14px; font-weight: 500; color: var(--text-primary); }
+  .ed-chart-sub { font-family: var(--font-mono); font-size: 10.5px; color: var(--text-muted); margin-top: 2px; }
+  .ed-chart-type-pill {
+    font-family: var(--font-mono); font-size: 9px;
+    padding: 2px 7px; border-radius: 999px; letter-spacing: 0.5px;
+    text-transform: uppercase; flex-shrink: 0;
+  }
+  .ed-chart-type-pill.dist { color: var(--violet); background: rgba(139,92,246,0.1); border: 1px solid rgba(139,92,246,0.3); }
+  .ed-chart-type-pill.box  { color: var(--cyan); background: rgba(34,211,238,0.1); border: 1px solid rgba(34,211,238,0.3); }
+  .ed-chart-type-pill.scatter { color: var(--green); background: rgba(52,211,153,0.1); border: 1px solid rgba(52,211,153,0.3); }
+  .ed-chart-type-pill.bar  { color: var(--amber); background: rgba(251,191,36,0.1); border: 1px solid rgba(251,191,36,0.3); }
+  .ed-chart-thumb {
+    height: 140px; border-radius: 10px; margin-bottom: 10px;
+    background-size: cover; background-position: center;
+    border: 1px solid var(--border-subtle);
+    position: relative; overflow: hidden;
+  }
+  .ed-chart-thumb svg { width: 100%; height: 100%; }
+  .ed-chart-caption {
+    font-size: 12px; color: var(--text-muted); line-height: 1.4;
+    padding-top: 8px; border-top: 1px solid var(--border-subtle);
+  }
+
+  /* Statistical findings table */
+  .ed-stats-wrap {
+    background: var(--bg-card); border: 1px solid var(--border-default);
+    border-radius: 14px; overflow: hidden; backdrop-filter: blur(14px);
+  }
+  table.ed-stats {
+    width: 100%; border-collapse: collapse; font-size: 13px;
+  }
+  table.ed-stats thead {
+    background: rgba(139,92,246,0.06);
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  table.ed-stats th {
+    text-align: left; padding: 12px 18px;
+    font-family: var(--font-mono); font-size: 10px;
+    font-weight: 600; letter-spacing: 1.2px;
+    text-transform: uppercase; color: var(--text-muted);
+  }
+  table.ed-stats td { padding: 12px 18px; border-bottom: 1px solid var(--border-subtle); color: var(--text-secondary); }
+  table.ed-stats tr:last-child td { border-bottom: none; }
+  table.ed-stats tr:hover { background: rgba(139,92,246,0.04); }
+  .ed-test-name { color: var(--text-primary); font-weight: 500; }
+  .ed-test-cols { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .ed-pval {
+    font-family: var(--font-mono); font-size: 12px;
+    padding: 2px 8px; border-radius: 6px;
+  }
+  .ed-pval.signif { color: var(--green); background: rgba(52,211,153,0.1); border: 1px solid rgba(52,211,153,0.3); }
+  .ed-pval.weak { color: var(--amber); background: rgba(251,191,36,0.1); border: 1px solid rgba(251,191,36,0.3); }
+  .ed-pval.ns { color: var(--text-muted); background: rgba(139,92,246,0.05); border: 1px solid var(--border-subtle); }
+  .ed-effect {
+    font-family: var(--font-mono); font-size: 11px;
+  }
+  .ed-interp {
+    font-size: 12px; color: var(--text-secondary); font-style: italic;
+  }
+
+  /* Outlier flags + red flags lists */
+  .ed-flag-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+  }
+  @media (max-width: 800px) { .ed-flag-grid { grid-template-columns: 1fr; } }
+  .ed-flag-card {
+    background: var(--bg-card); border: 1px solid var(--border-default);
+    border-radius: 14px; padding: 18px; backdrop-filter: blur(14px);
+  }
+  .ed-flag-head {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 14px;
+  }
+  .ed-flag-head svg { width: 16px; height: 16px; }
+  .ed-flag-card.outliers .ed-flag-head svg { color: var(--amber); }
+  .ed-flag-card.redflags .ed-flag-head svg { color: var(--red); }
+  .ed-flag-title { font-size: 14px; font-weight: 600; }
+  .ed-flag-count {
+    font-family: var(--font-mono); font-size: 10px;
+    padding: 2px 8px; border-radius: 999px; margin-left: auto;
+  }
+  .ed-flag-card.outliers .ed-flag-count {
+    color: var(--amber); background: rgba(251,191,36,0.1);
+    border: 1px solid rgba(251,191,36,0.3);
+  }
+  .ed-flag-card.redflags .ed-flag-count {
+    color: var(--red); background: rgba(248,113,113,0.1);
+    border: 1px solid rgba(248,113,113,0.3);
+  }
+  .ed-flag-list { display: flex; flex-direction: column; gap: 6px; }
+  .ed-flag-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 12px;
+    background: rgba(139,92,246,0.04); border: 1px solid var(--border-subtle);
+    border-radius: 8px; font-size: 12.5px;
+  }
+  .ed-flag-col {
+    font-family: var(--font-mono); font-size: 11.5px;
+    color: var(--violet); padding: 2px 8px;
+    background: rgba(139,92,246,0.08); border-radius: 6px;
+  }
+  .ed-flag-stat { color: var(--text-muted); flex: 1; }
+  .ed-flag-action {
+    font-size: 11px; color: var(--violet); cursor: pointer;
+  }
+
+  /* Bottom action bar — full width grid */
+  .actions {
+    display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px;
+  }
+  @media (max-width: 1024px) { .actions { grid-template-columns: 1fr; } }
+
+  /* ============== Generalized chat composer (above filters/actions) ============== */
+  .ed-chat-composer {
+    background: linear-gradient(135deg, rgba(139,92,246,0.08), rgba(168,85,247,0.04));
+    border: 1px solid var(--border-default);
+    border-radius: 18px; padding: 22px 24px;
+    backdrop-filter: blur(14px);
+    position: relative; overflow: hidden;
+  }
+  .ed-chat-composer::before {
+    content: ""; position: absolute; left: -30px; top: -30px;
+    width: 180px; height: 180px;
+    background: radial-gradient(circle, rgba(168,85,247,0.18), transparent 60%);
+    pointer-events: none;
+  }
+  .ed-chat-head {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 4px;
+  }
+  .ed-chat-head svg { width: 18px; height: 18px; color: var(--violet); flex-shrink: 0; }
+  .ed-chat-title {
+    font-family: var(--font-display); font-size: 22px;
+    color: var(--text-primary);
+  }
+  .ed-chat-title em {
+    font-style: italic;
+    background: var(--gradient-text);
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .ed-chat-sub {
+    font-size: 13px; color: var(--text-muted); margin-bottom: 14px;
+  }
+  .ed-chat-input-row {
+    display: flex; gap: 10px; align-items: stretch;
+  }
+  .ed-chat-input-row input {
+    flex: 1; padding: 12px 16px;
+    background: rgba(7,9,26,0.4);
+    border: 1px solid var(--border-default); border-radius: 12px;
+    color: var(--text-primary); font-family: var(--font-body); font-size: 14px;
+    transition: all 0.18s ease;
+  }
+  [data-theme="light"] .ed-chat-input-row input { background: rgba(255,255,255,0.6); }
+  .ed-chat-input-row input::placeholder { color: var(--text-faint); }
+  .ed-chat-input-row input:focus {
+    outline: none; border-color: var(--violet);
+    box-shadow: 0 0 0 3px rgba(139,92,246,0.15);
+  }
+  .ed-chat-send {
+    padding: 12px 22px;
+    background: var(--gradient-button); color: white;
+    border: none; border-radius: 12px;
+    font-family: var(--font-body); font-size: 13.5px; font-weight: 500;
+    cursor: pointer; box-shadow: 0 0 18px rgba(139,92,246,0.4);
+    transition: all 0.22s ease;
+    display: inline-flex; align-items: center; gap: 8px;
+    white-space: nowrap;
+  }
+  .ed-chat-send:hover { transform: translateY(-1px); box-shadow: 0 0 28px rgba(139,92,246,0.6); }
+  .ed-chat-suggestions {
+    display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px;
+  }
+  .ed-chat-suggestion-label {
+    font-family: var(--font-mono); font-size: 10px;
+    letter-spacing: 1px; text-transform: uppercase;
+    color: var(--text-faint); padding: 4px 0; margin-right: 4px;
+  }
+  .ed-chat-suggestion {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 12px; background: var(--bg-card);
+    border: 1px solid var(--border-subtle); border-radius: 999px;
+    font-size: 12px; color: var(--text-secondary); cursor: pointer;
+    backdrop-filter: blur(8px); transition: all 0.18s ease;
+  }
+  .ed-chat-suggestion:hover {
+    border-color: var(--violet); color: var(--text-primary); transform: translateY(-1px);
+  }
+  .ed-chat-suggestion svg { width: 11px; height: 11px; color: var(--violet); }
+  .actions-card {
+    background: var(--bg-card); border: 1px solid var(--border-default);
+    border-radius: 14px; padding: 18px; backdrop-filter: blur(14px);
+  }
+  .actions-card h4 {
+    font-family: var(--font-mono); font-size: 10px;
+    letter-spacing: 1.2px; text-transform: uppercase;
+    color: var(--text-faint); margin-bottom: 10px;
+  }
+  .actions-cta-primary {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%;
+    padding: 12px 16px;
+    background: var(--gradient-button); color: white;
+    border: none; border-radius: 10px;
+    font-family: var(--font-body); font-size: 14px; font-weight: 500;
+    cursor: pointer; box-shadow: 0 0 20px rgba(139,92,246,0.4);
+    transition: all 0.22s ease;
+  }
+  .actions-cta-primary:hover { transform: translateY(-1px); box-shadow: 0 0 28px rgba(139,92,246,0.6); }
+  .actions-cta-secondary {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%;
+    padding: 10px 16px;
+    background: transparent; color: var(--text-secondary);
+    border: 1px solid var(--border-default); border-radius: 10px;
+    font-family: var(--font-body); font-size: 13px;
+    cursor: pointer; transition: all 0.18s ease;
+    margin-top: 8px;
+  }
+  .actions-cta-secondary:hover { border-color: var(--border-strong); color: var(--text-primary); }
+  .actions-followup label {
+    display: block; font-size: 11.5px; color: var(--text-muted);
+    margin-bottom: 6px;
+  }
+  .actions-followup input {
+    width: 100%; padding: 10px 12px;
+    background: rgba(7,9,26,0.4);
+    border: 1px solid var(--border-subtle); border-radius: 8px;
+    color: var(--text-primary); font-family: var(--font-body); font-size: 12.5px;
+  }
+  [data-theme="light"] .actions-followup input { background: rgba(255,255,255,0.6); }
+  .actions-followup input:focus { outline: none; border-color: var(--violet); box-shadow: 0 0 0 3px rgba(139,92,246,0.15); }
+  .actions-followup-suggestions {
+    display: flex; flex-direction: column; gap: 4px; margin-top: 10px;
+  }
+  .actions-followup-suggestion {
+    font-size: 11.5px; color: var(--text-muted);
+    cursor: pointer; padding: 4px 0;
+    border-bottom: 1px dashed transparent;
+  }
+  .actions-followup-suggestion:hover { color: var(--violet); border-color: var(--border-subtle); }
+
+  /* Responsive */
+  @media (max-width: 900px) {
+    .app-frame { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+    .main { padding: 24px 0 60px; }
+    .topbar, .hero, .phase { padding: 0 20px; }
+    .hero h1 { font-size: 40px; }
+  }
+</style>
+</head>
+<body>
+<div class="starfield"></div>
+
+<div class="app-frame">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">A</div>
+      <div class="brand-name">AutoDS</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Workspace</div>
+      <div class="nav-item">
+        <div class="icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
+        Home
+      </div>
+      <div class="nav-item">
+        <div class="icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></div>
+        Projects
+      </div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Pipeline</div>
+      <div class="project-context">
+        <div class="project-context-label">Active Project</div>
+        <div class="project-context-name">Patient Readmission Risk</div>
+      </div>
+      <div class="pipeline-step done"><span class="dot"></span>Upload</div>
+      <div class="pipeline-step done"><span class="dot"></span>Configure</div>
+      <div class="pipeline-step active"><span class="dot"></span>EDA</div>
+      <div class="pipeline-step"><span class="dot"></span>Features</div>
+      <div class="pipeline-step"><span class="dot"></span>Modeling</div>
+      <div class="pipeline-step"><span class="dot"></span>Explainability</div>
+      <div class="pipeline-step"><span class="dot"></span>Predict</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Tools</div>
+      <div class="nav-item">
+        <div class="icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></div>
+        Chat
+      </div>
+      <div class="nav-item">
+        <div class="icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div>
+        Download
+      </div>
+    </div>
+    <div class="sidebar-footer">
+      <div class="user-chip">
+        <div class="user-avatar">P</div>
+        <div>
+          <div class="user-name">Parth</div>
+          <div class="user-email">parth@autods.app</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+    <div class="topbar">
+      <div class="crumbs">
+        <span>Patient Readmission Risk</span>
+        <span class="sep">/</span>
+        <span class="cur">EDA</span>
+      </div>
+      <div class="topbar-actions">
+        <div class="phase-toggle">
+          <button class="active" data-phase="questions">Questions</button>
+          <button data-phase="results">Results</button>
+        </div>
+        <button class="icon-btn theme-toggle" id="themeToggle" title="Toggle theme">
+          <svg class="icon-moon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <svg class="icon-sun" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Hero -->
+    <section class="hero">
+      <div class="eyebrow">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        Step 3 of 7 — Exploratory Data Analysis
+      </div>
+      <h1 id="heroTitle">Configure your <em>analysis questions.</em></h1>
+      <p id="heroSubtitle">Pick the goals, visualizations, and statistical tests you want. AutoDS will run them all in one go and show you the results.</p>
+    </section>
+
+    <!-- ============ PHASE 1 — Questions ============ -->
+    <div class="phase active" id="phase-questions">
+      <div class="ed-mode-pill">
+        <span class="dot"></span>
+        Guided Mode · Healthcare context
+      </div>
+
+      <!-- Question 1: General -->
+      <div class="ed-q-card answered">
+        <div class="ed-q-head">
+          <div class="ed-q-num"><span>01</span></div>
+          <div style="flex:1;">
+            <div class="ed-q-meta">
+              <span class="ed-domain-pill general">General</span>
+            </div>
+            <div class="ed-q-title">What is your primary analysis goal?</div>
+          </div>
+        </div>
+        <div class="ed-q-tip">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="2" x2="12" y2="6"/><circle cx="12" cy="12" r="4"/><line x1="12" y1="18" x2="12" y2="22"/></svg>
+          Since you have a clear target variable (readmitted_30d), understanding its drivers is most actionable.
+        </div>
+        <div class="ed-options">
+          <div class="ed-option selected">
+            <div class="ed-option-radio"></div>
+            <div class="ed-option-label">Understand what drives the target</div>
+            <div class="ed-option-rec">★ Recommended</div>
+          </div>
+          <div class="ed-option">
+            <div class="ed-option-radio"></div>
+            <div class="ed-option-label">Explore feature relationships</div>
+          </div>
+          <div class="ed-option">
+            <div class="ed-option-radio"></div>
+            <div class="ed-option-label">Deep data quality investigation</div>
+          </div>
+          <div class="ed-option">
+            <div class="ed-option-radio"></div>
+            <div class="ed-option-label">Find natural segments / clusters</div>
+          </div>
+          <div class="ed-option">
+            <div class="ed-option-radio"></div>
+            <div class="ed-option-label">Comprehensive analysis (all of the above)</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Question 2: General -->
+      <div class="ed-q-card answered">
+        <div class="ed-q-head">
+          <div class="ed-q-num"><span>02</span></div>
+          <div style="flex:1;">
+            <div class="ed-q-meta">
+              <span class="ed-domain-pill general">General</span>
+            </div>
+            <div class="ed-q-title">Which visualizations would you like?</div>
+          </div>
+        </div>
+        <div class="ed-q-tip">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="2" x2="12" y2="6"/><circle cx="12" cy="12" r="4"/><line x1="12" y1="18" x2="12" y2="22"/></svg>
+          Distributions and box plots are the most informative starting point.
+        </div>
+        <div class="ed-options">
+          <div class="ed-option selected">
+            <div class="ed-option-checkbox"></div>
+            <div class="ed-option-label">Distribution plots</div>
+            <div class="ed-option-rec">★ Recommended</div>
+          </div>
+          <div class="ed-option selected">
+            <div class="ed-option-checkbox"></div>
+            <div class="ed-option-label">Correlation heatmap</div>
+            <div class="ed-option-rec">★ Recommended</div>
+          </div>
+          <div class="ed-option selected">
+            <div class="ed-option-checkbox"></div>
+            <div class="ed-option-label">Box plots (outlier detection)</div>
+            <div class="ed-option-rec">★ Recommended</div>
+          </div>
+          <div class="ed-option">
+            <div class="ed-option-checkbox"></div>
+            <div class="ed-option-label">Scatter matrix</div>
+          </div>
+          <div class="ed-option">
+            <div class="ed-option-checkbox"></div>
+            <div class="ed-option-label">Missing-value heatmap</div>
+          </div>
+          <div class="ed-option selected">
+            <div class="ed-option-checkbox"></div>
+            <div class="ed-option-label">Target variable analysis</div>
+            <div class="ed-option-rec">★ Recommended</div>
+          </div>
+        </div>
+        <div class="ed-q-followup">
+          <label>Anything else? Add a custom request:</label>
+          <input class="ed-followup-input" placeholder="e.g., distribution of length_of_stay split by gender" />
+        </div>
+      </div>
+
+      <!-- Question 3: General -->
+      <div class="ed-q-card answered">
+        <div class="ed-q-head">
+          <div class="ed-q-num"><span>03</span></div>
+          <div style="flex:1;">
+            <div class="ed-q-meta">
+              <span class="ed-domain-pill general">General</span>
+            </div>
+            <div class="ed-q-title">Which statistical tests should be run?</div>
+          </div>
+        </div>
+        <div class="ed-q-tip">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="2" x2="12" y2="6"/><circle cx="12" cy="12" r="4"/><line x1="12" y1="18" x2="12" y2="22"/></svg>
+          Normality and correlation tests guide later modeling decisions.
+        </div>
+        <div class="ed-options">
+          <div class="ed-option selected">
+            <div class="ed-option-checkbox"></div>
+            <div class="ed-option-label">Independent t-tests (binary group differences)</div>
+            <div class="ed-option-rec">★ Recommended</div>
+          </div>
+          <div class="ed-option selected">
+            <div class="ed-option-checkbox"></div>
+            <div class="ed-option-label">ANOVA (multi-group comparisons)</div>
+            <div class="ed-option-rec">★ Recommended</div>
+          </div>
+          <div class="ed-option selected">
+            <div class="ed-option-checkbox"></div>
+            <div class="ed-option-label">Chi-square (categorical associations)</div>
+            <div class="ed-option-rec">★ Recommended</div>
+          </div>
+          <div class="ed-option">
+            <div class="ed-option-checkbox"></div>
+            <div class="ed-option-label">Mann-Whitney U (non-parametric)</div>
+          </div>
+          <div class="ed-option">
+            <div class="ed-option-checkbox"></div>
+            <div class="ed-option-label">Shapiro-Wilk normality</div>
+          </div>
+          <div class="ed-option">
+            <div class="ed-option-checkbox"></div>
+            <div class="ed-option-label">VIF / multicollinearity</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Question 4: Healthcare-specific -->
+      <div class="ed-q-card">
+        <div class="ed-q-head">
+          <div class="ed-q-num"><span>04</span></div>
+          <div style="flex:1;">
+            <div class="ed-q-meta">
+              <span class="ed-domain-pill healthcare">🏥 Healthcare</span>
+            </div>
+            <div class="ed-q-title">Which clinical patterns should we investigate?</div>
+          </div>
+        </div>
+        <div class="ed-q-tip">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="2" x2="12" y2="6"/><circle cx="12" cy="12" r="4"/><line x1="12" y1="18" x2="12" y2="22"/></svg>
+          Comorbidity burden and readmission timing are key predictors in healthcare.
+        </div>
+        <div class="ed-options">
+          <div class="ed-option">
+            <div class="ed-option-checkbox"></div>
+            <div class="ed-option-label">Charlson Comorbidity Index distribution</div>
+            <div class="ed-option-rec">★ Recommended</div>
+          </div>
+          <div class="ed-option">
+            <div class="ed-option-checkbox"></div>
+            <div class="ed-option-label">Age-stratified readmission rates</div>
+            <div class="ed-option-rec">★ Recommended</div>
+          </div>
+          <div class="ed-option">
+            <div class="ed-option-checkbox"></div>
+            <div class="ed-option-label">Length of stay vs. readmission risk</div>
+            <div class="ed-option-rec">★ Recommended</div>
+          </div>
+          <div class="ed-option">
+            <div class="ed-option-checkbox"></div>
+            <div class="ed-option-label">Diagnosis code clustering (ICD groups)</div>
+          </div>
+          <div class="ed-option">
+            <div class="ed-option-checkbox"></div>
+            <div class="ed-option-label">Time-to-readmission survival curve</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Question 5: Healthcare-specific -->
+      <div class="ed-q-card">
+        <div class="ed-q-head">
+          <div class="ed-q-num"><span>05</span></div>
+          <div style="flex:1;">
+            <div class="ed-q-meta">
+              <span class="ed-domain-pill healthcare">🏥 Healthcare</span>
+            </div>
+            <div class="ed-q-title">Should we audit fairness across demographic groups?</div>
+          </div>
+        </div>
+        <div class="ed-q-tip">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="2" x2="12" y2="6"/><circle cx="12" cy="12" r="4"/><line x1="12" y1="18" x2="12" y2="22"/></svg>
+          HIPAA-aware fairness audits compare outcome rates across protected groups.
+        </div>
+        <div class="ed-options">
+          <div class="ed-option selected">
+            <div class="ed-option-radio"></div>
+            <div class="ed-option-label">Yes — audit by age, gender, race</div>
+            <div class="ed-option-rec">★ Recommended</div>
+          </div>
+          <div class="ed-option">
+            <div class="ed-option-radio"></div>
+            <div class="ed-option-label">Yes — but only by gender</div>
+          </div>
+          <div class="ed-option">
+            <div class="ed-option-radio"></div>
+            <div class="ed-option-label">Skip fairness audit</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sticky action bar -->
+      <div class="ed-actionbar">
+        <div class="ed-progress-text">
+          <strong>3 / 5</strong> questions answered · Estimated runtime: <strong>~2 min</strong>
+        </div>
+        <button class="ed-run-btn" onclick="setPhase('results')">
+          Run Analysis
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- ============ PHASE 2 — Results ============ -->
+    <div class="phase" id="phase-results">
+      <div class="results-grid">
+        <!-- Filters -->
+        <!-- Center: results main content -->
+        <div class="results-main">
+          <!-- Insights summary -->
+          <section class="ed-insights-summary">
+            <h2>Key <em>insights</em></h2>
+            <div class="ed-insights-meta">
+              <span>5 takeaways · LLM-summarized · 28 charts run</span>
+            </div>
+            <div class="ed-insight-card">
+              <div class="ed-insight-num">01</div>
+              <div class="ed-insight-body">
+                <div class="ed-insight-text">Patients with <strong>length_of_stay &gt; 7 days</strong> have a 3.2× higher 30-day readmission rate than those discharged within 5 days.</div>
+                <div class="ed-insight-meta">
+                  <span class="ed-insight-conf high">High confidence</span>
+                  <span style="color:var(--text-muted);">·</span>
+                  <span style="color:var(--text-muted);">p &lt; 0.001, n=24,380</span>
+                  <span class="ed-insight-drill">Drill into this →</span>
+                </div>
+              </div>
+            </div>
+            <div class="ed-insight-card">
+              <div class="ed-insight-num">02</div>
+              <div class="ed-insight-body">
+                <div class="ed-insight-text"><strong>Charlson comorbidity score</strong> shows the strongest correlation with readmission (r = 0.41), more than age alone (r = 0.18).</div>
+                <div class="ed-insight-meta">
+                  <span class="ed-insight-conf high">High confidence</span>
+                  <span style="color:var(--text-muted);">·</span>
+                  <span style="color:var(--text-muted);">Pearson, n=24,380</span>
+                  <span class="ed-insight-drill">Drill into this →</span>
+                </div>
+              </div>
+            </div>
+            <div class="ed-insight-card">
+              <div class="ed-insight-num">03</div>
+              <div class="ed-insight-body">
+                <div class="ed-insight-text">Class imbalance detected: <strong>only 14.2% of patients</strong> are readmitted within 30 days. Consider class-weighted training or SMOTE.</div>
+                <div class="ed-insight-meta">
+                  <span class="ed-insight-conf high">High confidence</span>
+                  <span style="color:var(--text-muted);">·</span>
+                  <span style="color:var(--text-muted);">3,462 / 24,380</span>
+                  <span class="ed-insight-drill">Drill into this →</span>
+                </div>
+              </div>
+            </div>
+            <div class="ed-insight-card">
+              <div class="ed-insight-num">04</div>
+              <div class="ed-insight-body">
+                <div class="ed-insight-text">Readmission rates differ significantly across age groups (ANOVA F=12.4, p&lt;0.001) — patients 65+ have a <strong>22% rate</strong> vs 9% for under-50.</div>
+                <div class="ed-insight-meta">
+                  <span class="ed-insight-conf high">High confidence</span>
+                  <span style="color:var(--text-muted);">·</span>
+                  <span style="color:var(--text-muted);">η² = 0.08</span>
+                  <span class="ed-insight-drill">Drill into this →</span>
+                </div>
+              </div>
+            </div>
+            <div class="ed-insight-card">
+              <div class="ed-insight-num">05</div>
+              <div class="ed-insight-body">
+                <div class="ed-insight-text">Possible <strong>missing-not-at-random</strong> in <code style="font-family:var(--font-mono);font-size:11px;color:var(--violet);">hba1c</code> (38% missing, correlated with admission_type).</div>
+                <div class="ed-insight-meta">
+                  <span class="ed-insight-conf medium">Medium confidence</span>
+                  <span style="color:var(--text-muted);">·</span>
+                  <span style="color:var(--text-muted);">Little's test p=0.04</span>
+                  <span class="ed-insight-drill">Drill into this →</span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Target distribution callout -->
+          <div class="ed-target-callout">
+            <div class="ed-tc-head">
+              <div>
+                <div class="ed-tc-title">🎯 Target distribution: readmitted_30d</div>
+                <div class="ed-tc-sub">Class imbalance — minority class is 14.2% of records. Consider stratified sampling and class weights.</div>
+              </div>
+              <span class="ed-tc-pill warn">Imbalanced</span>
+            </div>
+            <div class="ed-tc-bars">
+              <div class="ed-tc-bar no" style="flex: 85.8;">No (85.8%)</div>
+              <div class="ed-tc-bar yes" style="flex: 14.2;">Yes (14.2%)</div>
+            </div>
+            <div class="ed-tc-legend">
+              <span><span class="ed-tc-dot" style="background: rgba(99,102,241,0.6);"></span>20,918 not readmitted</span>
+              <span><span class="ed-tc-dot" style="background: rgba(236,72,153,0.7);"></span>3,462 readmitted within 30d</span>
+            </div>
+          </div>
+
+          <!-- Featured: Correlation heatmap -->
+          <section>
+            <div class="ed-sec">
+              <h3>Featured <em>chart</em></h3>
+              <span class="ed-sec-meta">Correlation heatmap · numeric columns</span>
+            </div>
+            <div class="ed-featured">
+              <div class="ed-featured-head">
+                <div>
+                  <div class="ed-featured-title">Pearson correlation matrix</div>
+                  <div class="ed-chart-sub" style="margin-top:4px;">7 numeric columns · top 3 correlations with target highlighted</div>
+                </div>
+                <span class="ed-featured-tag">Featured</span>
+              </div>
+              <div class="ed-heatmap">
+                <div></div>
+                <div class="ed-hm-label">age</div>
+                <div class="ed-hm-label">los</div>
+                <div class="ed-hm-label">prior</div>
+                <div class="ed-hm-label">meds</div>
+                <div class="ed-hm-label">bmi</div>
+                <div class="ed-hm-label">hba1c</div>
+                <div class="ed-hm-label">target</div>
+
+                <div class="ed-hm-label">age</div>
+                <div class="ed-hm-cell h-100">1.0</div>
+                <div class="ed-hm-cell h-40">.34</div>
+                <div class="ed-hm-cell h-60">.52</div>
+                <div class="ed-hm-cell h-40">.28</div>
+                <div class="ed-hm-cell h-20">.12</div>
+                <div class="ed-hm-cell h-40">.31</div>
+                <div class="ed-hm-cell h-40">.18</div>
+
+                <div class="ed-hm-label">los</div>
+                <div class="ed-hm-cell h-40">.34</div>
+                <div class="ed-hm-cell h-100">1.0</div>
+                <div class="ed-hm-cell h-60">.47</div>
+                <div class="ed-hm-cell h-60">.55</div>
+                <div class="ed-hm-cell h-0">-.02</div>
+                <div class="ed-hm-cell h-20">.14</div>
+                <div class="ed-hm-cell h-60">.38</div>
+
+                <div class="ed-hm-label">prior</div>
+                <div class="ed-hm-cell h-60">.52</div>
+                <div class="ed-hm-cell h-60">.47</div>
+                <div class="ed-hm-cell h-100">1.0</div>
+                <div class="ed-hm-cell h-40">.36</div>
+                <div class="ed-hm-cell h-20">.09</div>
+                <div class="ed-hm-cell h-40">.27</div>
+                <div class="ed-hm-cell h-60">.45</div>
+
+                <div class="ed-hm-label">meds</div>
+                <div class="ed-hm-cell h-40">.28</div>
+                <div class="ed-hm-cell h-60">.55</div>
+                <div class="ed-hm-cell h-40">.36</div>
+                <div class="ed-hm-cell h-100">1.0</div>
+                <div class="ed-hm-cell h-20">.11</div>
+                <div class="ed-hm-cell h-40">.30</div>
+                <div class="ed-hm-cell h-40">.34</div>
+
+                <div class="ed-hm-label">bmi</div>
+                <div class="ed-hm-cell h-20">.12</div>
+                <div class="ed-hm-cell h-0">-.02</div>
+                <div class="ed-hm-cell h-20">.09</div>
+                <div class="ed-hm-cell h-20">.11</div>
+                <div class="ed-hm-cell h-100">1.0</div>
+                <div class="ed-hm-cell h-40">.29</div>
+                <div class="ed-hm-cell h-20">.08</div>
+
+                <div class="ed-hm-label">hba1c</div>
+                <div class="ed-hm-cell h-40">.31</div>
+                <div class="ed-hm-cell h-20">.14</div>
+                <div class="ed-hm-cell h-40">.27</div>
+                <div class="ed-hm-cell h-40">.30</div>
+                <div class="ed-hm-cell h-40">.29</div>
+                <div class="ed-hm-cell h-100">1.0</div>
+                <div class="ed-hm-cell h-20">.16</div>
+
+                <div class="ed-hm-label" style="color:var(--violet);">target</div>
+                <div class="ed-hm-cell h-40">.18</div>
+                <div class="ed-hm-cell h-60">.38</div>
+                <div class="ed-hm-cell h-60">.45</div>
+                <div class="ed-hm-cell h-40">.34</div>
+                <div class="ed-hm-cell h-20">.08</div>
+                <div class="ed-hm-cell h-20">.16</div>
+                <div class="ed-hm-cell h-100">1.0</div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Charts grid -->
+          <section>
+            <div class="ed-sec">
+              <h3>All <em>charts</em></h3>
+              <span class="ed-sec-meta">23 of 28 visible · 5 hidden by filter</span>
+            </div>
+            <div class="ed-charts-grid">
+              <div class="ed-chart-tile">
+                <div class="ed-chart-head">
+                  <div>
+                    <div class="ed-chart-title">Length of stay distribution</div>
+                    <div class="ed-chart-sub">Histogram · n=24,380</div>
+                  </div>
+                  <span class="ed-chart-type-pill dist">Distribution</span>
+                </div>
+                <div class="ed-chart-thumb">
+                  <svg viewBox="0 0 200 100" preserveAspectRatio="none">
+                    <rect x="0"   y="80" width="22" height="20" fill="rgba(139,92,246,0.6)"/>
+                    <rect x="24"  y="60" width="22" height="40" fill="rgba(139,92,246,0.7)"/>
+                    <rect x="48"  y="20" width="22" height="80" fill="rgba(139,92,246,0.85)"/>
+                    <rect x="72"  y="35" width="22" height="65" fill="rgba(139,92,246,0.75)"/>
+                    <rect x="96"  y="55" width="22" height="45" fill="rgba(139,92,246,0.6)"/>
+                    <rect x="120" y="70" width="22" height="30" fill="rgba(139,92,246,0.5)"/>
+                    <rect x="144" y="82" width="22" height="18" fill="rgba(139,92,246,0.4)"/>
+                    <rect x="168" y="90" width="22" height="10" fill="rgba(139,92,246,0.3)"/>
+                  </svg>
+                </div>
+                <div class="ed-chart-caption">Right-skewed; median = 4 days, p95 = 14 days. Long-stay patients are disproportionately readmitted.</div>
+              </div>
+
+              <div class="ed-chart-tile">
+                <div class="ed-chart-head">
+                  <div>
+                    <div class="ed-chart-title">Age vs readmission</div>
+                    <div class="ed-chart-sub">Box plot by age group</div>
+                  </div>
+                  <span class="ed-chart-type-pill box">Box plot</span>
+                </div>
+                <div class="ed-chart-thumb">
+                  <svg viewBox="0 0 200 100" preserveAspectRatio="none">
+                    <rect x="20"  y="40" width="30" height="30" fill="rgba(34,211,238,0.3)" stroke="rgba(34,211,238,0.8)"/>
+                    <line x1="35" y1="55" x2="35" y2="55" stroke="rgba(34,211,238,1)" stroke-width="2"/>
+                    <line x1="35" y1="40" x2="35" y2="20" stroke="rgba(34,211,238,0.6)"/>
+                    <line x1="35" y1="70" x2="35" y2="85" stroke="rgba(34,211,238,0.6)"/>
+
+                    <rect x="60"  y="35" width="30" height="35" fill="rgba(34,211,238,0.3)" stroke="rgba(34,211,238,0.8)"/>
+                    <line x1="75" y1="50" x2="75" y2="50" stroke="rgba(34,211,238,1)" stroke-width="2"/>
+                    <line x1="75" y1="35" x2="75" y2="15" stroke="rgba(34,211,238,0.6)"/>
+                    <line x1="75" y1="70" x2="75" y2="88" stroke="rgba(34,211,238,0.6)"/>
+
+                    <rect x="100" y="25" width="30" height="40" fill="rgba(34,211,238,0.3)" stroke="rgba(34,211,238,0.8)"/>
+                    <line x1="115" y1="45" x2="115" y2="45" stroke="rgba(34,211,238,1)" stroke-width="2"/>
+                    <line x1="115" y1="25" x2="115" y2="8" stroke="rgba(34,211,238,0.6)"/>
+                    <line x1="115" y1="65" x2="115" y2="92" stroke="rgba(34,211,238,0.6)"/>
+
+                    <rect x="140" y="20" width="30" height="50" fill="rgba(236,72,153,0.3)" stroke="rgba(236,72,153,0.8)"/>
+                    <line x1="155" y1="38" x2="155" y2="38" stroke="rgba(236,72,153,1)" stroke-width="2"/>
+                    <line x1="155" y1="20" x2="155" y2="5" stroke="rgba(236,72,153,0.6)"/>
+                    <line x1="155" y1="70" x2="155" y2="95" stroke="rgba(236,72,153,0.6)"/>
+                  </svg>
+                </div>
+                <div class="ed-chart-caption">Age 65+ shows the highest readmission rate (median 22%) — outliers in younger groups warrant investigation.</div>
+              </div>
+
+              <div class="ed-chart-tile">
+                <div class="ed-chart-head">
+                  <div>
+                    <div class="ed-chart-title">Comorbidity score vs readmission</div>
+                    <div class="ed-chart-sub">Scatter with regression line</div>
+                  </div>
+                  <span class="ed-chart-type-pill scatter">Scatter</span>
+                </div>
+                <div class="ed-chart-thumb">
+                  <svg viewBox="0 0 200 100" preserveAspectRatio="none">
+                    <line x1="0" y1="80" x2="200" y2="20" stroke="rgba(168,85,247,0.6)" stroke-width="1.5" stroke-dasharray="4 2"/>
+                    <circle cx="20"  cy="78" r="2" fill="rgba(52,211,153,0.7)"/>
+                    <circle cx="35"  cy="72" r="2" fill="rgba(52,211,153,0.7)"/>
+                    <circle cx="50"  cy="66" r="2" fill="rgba(52,211,153,0.7)"/>
+                    <circle cx="65"  cy="58" r="2" fill="rgba(52,211,153,0.7)"/>
+                    <circle cx="80"  cy="52" r="2" fill="rgba(168,85,247,0.7)"/>
+                    <circle cx="95"  cy="48" r="2" fill="rgba(168,85,247,0.7)"/>
+                    <circle cx="110" cy="40" r="2" fill="rgba(168,85,247,0.7)"/>
+                    <circle cx="125" cy="34" r="2" fill="rgba(236,72,153,0.7)"/>
+                    <circle cx="140" cy="28" r="2" fill="rgba(236,72,153,0.7)"/>
+                    <circle cx="155" cy="24" r="2" fill="rgba(236,72,153,0.7)"/>
+                    <circle cx="170" cy="22" r="2" fill="rgba(236,72,153,0.7)"/>
+                    <circle cx="185" cy="18" r="2" fill="rgba(236,72,153,0.9)"/>
+                  </svg>
+                </div>
+                <div class="ed-chart-caption">Strong positive linear relationship (r=0.41). Patients with Charlson ≥ 5 have nearly 2× the readmission rate.</div>
+              </div>
+
+              <div class="ed-chart-tile">
+                <div class="ed-chart-head">
+                  <div>
+                    <div class="ed-chart-title">Readmission by admission type</div>
+                    <div class="ed-chart-sub">Bar chart · 5 categories</div>
+                  </div>
+                  <span class="ed-chart-type-pill bar">Bar</span>
+                </div>
+                <div class="ed-chart-thumb">
+                  <svg viewBox="0 0 200 100" preserveAspectRatio="none">
+                    <rect x="10"  y="40" width="28" height="60" fill="rgba(236,72,153,0.7)"/>
+                    <rect x="48"  y="60" width="28" height="40" fill="rgba(168,85,247,0.7)"/>
+                    <rect x="86"  y="35" width="28" height="65" fill="rgba(236,72,153,0.8)"/>
+                    <rect x="124" y="70" width="28" height="30" fill="rgba(99,102,241,0.7)"/>
+                    <rect x="162" y="75" width="28" height="25" fill="rgba(99,102,241,0.6)"/>
+                  </svg>
+                </div>
+                <div class="ed-chart-caption">Emergency and urgent admissions show 2-3× higher readmission rates than elective.</div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Statistical findings -->
+          <section>
+            <div class="ed-sec">
+              <h3>Statistical <em>findings</em></h3>
+              <span class="ed-sec-meta">14 tests · 9 significant at p &lt; 0.05</span>
+            </div>
+            <div class="ed-stats-wrap">
+              <table class="ed-stats">
+                <thead>
+                  <tr>
+                    <th>Test</th>
+                    <th>p-value</th>
+                    <th>Effect size</th>
+                    <th>Interpretation</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>
+                      <div class="ed-test-name">Independent t-test</div>
+                      <div class="ed-test-cols">length_of_stay × readmitted_30d</div>
+                    </td>
+                    <td><span class="ed-pval signif">&lt; 0.001</span></td>
+                    <td class="ed-effect">d = 0.42 (medium)</td>
+                    <td class="ed-interp">Readmitted patients have significantly longer stays.</td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div class="ed-test-name">ANOVA</div>
+                      <div class="ed-test-cols">age_group × readmitted_30d</div>
+                    </td>
+                    <td><span class="ed-pval signif">&lt; 0.001</span></td>
+                    <td class="ed-effect">η² = 0.08 (medium)</td>
+                    <td class="ed-interp">Readmission rate varies meaningfully across age groups.</td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div class="ed-test-name">Chi-square</div>
+                      <div class="ed-test-cols">admission_type × readmitted_30d</div>
+                    </td>
+                    <td><span class="ed-pval signif">&lt; 0.001</span></td>
+                    <td class="ed-effect">V = 0.21 (medium)</td>
+                    <td class="ed-interp">Strong association — emergency admissions readmit most.</td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div class="ed-test-name">Pearson correlation</div>
+                      <div class="ed-test-cols">charlson × readmitted_30d</div>
+                    </td>
+                    <td><span class="ed-pval signif">&lt; 0.001</span></td>
+                    <td class="ed-effect">r = 0.41</td>
+                    <td class="ed-interp">Strongest single feature predictor.</td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div class="ed-test-name">Chi-square</div>
+                      <div class="ed-test-cols">gender × readmitted_30d</div>
+                    </td>
+                    <td><span class="ed-pval weak">0.043</span></td>
+                    <td class="ed-effect">V = 0.04 (small)</td>
+                    <td class="ed-interp">Weak — gender has minor independent effect.</td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div class="ed-test-name">Mann-Whitney U</div>
+                      <div class="ed-test-cols">bmi × readmitted_30d</div>
+                    </td>
+                    <td><span class="ed-pval ns">0.182</span></td>
+                    <td class="ed-effect">U = 1.2e7</td>
+                    <td class="ed-interp">No significant difference in BMI between groups.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <!-- Outliers + Red flags -->
+          <section>
+            <div class="ed-sec">
+              <h3>Quality <em>flags</em></h3>
+              <span class="ed-sec-meta">Issues to address before modeling</span>
+            </div>
+            <div class="ed-flag-grid">
+              <div class="ed-flag-card outliers">
+                <div class="ed-flag-head">
+                  <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                  <div class="ed-flag-title">Outliers detected</div>
+                  <span class="ed-flag-count">4 columns</span>
+                </div>
+                <div class="ed-flag-list">
+                  <div class="ed-flag-item">
+                    <span class="ed-flag-col">length_of_stay</span>
+                    <span class="ed-flag-stat">8.4% above 1.5×IQR</span>
+                    <span class="ed-flag-action">Investigate →</span>
+                  </div>
+                  <div class="ed-flag-item">
+                    <span class="ed-flag-col">num_medications</span>
+                    <span class="ed-flag-stat">6.1% above 1.5×IQR</span>
+                    <span class="ed-flag-action">Investigate →</span>
+                  </div>
+                  <div class="ed-flag-item">
+                    <span class="ed-flag-col">hba1c</span>
+                    <span class="ed-flag-stat">5.7% above 1.5×IQR</span>
+                    <span class="ed-flag-action">Investigate →</span>
+                  </div>
+                  <div class="ed-flag-item">
+                    <span class="ed-flag-col">prior_admissions</span>
+                    <span class="ed-flag-stat">5.2% above 1.5×IQR</span>
+                    <span class="ed-flag-action">Investigate →</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="ed-flag-card redflags">
+                <div class="ed-flag-head">
+                  <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+                  <div class="ed-flag-title">Modeling red flags</div>
+                  <span class="ed-flag-count">3 issues</span>
+                </div>
+                <div class="ed-flag-list">
+                  <div class="ed-flag-item">
+                    <span class="ed-flag-col">discharge_dt</span>
+                    <span class="ed-flag-stat">Possible target leakage (post-event timestamp)</span>
+                    <span class="ed-flag-action">Review →</span>
+                  </div>
+                  <div class="ed-flag-item">
+                    <span class="ed-flag-col">los × meds</span>
+                    <span class="ed-flag-stat">High multicollinearity (VIF = 6.8)</span>
+                    <span class="ed-flag-action">Review →</span>
+                  </div>
+                  <div class="ed-flag-item">
+                    <span class="ed-flag-col">readmitted_30d</span>
+                    <span class="ed-flag-stat">Class imbalance — 14.2% positive</span>
+                    <span class="ed-flag-action">Review →</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <!-- Generalized chat composer (chat for more charts / follow-ups) -->
+        <section class="ed-chat-composer">
+          <div class="ed-chat-head">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+            <h3 class="ed-chat-title">Ask for more <em>charts or analyses.</em></h3>
+          </div>
+          <p class="ed-chat-sub">Type any follow-up question — request a new visualization, drill into a specific column, or compare segments. AutoDS will run it and add the results above.</p>
+          <div class="ed-chat-input-row">
+            <input placeholder="e.g., Show length_of_stay distribution split by gender, with a KS-test p-value" />
+            <button class="ed-chat-send">
+              Send
+              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            </button>
+          </div>
+          <div class="ed-chat-suggestions">
+            <span class="ed-chat-suggestion-label">Try:</span>
+            <span class="ed-chat-suggestion">
+              <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 3v18M5 12h14M19 5l-3 7 3 7"/></svg>
+              Survival curves by age
+            </span>
+            <span class="ed-chat-suggestion">
+              <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/></svg>
+              LOS by admission type
+            </span>
+            <span class="ed-chat-suggestion">
+              <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              hba1c missingness drill-in
+            </span>
+            <span class="ed-chat-suggestion">
+              <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+              Time-to-readmission trend
+            </span>
+          </div>
+        </section>
+
+        <!-- Filters bar (full-width below content) -->
+        <section class="filters">
+          <div class="filters-group">
+            <h4>Chart type</h4>
+            <label class="filter-checkbox">
+              <input type="checkbox" checked /> Distributions <span class="filter-checkbox-count">8</span>
+            </label>
+            <label class="filter-checkbox">
+              <input type="checkbox" checked /> Box plots <span class="filter-checkbox-count">6</span>
+            </label>
+            <label class="filter-checkbox">
+              <input type="checkbox" checked /> Scatter <span class="filter-checkbox-count">4</span>
+            </label>
+            <label class="filter-checkbox">
+              <input type="checkbox" checked /> Bar charts <span class="filter-checkbox-count">5</span>
+            </label>
+            <label class="filter-checkbox">
+              <input type="checkbox" /> Heatmaps <span class="filter-checkbox-count">2</span>
+            </label>
+          </div>
+
+          <div class="filters-group">
+            <h4>Significance</h4>
+            <div class="filter-slider">
+              <input type="range" min="0.01" max="0.10" step="0.01" value="0.05" />
+              <div class="filter-slider-meta">
+                <span>p &lt; 0.01</span>
+                <span>p &lt; 0.05</span>
+                <span>p &lt; 0.10</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="filters-group">
+            <h4>Column</h4>
+            <label class="filter-checkbox">
+              <input type="checkbox" checked /> All columns
+            </label>
+            <label class="filter-checkbox">
+              <input type="checkbox" /> Numeric only
+            </label>
+            <label class="filter-checkbox">
+              <input type="checkbox" /> Categorical only
+            </label>
+          </div>
+        </section>
+
+        <!-- Action bar (full-width below filters) -->
+        <section class="actions">
+          <div class="actions-card">
+            <h4>Next steps</h4>
+            <button class="actions-cta-primary">
+              Continue to Features
+              <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </button>
+            <button class="actions-cta-secondary" onclick="setPhase('questions')">
+              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+              Reconfigure questions
+            </button>
+            <button class="actions-cta-secondary">
+              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Export EDA report
+            </button>
+          </div>
+
+          <div class="actions-card" style="background:rgba(139,92,246,0.04); border-style:dashed;">
+            <h4 style="color:var(--violet);">Run summary</h4>
+            <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted);line-height:1.6;">
+              <div>28 charts generated</div>
+              <div>14 stat tests run</div>
+              <div>5 insights extracted</div>
+              <div>Runtime: 1 min 47 s</div>
+              <div>LLM cost: $0.14</div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+  // Theme toggle
+  const themeToggle = document.getElementById('themeToggle');
+  const html = document.documentElement;
+  const saved = localStorage.getItem('autods-theme');
+  if (saved === 'light' || saved === 'dark') html.setAttribute('data-theme', saved);
+  themeToggle.addEventListener('click', () => {
+    const cur = html.getAttribute('data-theme');
+    const next = cur === 'dark' ? 'light' : 'dark';
+    html.setAttribute('data-theme', next);
+    localStorage.setItem('autods-theme', next);
+  });
+
+  // Phase toggle
+  function setPhase(name) {
+    document.querySelectorAll('.phase').forEach(p => p.classList.remove('active'));
+    document.getElementById('phase-' + name).classList.add('active');
+    document.querySelectorAll('.phase-toggle button').forEach(b => {
+      b.classList.toggle('active', b.dataset.phase === name);
+    });
+    if (name === 'questions') {
+      document.getElementById('heroTitle').innerHTML = 'Configure your <em>analysis questions.</em>';
+      document.getElementById('heroSubtitle').textContent = "Pick the goals, visualizations, and statistical tests you want. AutoDS will run them all in one go and show you the results.";
+    } else {
+      document.getElementById('heroTitle').innerHTML = 'Your <em>EDA results.</em>';
+      document.getElementById('heroSubtitle').textContent = '5 insights, 28 charts, 14 statistical tests. Filter, drill in, or ask a follow-up.';
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  document.querySelectorAll('.phase-toggle button').forEach(b => {
+    b.addEventListener('click', () => setPhase(b.dataset.phase));
+  });
+
+  // Question option toggling
+  document.querySelectorAll('.ed-options').forEach(group => {
+    group.addEventListener('click', e => {
+      const opt = e.target.closest('.ed-option');
+      if (!opt) return;
+      const isRadio = opt.querySelector('.ed-option-radio');
+      if (isRadio) {
+        group.querySelectorAll('.ed-option').forEach(o => o.classList.remove('selected'));
+        opt.classList.add('selected');
+      } else {
+        opt.classList.toggle('selected');
+      }
+    });
+  });
+</script>
+</body>
+</html>

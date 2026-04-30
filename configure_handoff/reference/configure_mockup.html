@@ -1,0 +1,1162 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AutoDS — Configure (Sample)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter+Tight:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  /* Tokens */
+  :root, [data-theme="dark"] {
+    --bg-base: #07091A; --bg-elev: #0E1130;
+    --bg-card: rgba(17, 23, 61, 0.55);
+    --bg-card-strong: rgba(17, 23, 61, 0.85);
+    --border-subtle: rgba(139, 92, 246, 0.12);
+    --border-default: rgba(139, 92, 246, 0.22);
+    --border-strong: rgba(139, 92, 246, 0.45);
+    --indigo: #6366F1; --violet: #8B5CF6; --purple: #A855F7;
+    --pink: #EC4899; --cyan: #22D3EE; --green: #34D399;
+    --amber: #FBBF24; --red: #F87171;
+    --text-primary: #F4F4FB; --text-secondary: #C5C7E0;
+    --text-muted: #8489AE; --text-faint: #5C617F;
+    --gradient-text: linear-gradient(135deg, #C5C7FF 0%, #A855F7 50%, #EC4899 100%);
+    --gradient-button: linear-gradient(135deg, #6366F1 0%, #A855F7 100%);
+    --aurora-1: radial-gradient(60% 60% at 20% 10%, rgba(99,102,241,.35) 0%, transparent 60%);
+    --aurora-2: radial-gradient(50% 50% at 85% 30%, rgba(168,85,247,.30) 0%, transparent 65%);
+    --aurora-3: radial-gradient(40% 40% at 50% 100%, rgba(236,72,153,.25) 0%, transparent 60%);
+    --star-opacity: 0.6;
+    --shadow-glow: 0 0 60px -10px rgba(139,92,246,0.35);
+  }
+  [data-theme="light"] {
+    --bg-base: #F7F6FB; --bg-elev: #FFFFFF;
+    --bg-card: rgba(255,255,255,0.72); --bg-card-strong: rgba(255,255,255,0.92);
+    --border-subtle: rgba(99,102,241,0.10); --border-default: rgba(99,102,241,0.22);
+    --border-strong: rgba(139,92,246,0.45);
+    --text-primary: #1A1B2E; --text-secondary: #4A4D6E;
+    --text-muted: #6E7295; --text-faint: #A1A4BD;
+    --gradient-text: linear-gradient(135deg, #6366F1 0%, #8B5CF6 45%, #EC4899 100%);
+    --aurora-1: radial-gradient(60% 60% at 20% 10%, rgba(99,102,241,.18) 0%, transparent 60%);
+    --aurora-2: radial-gradient(50% 50% at 85% 30%, rgba(168,85,247,.14) 0%, transparent 65%);
+    --aurora-3: radial-gradient(40% 40% at 50% 100%, rgba(236,72,153,.10) 0%, transparent 60%);
+    --star-opacity: 0;
+    --shadow-glow: 0 0 60px -10px rgba(139,92,246,0.20);
+  }
+  :root { --font-display: 'Instrument Serif', serif; --font-body: 'Inter Tight', sans-serif; --font-mono: 'JetBrains Mono', monospace; }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg-base); color: var(--text-primary);
+    font-family: var(--font-body); font-size: 15px; line-height: 1.55;
+    -webkit-font-smoothing: antialiased; overflow-x: hidden; position: relative;
+    transition: background 0.5s ease, color 0.3s ease; min-height: 100vh;
+  }
+  body::before {
+    content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background: var(--aurora-1), var(--aurora-2), var(--aurora-3);
+  }
+  .starfield {
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background-image:
+      radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,0.7) 50%, transparent 100%),
+      radial-gradient(1px 1px at 70% 60%, rgba(255,255,255,0.5) 50%, transparent 100%),
+      radial-gradient(1px 1px at 40% 80%, rgba(255,255,255,0.6) 50%, transparent 100%),
+      radial-gradient(1.5px 1.5px at 85% 15%, rgba(197,199,255,0.6) 50%, transparent 100%),
+      radial-gradient(1px 1px at 60% 25%, rgba(168,85,247,0.5) 50%, transparent 100%);
+    background-size: 300px 300px;
+    animation: starDrift 120s linear infinite;
+    opacity: var(--star-opacity); transition: opacity 0.5s ease;
+  }
+  @keyframes starDrift { from { transform: translateY(0); } to { transform: translateY(-300px); } }
+  @keyframes pulse {
+    0%,100% { box-shadow: 0 0 0 3px rgba(139,92,246,0.25), 0 0 16px rgba(139,92,246,0.6); }
+    50% { box-shadow: 0 0 0 6px rgba(139,92,246,0.12), 0 0 22px rgba(139,92,246,0.8); }
+  }
+
+  /* Layout */
+  .app-frame { position: relative; z-index: 1; display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
+
+  /* Sidebar (compact, with active project + Configure step active) */
+  .sidebar {
+    background: var(--bg-card-strong); backdrop-filter: blur(18px);
+    border-right: 1px solid var(--border-subtle);
+    padding: 22px 16px; display: flex; flex-direction: column; gap: 18px;
+    position: sticky; top: 0; height: 100vh; overflow-y: auto;
+  }
+  .brand { display: flex; align-items: center; gap: 10px;
+           padding: 4px 8px 14px; border-bottom: 1px solid var(--border-subtle); }
+  .brand-mark { width: 30px; height: 30px; background: var(--gradient-button);
+                border-radius: 8px; box-shadow: 0 0 18px rgba(139,92,246,0.5);
+                display: grid; place-items: center; font-family: var(--font-display);
+                font-size: 18px; color: white; font-style: italic; }
+  .brand-name { font-family: var(--font-display); font-size: 21px; }
+  .nav-section { display: flex; flex-direction: column; gap: 2px; }
+  .nav-label { font-size: 10.5px; font-weight: 600; letter-spacing: 1.5px;
+               text-transform: uppercase; color: var(--text-faint); padding: 0 10px 8px; }
+  .nav-item { display: flex; align-items: center; gap: 11px; padding: 8px 10px;
+              border-radius: 8px; color: var(--text-secondary); font-size: 13.5px;
+              cursor: pointer; transition: all 0.18s ease; user-select: none; }
+  .nav-item:hover { background: rgba(139,92,246,0.08); color: var(--text-primary); }
+  .nav-item .icon { width: 16px; height: 16px; display: grid; place-items: center; color: var(--violet); flex-shrink: 0; }
+  .project-context { padding: 8px 10px; margin-bottom: 6px;
+                     background: rgba(139,92,246,0.06);
+                     border: 1px solid var(--border-subtle); border-radius: 8px; }
+  .project-context-label { font-size: 10px; color: var(--text-faint);
+                           letter-spacing: 1.2px; text-transform: uppercase; }
+  .project-context-name { font-size: 13px; color: var(--text-primary); font-weight: 500; margin-top: 2px; }
+  .pipeline-step {
+    display: flex; align-items: center; gap: 11px;
+    padding: 8px 10px 8px 28px; border-radius: 8px;
+    color: var(--text-secondary); font-size: 13px; cursor: pointer; position: relative;
+  }
+  .pipeline-step::before {
+    content: ""; position: absolute; left: 18px; top: -2px; bottom: -2px;
+    width: 1px; background: var(--border-subtle);
+  }
+  .pipeline-step:first-child::before { top: 12px; }
+  .pipeline-step:last-child::before { bottom: 50%; }
+  .pipeline-step .dot {
+    position: absolute; left: 13px; top: 50%; transform: translateY(-50%);
+    width: 11px; height: 11px; border-radius: 50%;
+    background: var(--bg-elev); border: 1.5px solid var(--text-faint); z-index: 1;
+  }
+  .pipeline-step.done .dot { background: var(--green); border-color: var(--green); box-shadow: 0 0 10px rgba(52,211,153,0.5); }
+  .pipeline-step.active .dot { background: var(--violet); border-color: var(--violet); animation: pulse 1.8s ease-in-out infinite; }
+  .pipeline-step.active { color: var(--text-primary); font-weight: 500; }
+  .pipeline-step.done { color: var(--text-muted); }
+  .pipeline-step:hover { background: rgba(139,92,246,0.06); }
+  .sidebar-footer { margin-top: auto; padding-top: 14px;
+                    border-top: 1px solid var(--border-subtle);
+                    display: flex; flex-direction: column; gap: 6px; }
+  .user-chip { display: flex; align-items: center; gap: 10px; padding: 8px 10px;
+               border-radius: 10px; background: rgba(139,92,246,0.06);
+               border: 1px solid var(--border-subtle); }
+  .user-avatar { width: 28px; height: 28px; border-radius: 50%;
+                 background: var(--gradient-button); display: grid; place-items: center;
+                 font-size: 12px; font-weight: 600; color: white; }
+  .user-name { font-size: 13px; color: var(--text-primary); }
+  .user-email { font-size: 10.5px; color: var(--text-muted); }
+
+  /* Main */
+  .main { padding: 36px 0 80px; max-width: 1280px; width: 100%; }
+  .main-inner {
+    display: grid; grid-template-columns: 1fr 340px; gap: 32px;
+    padding: 0 56px;
+  }
+
+  /* Topbar */
+  .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; padding: 0 56px; }
+  .crumbs { display: flex; align-items: center; gap: 8px; font-size: 12.5px;
+            color: var(--text-muted); font-family: var(--font-mono); letter-spacing: 0.4px; }
+  .crumbs span.sep { color: var(--text-faint); }
+  .crumbs span.cur { color: var(--text-primary); }
+  .topbar-actions { display: flex; gap: 12px; align-items: center; }
+  .icon-btn { width: 36px; height: 36px; display: grid; place-items: center;
+              border-radius: 10px; background: var(--bg-card);
+              border: 1px solid var(--border-subtle); color: var(--text-secondary);
+              cursor: pointer; backdrop-filter: blur(12px); transition: all 0.18s ease; }
+  .icon-btn:hover { border-color: var(--border-strong); color: var(--text-primary); }
+  .theme-toggle { background: transparent !important; cursor: pointer; position: relative; overflow: hidden; }
+  .theme-toggle .icon-moon, .theme-toggle .icon-sun {
+    position: absolute; top: 50%; left: 50%;
+    transition: transform 0.4s cubic-bezier(.5,1.5,.5,1), opacity 0.3s ease;
+  }
+  [data-theme="dark"] .theme-toggle .icon-moon { transform: translate(-50%,-50%) rotate(0deg); opacity: 1; }
+  [data-theme="dark"] .theme-toggle .icon-sun { transform: translate(-50%,-50%) rotate(180deg) scale(0); opacity: 0; }
+  [data-theme="light"] .theme-toggle .icon-moon { transform: translate(-50%,-50%) rotate(-180deg) scale(0); opacity: 0; }
+  [data-theme="light"] .theme-toggle .icon-sun { transform: translate(-50%,-50%) rotate(0deg); opacity: 1; color: #F59E0B; }
+
+  /* Hero */
+  .hero { padding: 0 56px; margin-bottom: 28px; }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 4px 12px 4px 8px; background: var(--bg-card);
+    border: 1px solid var(--border-default); border-radius: 999px;
+    font-size: 11.5px; color: var(--text-secondary); margin-bottom: 16px;
+    backdrop-filter: blur(12px); font-family: var(--font-mono);
+    letter-spacing: 0.6px; text-transform: uppercase;
+  }
+  .eyebrow svg { width: 14px; height: 14px; color: var(--violet); }
+  .hero h1 {
+    font-family: var(--font-display); font-size: 56px;
+    line-height: 1; letter-spacing: -0.5px; margin-bottom: 12px;
+  }
+  .hero h1 em {
+    font-style: italic;
+    background: var(--gradient-text);
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .hero p { font-size: 16px; color: var(--text-muted); max-width: 720px; }
+
+  /* Dataset recap strip */
+  .recap-strip {
+    display: flex; flex-wrap: wrap; gap: 22px; padding: 18px 22px;
+    background: rgba(139,92,246,0.03);
+    border: 1px solid var(--border-subtle); border-radius: 14px;
+    backdrop-filter: blur(8px); margin-bottom: 36px;
+  }
+  .recap-item { display: flex; flex-direction: column; gap: 2px; min-width: 90px; }
+  .recap-label {
+    font-family: var(--font-mono); font-size: 9.5px;
+    color: var(--text-faint); letter-spacing: 1px; text-transform: uppercase;
+  }
+  .recap-value {
+    font-family: var(--font-display); font-size: 22px;
+    color: var(--text-primary); line-height: 1;
+  }
+  .recap-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; font-family: var(--font-mono); }
+
+  /* Section structure */
+  .section { margin-bottom: 56px; }
+  .sec-header { display: flex; align-items: baseline; gap: 12px; margin-bottom: 6px; flex-wrap: wrap; }
+  .sec-num {
+    font-family: var(--font-mono); font-size: 11px;
+    padding: 3px 10px; background: rgba(139,92,246,0.08);
+    border: 1px solid var(--border-subtle); border-radius: 999px;
+    color: var(--violet); letter-spacing: 1px;
+  }
+  .sec-title { font-family: var(--font-display); font-size: 30px; line-height: 1.1; }
+  .sec-title em {
+    font-style: italic;
+    background: var(--gradient-text);
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .sec-sub { font-size: 14px; color: var(--text-muted); margin: 4px 0 22px; }
+
+  /* Domain cards */
+  .domain-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 12px; margin-bottom: 16px;
+  }
+  .domain-card {
+    background: var(--bg-card); border: 1px solid var(--border-default);
+    border-radius: 14px; padding: 16px; text-align: center; cursor: pointer;
+    transition: all 0.2s ease; backdrop-filter: blur(14px);
+    position: relative; overflow: hidden;
+  }
+  .domain-card:hover { transform: translateY(-2px); border-color: var(--border-strong); }
+  .domain-card.detected {
+    background: rgba(139,92,246,0.12);
+    border-color: var(--violet);
+    box-shadow: 0 0 20px -4px var(--violet);
+  }
+  .domain-card.selected {
+    background: rgba(139,92,246,0.18);
+    border-color: var(--violet);
+    box-shadow: 0 0 24px -4px var(--violet);
+  }
+  .domain-icon { font-size: 26px; margin-bottom: 8px; }
+  .domain-name { font-size: 13px; font-weight: 500; color: var(--text-primary); }
+  .domain-detected-badge {
+    position: absolute; top: 6px; right: 6px;
+    font-family: var(--font-mono); font-size: 9px;
+    padding: 2px 6px; background: var(--gradient-button); color: white;
+    border-radius: 999px; letter-spacing: 0.5px; text-transform: uppercase;
+  }
+
+  .why-button {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: transparent; border: none; color: var(--violet);
+    font-family: var(--font-body); font-size: 12.5px; cursor: pointer;
+    padding: 6px 0; transition: opacity 0.2s ease;
+  }
+  .why-button:hover { opacity: 0.8; }
+  .why-panel {
+    background: rgba(139,92,246,0.04);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px; padding: 16px 18px; margin-top: 8px;
+    display: none;
+  }
+  .why-panel.open { display: block; animation: fadeUp 0.25s ease; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+  .why-title {
+    font-size: 12px; font-weight: 600; color: var(--text-primary);
+    margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
+  }
+  .why-signals { display: flex; flex-direction: column; gap: 6px; }
+  .why-signal {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 12.5px; color: var(--text-secondary);
+  }
+  .why-signal-bar {
+    flex: 1; height: 4px; background: rgba(139,92,246,0.1);
+    border-radius: 2px; overflow: hidden;
+  }
+  .why-signal-fill { height: 100%; background: var(--gradient-button); border-radius: 2px; }
+  .why-signal-col {
+    font-family: var(--font-mono); font-size: 11px; color: var(--violet);
+    padding: 2px 8px; background: rgba(139,92,246,0.08);
+    border-radius: 6px; min-width: 110px; text-align: center;
+  }
+  .why-signal-pct { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); min-width: 36px; }
+
+  /* Compliance notice */
+  .compliance-notice {
+    display: flex; gap: 14px; align-items: flex-start;
+    padding: 16px 20px; margin-top: 16px;
+    background: rgba(34,211,238,0.06);
+    border: 1px solid rgba(34,211,238,0.3);
+    border-radius: 12px;
+  }
+  .compliance-icon {
+    width: 32px; height: 32px; flex-shrink: 0;
+    background: rgba(34,211,238,0.12); border-radius: 50%;
+    display: grid; place-items: center; color: var(--cyan);
+  }
+  .compliance-title { font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
+  .compliance-text { font-size: 12.5px; color: var(--text-muted); line-height: 1.5; }
+  .compliance-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .compliance-tag {
+    font-family: var(--font-mono); font-size: 9.5px;
+    padding: 2px 8px; background: rgba(34,211,238,0.1);
+    border: 1px solid rgba(34,211,238,0.3);
+    border-radius: 999px; color: var(--cyan);
+    letter-spacing: 0.5px; text-transform: uppercase;
+  }
+
+  /* Mode flashcards */
+  .mode-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 16px;
+  }
+  .mode-card {
+    background: var(--bg-card); border: 1px solid var(--border-default);
+    border-radius: 16px; padding: 22px 20px;
+    cursor: pointer; transition: all 0.25s ease;
+    backdrop-filter: blur(14px); position: relative; overflow: hidden;
+  }
+  .mode-card:hover { transform: translateY(-3px); border-color: var(--border-strong); }
+  .mode-card.selected {
+    background: rgba(139,92,246,0.15);
+    border-color: var(--violet);
+    box-shadow: 0 0 28px -4px var(--violet);
+  }
+  .mode-card.selected::before {
+    content: ""; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: var(--gradient-button);
+  }
+  .mode-recommended {
+    position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
+    font-family: var(--font-mono); font-size: 10px;
+    padding: 3px 12px; background: var(--gradient-button); color: white;
+    border-radius: 999px; letter-spacing: 0.6px; text-transform: uppercase;
+    box-shadow: 0 4px 12px -2px var(--violet);
+  }
+  .mode-icon { font-size: 28px; margin-bottom: 12px; }
+  .mode-name { font-family: var(--font-display); font-size: 22px; margin-bottom: 4px; }
+  .mode-tagline { font-size: 13px; color: var(--text-muted); margin-bottom: 14px; }
+  .mode-meta {
+    display: flex; gap: 12px; padding-top: 12px;
+    border-top: 1px solid var(--border-subtle);
+    font-family: var(--font-mono); font-size: 10.5px;
+    color: var(--text-secondary);
+  }
+  .mode-meta-item { display: flex; align-items: center; gap: 5px; }
+  .mode-meta-item svg { width: 12px; height: 12px; color: var(--violet); }
+
+  /* Auto unsure helper */
+  .unsure-block {
+    margin-top: 18px; padding: 22px;
+    background: rgba(139,92,246,0.04);
+    border: 1px dashed var(--border-default);
+    border-radius: 16px;
+  }
+  .unsure-title {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 14px; font-weight: 600; margin-bottom: 6px;
+  }
+  .unsure-title svg { width: 16px; height: 16px; color: var(--violet); }
+  .unsure-sub { font-size: 12.5px; color: var(--text-muted); margin-bottom: 14px; }
+  .unsure-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .unsure-chip {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 9px 14px; background: var(--bg-card);
+    border: 1px solid var(--border-default); border-radius: 999px;
+    font-size: 12.5px; color: var(--text-secondary); cursor: pointer;
+    backdrop-filter: blur(8px); transition: all 0.2s ease;
+  }
+  .unsure-chip:hover { border-color: var(--violet); color: var(--text-primary); transform: translateY(-1px); }
+  .unsure-chip.selected {
+    background: rgba(139,92,246,0.15); border-color: var(--violet);
+    color: var(--text-primary); box-shadow: 0 0 14px -4px var(--violet);
+  }
+  .unsure-chip-icon { font-size: 15px; }
+
+  /* Problem type pills */
+  .problem-pills {
+    display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px;
+  }
+  .problem-pill {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 16px; background: var(--bg-card);
+    border: 1px solid var(--border-default); border-radius: 12px;
+    font-size: 13px; color: var(--text-secondary); cursor: pointer;
+    backdrop-filter: blur(8px); transition: all 0.2s ease;
+    position: relative;
+  }
+  .problem-pill:hover { border-color: var(--border-strong); color: var(--text-primary); }
+  .problem-pill.detected {
+    background: rgba(139,92,246,0.12); border-color: var(--violet);
+    color: var(--text-primary);
+  }
+  .problem-pill.selected {
+    background: rgba(139,92,246,0.18); border-color: var(--violet);
+    color: var(--text-primary); box-shadow: 0 0 14px -4px var(--violet);
+  }
+  .problem-pill-detected-tag {
+    position: absolute; top: -6px; right: -4px;
+    font-family: var(--font-mono); font-size: 8.5px;
+    padding: 2px 6px; background: var(--gradient-button); color: white;
+    border-radius: 999px; letter-spacing: 0.5px; text-transform: uppercase;
+  }
+  .problem-icon { font-size: 14px; }
+
+  /* Form fields */
+  .field { margin-bottom: 20px; }
+  .field-label {
+    display: block; font-size: 12.5px; color: var(--text-secondary);
+    margin-bottom: 8px; font-weight: 500; letter-spacing: 0.3px;
+  }
+  .field-helper { font-size: 11.5px; color: var(--text-muted); margin-top: 4px; }
+  .field-input, .field-select {
+    width: 100%; padding: 11px 14px;
+    font-family: var(--font-body); font-size: 13.5px; color: var(--text-primary);
+    background: rgba(7,9,26,0.4);
+    border: 1px solid var(--border-default); border-radius: 10px;
+    transition: all 0.18s ease;
+  }
+  [data-theme="light"] .field-input, [data-theme="light"] .field-select {
+    background: rgba(255,255,255,0.6);
+  }
+  .field-input:focus, .field-select:focus {
+    outline: none; border-color: var(--violet);
+    box-shadow: 0 0 0 3px rgba(139,92,246,0.15);
+  }
+  .field-input::placeholder { color: var(--text-faint); }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+  /* Excluded columns */
+  .excl-helper {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
+    font-size: 12px; color: var(--text-muted);
+  }
+  .excl-suggest-tag {
+    font-family: var(--font-mono); font-size: 9.5px;
+    padding: 2px 7px; background: rgba(251,191,36,0.1);
+    border: 1px solid rgba(251,191,36,0.3); border-radius: 999px;
+    color: var(--amber); letter-spacing: 0.5px; text-transform: uppercase;
+  }
+  .col-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 8px; max-height: 280px; overflow-y: auto;
+    padding: 14px; background: rgba(7,9,26,0.25);
+    border: 1px solid var(--border-subtle); border-radius: 12px;
+  }
+  [data-theme="light"] .col-grid { background: rgba(255,255,255,0.4); }
+  .col-grid::-webkit-scrollbar { width: 6px; }
+  .col-grid::-webkit-scrollbar-thumb { background: var(--border-default); border-radius: 3px; }
+  .col-checkbox {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 12px; border-radius: 8px;
+    font-size: 13px; cursor: pointer;
+    transition: all 0.15s ease; user-select: none;
+    background: transparent; border: 1px solid transparent;
+  }
+  .col-checkbox:hover { background: rgba(139,92,246,0.06); }
+  .col-checkbox.checked {
+    background: rgba(248,113,113,0.06);
+    border-color: rgba(248,113,113,0.3);
+    color: var(--text-muted);
+  }
+  .col-checkbox.checked .col-name { text-decoration: line-through; }
+  .col-checkbox.suggested { border-color: rgba(251,191,36,0.25); }
+  .col-checkbox-box {
+    width: 16px; height: 16px; border-radius: 4px;
+    border: 1.5px solid var(--text-faint);
+    display: grid; place-items: center; flex-shrink: 0;
+    transition: all 0.15s ease;
+  }
+  .col-checkbox.checked .col-checkbox-box {
+    background: var(--red); border-color: var(--red);
+  }
+  .col-checkbox.checked .col-checkbox-box::after {
+    content: "✕"; color: white; font-size: 10px; font-weight: 700;
+  }
+  .col-name { font-family: var(--font-mono); font-size: 12.5px; color: var(--text-primary); }
+  .col-name-tag {
+    font-family: var(--font-mono); font-size: 9px;
+    padding: 1px 5px; background: rgba(251,191,36,0.1);
+    border: 1px solid rgba(251,191,36,0.25); border-radius: 4px;
+    color: var(--amber); margin-left: 4px;
+  }
+
+  /* Right summary */
+  .summary {
+    position: sticky; top: 28px;
+    background: var(--bg-card); border: 1px solid var(--border-default);
+    border-radius: 18px; padding: 24px;
+    backdrop-filter: blur(14px); height: fit-content;
+    max-height: calc(100vh - 56px); overflow-y: auto;
+  }
+  .summary::before {
+    content: ""; display: block; width: 28px; height: 2px;
+    background: var(--gradient-button); border-radius: 2px; margin-bottom: 16px;
+  }
+  .summary h3 {
+    font-family: var(--font-display); font-size: 22px; margin-bottom: 4px;
+  }
+  .summary h3 em {
+    font-style: italic;
+    background: var(--gradient-text);
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .summary-tagline { font-size: 12.5px; color: var(--text-muted); margin-bottom: 22px; }
+  .summary-row {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    padding: 12px 0; border-bottom: 1px solid var(--border-subtle);
+    gap: 12px;
+  }
+  .summary-row:last-child { border-bottom: none; }
+  .summary-label {
+    font-family: var(--font-mono); font-size: 10px;
+    color: var(--text-faint); letter-spacing: 0.8px;
+    text-transform: uppercase; padding-top: 3px; flex-shrink: 0;
+  }
+  .summary-value {
+    font-size: 13px; color: var(--text-primary); text-align: right;
+    line-height: 1.4;
+  }
+  .summary-pill {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 2px 8px; background: rgba(139,92,246,0.12);
+    border: 1px solid var(--border-subtle); border-radius: 999px;
+    font-size: 11.5px; font-weight: 500;
+  }
+
+  .estimate-block {
+    margin: 22px -24px -24px;
+    padding: 18px 24px;
+    background: rgba(139,92,246,0.06);
+    border-top: 1px solid var(--border-subtle);
+    border-radius: 0 0 18px 18px;
+  }
+  .estimate-title {
+    font-family: var(--font-mono); font-size: 10px;
+    color: var(--text-faint); letter-spacing: 1px;
+    text-transform: uppercase; margin-bottom: 10px;
+  }
+  .estimate-row { display: flex; justify-content: space-between; gap: 8px; padding: 4px 0; font-size: 13px; }
+  .estimate-row .v { color: var(--text-primary); font-family: var(--font-mono); font-weight: 500; }
+  .estimate-row .l { color: var(--text-secondary); }
+
+  .start-button {
+    width: 100%; margin-top: 20px;
+    padding: 14px 18px; background: var(--gradient-button);
+    color: white; border: none; border-radius: 12px;
+    font-family: var(--font-body); font-size: 14px; font-weight: 500;
+    cursor: pointer; box-shadow: 0 0 24px rgba(139,92,246,0.4);
+    transition: all 0.22s ease;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .start-button:hover { transform: translateY(-1px); box-shadow: 0 0 32px rgba(139,92,246,0.6); }
+  .start-button:disabled {
+    opacity: 0.5; cursor: not-allowed; box-shadow: none;
+  }
+
+  /* Responsive */
+  @media (max-width: 1100px) {
+    .main-inner { grid-template-columns: 1fr; }
+    .summary { position: static; max-height: none; }
+  }
+  @media (max-width: 900px) {
+    .app-frame { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+    .main-inner, .topbar, .hero { padding: 0 20px; }
+    .hero h1 { font-size: 40px; }
+    .mode-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="starfield"></div>
+
+<div class="app-frame">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">A</div>
+      <div class="brand-name">AutoDS</div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Workspace</div>
+      <div class="nav-item">
+        <div class="icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
+        Home
+      </div>
+      <div class="nav-item">
+        <div class="icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></div>
+        Projects
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Pipeline</div>
+      <div class="project-context">
+        <div class="project-context-label">Active Project</div>
+        <div class="project-context-name">Patient Readmission Risk</div>
+      </div>
+      <div class="pipeline-step done"><span class="dot"></span>Upload</div>
+      <div class="pipeline-step active"><span class="dot"></span>Configure</div>
+      <div class="pipeline-step"><span class="dot"></span>EDA</div>
+      <div class="pipeline-step"><span class="dot"></span>Features</div>
+      <div class="pipeline-step"><span class="dot"></span>Modeling</div>
+      <div class="pipeline-step"><span class="dot"></span>Explainability</div>
+      <div class="pipeline-step"><span class="dot"></span>Predict</div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Tools</div>
+      <div class="nav-item">
+        <div class="icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></div>
+        Chat
+      </div>
+      <div class="nav-item">
+        <div class="icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div>
+        Download
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="user-chip">
+        <div class="user-avatar">P</div>
+        <div>
+          <div class="user-name">Parth</div>
+          <div class="user-email">parth@autods.app</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+    <div class="topbar">
+      <div class="crumbs">
+        <span>Patient Readmission Risk</span>
+        <span class="sep">/</span>
+        <span class="cur">Configure</span>
+      </div>
+      <div class="topbar-actions">
+        <button class="icon-btn theme-toggle" id="themeToggle" title="Toggle theme">
+          <svg class="icon-moon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <svg class="icon-sun" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+        </button>
+        <div class="icon-btn"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
+      </div>
+    </div>
+
+    <!-- Hero -->
+    <section class="hero">
+      <div class="eyebrow">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Step 2 of 7 — Configure
+      </div>
+      <h1>Tell AutoDS how to <em>analyze your data.</em></h1>
+      <p>Confirm the detected domain, choose how much control you want, pick a target — and we'll build the rest of the pipeline around your decisions.</p>
+    </section>
+
+    <div class="main-inner">
+      <!-- Left: form -->
+      <div>
+
+        <!-- Dataset recap strip -->
+        <div class="recap-strip">
+          <div class="recap-item">
+            <div class="recap-label">Dataset</div>
+            <div class="recap-value" style="font-size:14px;font-family:var(--font-mono);">readmissions_2024.csv</div>
+          </div>
+          <div class="recap-item">
+            <div class="recap-label">Rows</div>
+            <div class="recap-value">24,380</div>
+          </div>
+          <div class="recap-item">
+            <div class="recap-label">Columns</div>
+            <div class="recap-value">38</div>
+            <div class="recap-sub">14 num · 22 cat · 2 dt</div>
+          </div>
+          <div class="recap-item">
+            <div class="recap-label">Missing</div>
+            <div class="recap-value">3.2%</div>
+            <div class="recap-sub">Acceptable</div>
+          </div>
+          <div class="recap-item">
+            <div class="recap-label">Sources</div>
+            <div class="recap-value">3</div>
+            <div class="recap-sub">Joined</div>
+          </div>
+        </div>
+
+        <!-- Domain section -->
+        <section class="section">
+          <div class="sec-header">
+            <span class="sec-num">01</span>
+            <h2 class="sec-title">Confirm the <em>domain</em></h2>
+          </div>
+          <p class="sec-sub">We auto-detected this dataset as Healthcare. Override if you disagree.</p>
+
+          <div class="domain-grid">
+            <div class="domain-card detected selected" data-domain="healthcare">
+              <div class="domain-detected-badge">Detected</div>
+              <div class="domain-icon">🏥</div>
+              <div class="domain-name">Healthcare</div>
+            </div>
+            <div class="domain-card" data-domain="finance">
+              <div class="domain-icon">💳</div>
+              <div class="domain-name">Finance</div>
+            </div>
+            <div class="domain-card" data-domain="ecommerce">
+              <div class="domain-icon">🛒</div>
+              <div class="domain-name">E-commerce</div>
+            </div>
+            <div class="domain-card" data-domain="manufacturing">
+              <div class="domain-icon">⚙️</div>
+              <div class="domain-name">Manufacturing</div>
+            </div>
+            <div class="domain-card" data-domain="hr">
+              <div class="domain-icon">👥</div>
+              <div class="domain-name">HR</div>
+            </div>
+            <div class="domain-card" data-domain="marketing">
+              <div class="domain-icon">📣</div>
+              <div class="domain-name">Marketing</div>
+            </div>
+            <div class="domain-card" data-domain="generic">
+              <div class="domain-icon">📊</div>
+              <div class="domain-name">Generic</div>
+            </div>
+          </div>
+
+          <button class="why-button" id="whyBtn">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            Why Healthcare?
+          </button>
+          <div class="why-panel" id="whyPanel">
+            <div class="why-title">
+              <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+              Top signals from your column names
+            </div>
+            <div class="why-signals">
+              <div class="why-signal">
+                <div class="why-signal-col">patient_id</div>
+                <div class="why-signal-bar"><div class="why-signal-fill" style="width:96%"></div></div>
+                <div class="why-signal-pct">96%</div>
+              </div>
+              <div class="why-signal">
+                <div class="why-signal-col">diagnosis_code</div>
+                <div class="why-signal-bar"><div class="why-signal-fill" style="width:91%"></div></div>
+                <div class="why-signal-pct">91%</div>
+              </div>
+              <div class="why-signal">
+                <div class="why-signal-col">length_of_stay</div>
+                <div class="why-signal-bar"><div class="why-signal-fill" style="width:84%"></div></div>
+                <div class="why-signal-pct">84%</div>
+              </div>
+            </div>
+            <div style="font-size: 12px; color: var(--text-muted); margin-top: 12px;">
+              Combined confidence: <strong style="color: var(--green);">94%</strong>. AutoDS will apply healthcare-specific feature engineering (Charlson Comorbidity Index, age binning), HIPAA-aware fairness audits, and clinical report styling.
+            </div>
+          </div>
+
+          <!-- Compliance notice -->
+          <div class="compliance-notice">
+            <div class="compliance-icon">
+              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            </div>
+            <div>
+              <div class="compliance-title">Healthcare compliance mode will activate</div>
+              <div class="compliance-text">PHI-aware processing, demographic fairness audits, and HIPAA-conscious report styling will be applied. This is informational guidance only — AutoDS is not a certified HIPAA system.</div>
+              <div class="compliance-tags">
+                <span class="compliance-tag">HIPAA Aware</span>
+                <span class="compliance-tag">Fairness Audit</span>
+                <span class="compliance-tag">PHI Detection</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Mode section -->
+        <section class="section">
+          <div class="sec-header">
+            <span class="sec-num">02</span>
+            <h2 class="sec-title">Pick your <em>analysis mode</em></h2>
+          </div>
+          <p class="sec-sub">How much control do you want over the pipeline?</p>
+
+          <div class="mode-grid">
+            <div class="mode-card" data-mode="auto">
+              <div class="mode-icon">⚡</div>
+              <div class="mode-name">Auto</div>
+              <div class="mode-tagline">We pick everything. Hands-off.</div>
+              <div class="mode-meta">
+                <div class="mode-meta-item">
+                  <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  ~2 min
+                </div>
+                <div class="mode-meta-item">
+                  <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                  0 prompts
+                </div>
+              </div>
+            </div>
+            <div class="mode-card selected" data-mode="guided">
+              <div class="mode-recommended">Recommended</div>
+              <div class="mode-icon">🎯</div>
+              <div class="mode-name">Guided</div>
+              <div class="mode-tagline">Approve key decisions. Steer the pipeline.</div>
+              <div class="mode-meta">
+                <div class="mode-meta-item">
+                  <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  ~5 min
+                </div>
+                <div class="mode-meta-item">
+                  <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                  ~7 prompts
+                </div>
+              </div>
+            </div>
+            <div class="mode-card" data-mode="expert">
+              <div class="mode-icon">🛠</div>
+              <div class="mode-name">Expert</div>
+              <div class="mode-tagline">Full control. Tweak every parameter.</div>
+              <div class="mode-meta">
+                <div class="mode-meta-item">
+                  <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  ~15 min
+                </div>
+                <div class="mode-meta-item">
+                  <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                  ~20 prompts
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Auto-mode "I'm not sure" helper (hidden by default — shown when Auto is selected) -->
+          <div class="unsure-block" id="unsureBlock" style="display:none;">
+            <div class="unsure-title">
+              <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              Not sure what you want?
+            </div>
+            <div class="unsure-sub">Pick a goal and we'll pre-fill the target column and problem type for you.</div>
+            <div class="unsure-chips">
+              <div class="unsure-chip" data-quickgoal="predict">
+                <span class="unsure-chip-icon">🎯</span>
+                Predict something specific
+              </div>
+              <div class="unsure-chip" data-quickgoal="groups">
+                <span class="unsure-chip-icon">🧩</span>
+                Find natural groups
+              </div>
+              <div class="unsure-chip" data-quickgoal="anomaly">
+                <span class="unsure-chip-icon">⚠️</span>
+                Spot what's unusual
+              </div>
+              <div class="unsure-chip" data-quickgoal="forecast">
+                <span class="unsure-chip-icon">📈</span>
+                Forecast over time
+              </div>
+              <div class="unsure-chip" data-quickgoal="explore">
+                <span class="unsure-chip-icon">🔍</span>
+                Just explore the data
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Problem type pills -->
+        <section class="section">
+          <div class="sec-header">
+            <span class="sec-num">03</span>
+            <h2 class="sec-title">Confirm the <em>problem type</em></h2>
+          </div>
+          <p class="sec-sub">We've inferred this from your target column. Override if needed.</p>
+
+          <div class="problem-pills">
+            <div class="problem-pill detected selected" data-problem="classification">
+              <span class="problem-pill-detected-tag">Detected</span>
+              <span class="problem-icon">🎯</span>
+              Classification
+            </div>
+            <div class="problem-pill" data-problem="regression">
+              <span class="problem-icon">📈</span>
+              Regression
+            </div>
+            <div class="problem-pill" data-problem="clustering">
+              <span class="problem-icon">🧩</span>
+              Clustering
+            </div>
+            <div class="problem-pill" data-problem="timeseries">
+              <span class="problem-icon">⏱</span>
+              Time Series
+            </div>
+            <div class="problem-pill" data-problem="survival">
+              <span class="problem-icon">⌛</span>
+              Survival
+            </div>
+            <div class="problem-pill" data-problem="anomaly">
+              <span class="problem-icon">⚠️</span>
+              Anomaly Detection
+            </div>
+          </div>
+        </section>
+
+        <!-- Target + goals -->
+        <section class="section">
+          <div class="sec-header">
+            <span class="sec-num">04</span>
+            <h2 class="sec-title">Set <em>target & goal</em></h2>
+          </div>
+          <p class="sec-sub">Tell us what you want to predict and what success looks like.</p>
+
+          <div class="field">
+            <label class="field-label">Target column</label>
+            <select class="field-select" id="targetSelect">
+              <option value="">— None (unsupervised)</option>
+              <option value="readmitted_30d" selected>readmitted_30d  (bool)  ✨ recommended</option>
+              <option>length_of_stay  (int64)</option>
+              <option>discharge_disposition  (object)</option>
+              <option>—  PHI-flagged columns hidden  —</option>
+            </select>
+            <div class="field-helper">Boolean target detected — defaulting to binary classification.</div>
+          </div>
+
+          <div class="field">
+            <label class="field-label">What do you want to achieve?</label>
+            <select class="field-select" id="goalSelect">
+              <option>Identify top drivers of readmission</option>
+              <option selected>Find the top 5 predictors with AUC > 0.80</option>
+              <option>Maximize recall for high-risk patients</option>
+              <option>Minimize false negatives (missed readmissions)</option>
+              <option>Build a fair model across age and gender</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label class="field-label">Or describe your goal manually</label>
+            <input class="field-input" placeholder="e.g., Find readmission predictors with AUC > 0.85, prioritize fairness across age groups" />
+          </div>
+        </section>
+
+        <!-- Excluded columns -->
+        <section class="section">
+          <div class="sec-header">
+            <span class="sec-num">05</span>
+            <h2 class="sec-title">Exclude <em>columns</em> <span style="font-family:var(--font-body);font-size:14px;color:var(--text-muted);font-weight:400;font-style:normal;">(optional)</span></h2>
+          </div>
+          <p class="sec-sub">Skip columns that would leak the target, contain PII, or aren't useful for analysis.</p>
+
+          <div class="excl-helper">
+            <span style="color: var(--text-secondary);">3 auto-suggestions detected:</span>
+            <span class="excl-suggest-tag">PII</span>
+            <span class="excl-suggest-tag">High Cardinality ID</span>
+            <span class="excl-suggest-tag">Constant</span>
+          </div>
+
+          <div class="col-grid">
+            <div class="col-checkbox checked suggested" data-col="patient_id">
+              <div class="col-checkbox-box"></div>
+              <span class="col-name">patient_id</span>
+              <span class="col-name-tag">ID</span>
+            </div>
+            <div class="col-checkbox checked suggested" data-col="patient_name">
+              <div class="col-checkbox-box"></div>
+              <span class="col-name">patient_name</span>
+              <span class="col-name-tag">PII</span>
+            </div>
+            <div class="col-checkbox checked suggested" data-col="data_version">
+              <div class="col-checkbox-box"></div>
+              <span class="col-name">data_version</span>
+              <span class="col-name-tag">CONST</span>
+            </div>
+            <div class="col-checkbox" data-col="age">
+              <div class="col-checkbox-box"></div>
+              <span class="col-name">age</span>
+            </div>
+            <div class="col-checkbox" data-col="gender">
+              <div class="col-checkbox-box"></div>
+              <span class="col-name">gender</span>
+            </div>
+            <div class="col-checkbox" data-col="admission_type">
+              <div class="col-checkbox-box"></div>
+              <span class="col-name">admission_type</span>
+            </div>
+            <div class="col-checkbox" data-col="length_of_stay">
+              <div class="col-checkbox-box"></div>
+              <span class="col-name">length_of_stay</span>
+            </div>
+            <div class="col-checkbox" data-col="prior_admissions">
+              <div class="col-checkbox-box"></div>
+              <span class="col-name">prior_admissions</span>
+            </div>
+            <div class="col-checkbox" data-col="diagnosis_code">
+              <div class="col-checkbox-box"></div>
+              <span class="col-name">diagnosis_code</span>
+            </div>
+            <div class="col-checkbox" data-col="discharge_dt">
+              <div class="col-checkbox-box"></div>
+              <span class="col-name">discharge_dt</span>
+            </div>
+            <div class="col-checkbox" data-col="num_medications">
+              <div class="col-checkbox-box"></div>
+              <span class="col-name">num_medications</span>
+            </div>
+            <div class="col-checkbox" data-col="hba1c">
+              <div class="col-checkbox-box"></div>
+              <span class="col-name">hba1c</span>
+            </div>
+            <div class="col-checkbox" data-col="bmi">
+              <div class="col-checkbox-box"></div>
+              <span class="col-name">bmi</span>
+            </div>
+            <div class="col-checkbox" data-col="systolic_bp">
+              <div class="col-checkbox-box"></div>
+              <span class="col-name">systolic_bp</span>
+            </div>
+            <div class="col-checkbox" data-col="diastolic_bp">
+              <div class="col-checkbox-box"></div>
+              <span class="col-name">diastolic_bp</span>
+            </div>
+            <div class="col-checkbox" data-col="discharge_disposition">
+              <div class="col-checkbox-box"></div>
+              <span class="col-name">discharge_disposition</span>
+            </div>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-top: 10px; font-family: var(--font-mono); font-size: 11px; color: var(--text-faint);">
+            <span id="exclCount">3 columns excluded · 35 will be analyzed</span>
+            <span style="color: var(--violet); cursor: pointer;">Clear all suggestions</span>
+          </div>
+        </section>
+      </div>
+
+      <!-- Right: live summary -->
+      <aside class="summary">
+        <h3>Analysis <em>plan</em></h3>
+        <p class="summary-tagline">Live preview of your configuration.</p>
+
+        <div class="summary-row">
+          <span class="summary-label">Domain</span>
+          <span class="summary-value">🏥 Healthcare<br/><span class="summary-pill" style="color: var(--green); border-color: rgba(52,211,153,0.3); background: rgba(52,211,153,0.08);">94% confident</span></span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Mode</span>
+          <span class="summary-value">🎯 Guided<br/><span style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted);">~7 prompts · ~5 min</span></span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Problem</span>
+          <span class="summary-value">🎯 Classification<br/><span style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted);">Binary</span></span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Target</span>
+          <span class="summary-value" style="font-family: var(--font-mono); font-size: 12.5px;">readmitted_30d</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Goal</span>
+          <span class="summary-value" style="font-size: 12.5px;">Find top 5 predictors with AUC > 0.80</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Excluded</span>
+          <span class="summary-value" style="font-size: 12.5px;">3 columns<br/><span style="font-family:var(--font-mono);font-size:10.5px;color:var(--text-muted);">patient_id · patient_name · data_version</span></span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Compliance</span>
+          <span class="summary-value" style="font-size:12.5px;"><span class="summary-pill" style="color:var(--cyan);border-color:rgba(34,211,238,0.3);background:rgba(34,211,238,0.08);">HIPAA-aware</span></span>
+        </div>
+
+        <!-- Estimate -->
+        <div class="estimate-block">
+          <div class="estimate-title">Pipeline estimate</div>
+          <div class="estimate-row"><span class="l">Charts</span><span class="v">~28</span></div>
+          <div class="estimate-row"><span class="l">Statistical tests</span><span class="v">~14</span></div>
+          <div class="estimate-row"><span class="l">Models trained</span><span class="v">7</span></div>
+          <div class="estimate-row"><span class="l">SHAP explanations</span><span class="v">3</span></div>
+          <div class="estimate-row"><span class="l">Est. runtime</span><span class="v">4 min 12 s</span></div>
+          <div class="estimate-row"><span class="l">Est. LLM cost</span><span class="v">~$0.18</span></div>
+        </div>
+
+        <button class="start-button">
+          Start Analysis
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </button>
+      </aside>
+    </div>
+  </main>
+</div>
+
+<script>
+  // Theme toggle
+  const themeToggle = document.getElementById('themeToggle');
+  const html = document.documentElement;
+  const saved = localStorage.getItem('autods-theme');
+  if (saved === 'light' || saved === 'dark') html.setAttribute('data-theme', saved);
+  themeToggle.addEventListener('click', () => {
+    const cur = html.getAttribute('data-theme');
+    const next = cur === 'dark' ? 'light' : 'dark';
+    html.setAttribute('data-theme', next);
+    localStorage.setItem('autods-theme', next);
+  });
+
+  // Domain card selection
+  document.querySelectorAll('.domain-card').forEach(card => {
+    card.addEventListener('click', () => {
+      document.querySelectorAll('.domain-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+    });
+  });
+
+  // Why panel
+  document.getElementById('whyBtn').addEventListener('click', () => {
+    document.getElementById('whyPanel').classList.toggle('open');
+  });
+
+  // Mode card selection — also toggles the unsure helper for Auto
+  document.querySelectorAll('.mode-card').forEach(card => {
+    card.addEventListener('click', () => {
+      document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+      const isAuto = card.dataset.mode === 'auto';
+      document.getElementById('unsureBlock').style.display = isAuto ? 'block' : 'none';
+    });
+  });
+
+  // Unsure chips
+  document.querySelectorAll('.unsure-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('.unsure-chip').forEach(c => c.classList.remove('selected'));
+      chip.classList.add('selected');
+    });
+  });
+
+  // Problem pill selection
+  document.querySelectorAll('.problem-pill').forEach(pill => {
+    pill.addEventListener('click', () => {
+      document.querySelectorAll('.problem-pill').forEach(p => p.classList.remove('selected'));
+      pill.classList.add('selected');
+    });
+  });
+
+  // Excluded column checkboxes
+  function updateExclCount() {
+    const checked = document.querySelectorAll('.col-checkbox.checked').length;
+    const total = document.querySelectorAll('.col-checkbox').length;
+    document.getElementById('exclCount').textContent =
+      `${checked} columns excluded · ${total - checked + 22} will be analyzed`;
+  }
+  document.querySelectorAll('.col-checkbox').forEach(box => {
+    box.addEventListener('click', () => {
+      box.classList.toggle('checked');
+      updateExclCount();
+    });
+  });
+</script>
+</body>
+</html>
