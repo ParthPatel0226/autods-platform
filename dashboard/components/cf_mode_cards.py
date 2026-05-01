@@ -10,6 +10,8 @@ MODE_INFO: list[dict] = [
         "icon": "⚡",
         "desc": "Let the AI decide everything. Fastest path to results.",
         "recommended": False,
+        "time": "~2 min",
+        "prompts": "0 prompts",
     },
     {
         "key": "guided",
@@ -17,6 +19,8 @@ MODE_INFO: list[dict] = [
         "icon": "🧭",
         "desc": "Answer a few smart questions. Best balance of control and speed.",
         "recommended": True,
+        "time": "~5 min",
+        "prompts": "~7 prompts",
     },
     {
         "key": "expert",
@@ -24,6 +28,8 @@ MODE_INFO: list[dict] = [
         "icon": "🔬",
         "desc": "Full control over every decision. For experienced practitioners.",
         "recommended": False,
+        "time": "~15 min",
+        "prompts": "~20 prompts",
     },
 ]
 
@@ -50,10 +56,15 @@ def render(on_change=None) -> str:
                 f'  <div class="cf-mode-icon">{info["icon"]}</div>'
                 f'  <div class="cf-mode-label">{info["label"]}</div>'
                 f'  <div class="cf-mode-desc">{info["desc"]}</div>'
+                f'  <div class="cf-mode-meta">'
+                f'    <span>⏱ {info["time"]}</span>'
+                f'    <span class="cf-mode-meta-sep">·</span>'
+                f'    <span>💬 {info["prompts"]}</span>'
+                f'  </div>'
                 f'</div>',
                 unsafe_allow_html=True,
             )
-            if st.button(info["label"], key=f"cf_mode_btn_{key}", use_container_width=True, label_visibility="collapsed"):
+            if st.button(info["label"], key=f"cf_mode_btn_{key}", use_container_width=True):
                 st.session_state["cf_mode"] = key
                 if on_change:
                     on_change(key)

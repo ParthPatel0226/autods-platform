@@ -35,7 +35,20 @@ def render(detected_type: str = "auto", on_select=None) -> str:
             f'  <small>{pt["desc"]}</small>'
             f'</span>'
         )
-    st.markdown(f'<div class="cf-pills-row">{pills_html}</div>', unsafe_allow_html=True)
+    st.markdown(
+        f'<div class="cf-pills-row">{pills_html}</div>'
+        '<style>'
+        '.stMarkdown:has(.cf-pills-row) + [data-testid="stHorizontalBlock"] {'
+        '  margin-top: -44px !important;'
+        '  opacity: 0 !important;'
+        '  position: relative !important;'
+        '  z-index: 5 !important;'
+        '  height: 44px !important;'
+        '  overflow: hidden !important;'
+        '}'
+        '</style>',
+        unsafe_allow_html=True,
+    )
 
     cols = st.columns(len(PROBLEM_TYPES))
     for col, pt in zip(cols, PROBLEM_TYPES):
@@ -44,7 +57,6 @@ def render(detected_type: str = "auto", on_select=None) -> str:
                 pt["label"],
                 key=f"cf_pt_btn_{pt['key']}",
                 use_container_width=True,
-                label_visibility="collapsed",
             ):
                 st.session_state["cf_problem_type"] = pt["key"]
                 if on_select:
