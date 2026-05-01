@@ -1002,6 +1002,7 @@ def inject_shared_css() -> bool:
     st.markdown(_build_css(palette), unsafe_allow_html=True)
     st.markdown(_SNAV_CSS, unsafe_allow_html=True)
     st.markdown(_UPLOAD_CSS, unsafe_allow_html=True)
+    st.markdown(_CF_CSS, unsafe_allow_html=True)
 
     return is_dark
 
@@ -1101,6 +1102,7 @@ def render_theme_toggle() -> None:
 # ---------------------------------------------------------------------------
 
 _UPLOAD_CSS = """
+<style>
 .up-crumbs { display: flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: 12.5px; color: var(--text-muted); letter-spacing: 0.4px; margin-bottom: 24px; }
 .up-crumbs .sep { color: var(--text-faint); }
 .up-crumbs .cur { color: var(--text-primary); }
@@ -1235,4 +1237,321 @@ _UPLOAD_CSS = """
 .up-cta-text { display: flex; flex-direction: column; }
 .up-cta-text strong { font-size: 15px; color: var(--text-primary); }
 .up-cta-text span { font-size: 12px; color: var(--text-muted); }
+</style>
+"""
+
+# ---------------------------------------------------------------------------
+# Configure tab CSS  (cf-* prefix)
+# ---------------------------------------------------------------------------
+
+_CF_CSS = """
+<style>
+/* ===== Breadcrumb ===== */
+.cf-breadcrumb {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  font-family: var(--font-mono);
+}
+
+/* ===== Hero ===== */
+.cf-hero { margin-bottom: 20px; }
+.cf-hero-title {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 4px;
+}
+.cf-hero-sub {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* ===== Recap bar ===== */
+.cf-recap-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: 8px 16px;
+  margin-bottom: 20px;
+  font-size: 13px;
+}
+.cf-recap-item { color: var(--text-secondary); }
+.cf-recap-sep { color: var(--text-muted); }
+
+/* ===== Section headers ===== */
+.cf-section-header {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 16px 0 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border-default);
+}
+
+/* ===== Divider ===== */
+.cf-divider {
+  border: none;
+  border-top: 1px solid var(--border-default);
+  margin: 20px 0;
+}
+
+/* ===== Domain cards ===== */
+.cf-domain-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 8px; }
+.cf-domain-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border: 1.5px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--bg-elevated);
+  cursor: pointer;
+  transition: var(--transition-colors);
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.cf-domain-card:hover { border-color: var(--accent-primary); color: var(--text-primary); }
+.cf-domain-card.cf-domain-selected {
+  border-color: var(--accent-primary);
+  background: var(--accent-primary-subtle);
+  color: var(--text-primary);
+  font-weight: 600;
+}
+.cf-domain-detected-badge {
+  font-size: 10px;
+  background: var(--accent-purple);
+  color: #fff;
+  border-radius: 4px;
+  padding: 1px 5px;
+  margin-left: 4px;
+}
+
+/* ===== Why panel ===== */
+.cf-why-panel {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  margin-top: 8px;
+}
+.cf-why-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+}
+.cf-signal-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  font-size: 12px;
+}
+.cf-signal-bar {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--accent-primary);
+  opacity: 0.7;
+}
+
+/* ===== Compliance notice ===== */
+.cf-compliance-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  margin-top: 8px;
+  font-size: 13px;
+}
+.cf-compliance-title {
+  font-weight: 600;
+  color: var(--amber);
+  margin-bottom: 4px;
+}
+.cf-compliance-list {
+  color: var(--text-secondary);
+  margin: 0;
+  padding-left: 16px;
+}
+
+/* ===== Mode cards ===== */
+.cf-mode-cards { display: flex; gap: 12px; margin-bottom: 8px; flex-wrap: wrap; }
+.cf-mode-card {
+  flex: 1;
+  min-width: 130px;
+  border: 1.5px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  background: var(--bg-elevated);
+  cursor: pointer;
+  transition: var(--transition-colors);
+  position: relative;
+}
+.cf-mode-card:hover { border-color: var(--accent-primary); }
+.cf-mode-card.cf-mode-selected {
+  border-color: var(--accent-primary);
+  background: var(--accent-primary-subtle);
+}
+.cf-mode-icon { font-size: 22px; margin-bottom: 6px; }
+.cf-mode-name { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+.cf-mode-desc { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+.cf-mode-recommended {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  font-size: 10px;
+  background: var(--accent-primary);
+  color: #fff;
+  border-radius: 4px;
+  padding: 1px 6px;
+}
+
+/* ===== Unsure helper chips ===== */
+.cf-unsure-label {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+.cf-chips-row { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* ===== Problem pills ===== */
+.cf-pills-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+.cf-problem-pill {
+  padding: 6px 14px;
+  border: 1.5px solid var(--border-default);
+  border-radius: var(--radius-full);
+  background: var(--bg-elevated);
+  font-size: 13px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: var(--transition-colors);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.cf-problem-pill:hover { border-color: var(--accent-primary); color: var(--text-primary); }
+.cf-problem-pill.cf-pill-selected {
+  border-color: var(--accent-primary);
+  background: var(--accent-primary-subtle);
+  color: var(--text-primary);
+  font-weight: 600;
+}
+.cf-pill-badge {
+  font-size: 10px;
+  background: var(--accent-purple);
+  color: #fff;
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+
+/* ===== Target hint ===== */
+.cf-target-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 4px;
+  font-style: italic;
+}
+
+/* ===== Excluded columns ===== */
+.cf-excl-header {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+}
+.cf-excl-cell {
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  padding: 6px 8px;
+  background: var(--bg-elevated);
+  margin-bottom: 6px;
+}
+.cf-excl-cell.cf-excl-active { border-color: var(--pink); background: rgba(236,72,153,0.06); }
+.cf-excl-cell.cf-excl-suggested { border-color: var(--amber); background: rgba(245,158,11,0.06); }
+.cf-excl-colname { font-size: 12px; font-weight: 500; color: var(--text-primary); }
+.cf-excl-reason {
+  font-size: 10px;
+  background: var(--accent-primary-subtle);
+  color: var(--accent-primary);
+  border-radius: 3px;
+  padding: 1px 5px;
+  margin-left: 5px;
+}
+
+/* ===== Summary panel ===== */
+.cf-summary-panel {
+  position: sticky;
+  top: 16px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: 16px;
+}
+.cf-summary-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-default);
+}
+.cf-summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px 0;
+  font-size: 13px;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.cf-summary-label { color: var(--text-muted); }
+.cf-summary-value { color: var(--text-primary); font-weight: 500; }
+.cf-summary-warn .cf-summary-value { color: var(--amber); }
+.cf-summary-compliance {
+  font-size: 12px;
+  color: var(--amber);
+  margin-top: 10px;
+  padding: 6px 10px;
+  background: rgba(245,158,11,0.08);
+  border-radius: var(--radius-sm);
+}
+
+/* ===== Pipeline estimate block ===== */
+.cf-estimate-block {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-default);
+}
+.cf-estimate-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+}
+.cf-estimate-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--text-secondary);
+  padding: 3px 0;
+}
+
+/* ===== Validation issues ===== */
+.cf-validation-issue {
+  font-size: 12px;
+  color: var(--pink);
+  padding: 3px 0;
+}
+</style>
 """

@@ -14,7 +14,7 @@ import json
 import uuid
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, Optional
 
 _STEP_KEYS: list[str] = [
     "upload",
@@ -41,12 +41,19 @@ class Project:
     step_status: dict[str, str] = field(
         default_factory=lambda: {k: "pending" for k in _STEP_KEYS}
     )
+    dataset_name: str = ""
+    dataset_path: str = ""
+    n_rows: int = 0
+    n_cols: int = 0
+    metric_summary: str = ""
     created_at: str = field(
         default_factory=lambda: datetime.now(timezone.utc).isoformat()
     )
     updated_at: str = field(
         default_factory=lambda: datetime.now(timezone.utc).isoformat()
     )
+    excluded_columns: list[str] = field(default_factory=list)
+    goal: Optional[str] = None
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -161,6 +168,51 @@ def list_all(user_id: str = "local") -> list[Project]:
                 continue
     projects.sort(key=lambda p: p.updated_at, reverse=True)
     return projects
+
+
+def update(p: Project) -> None:
+    """Alias for save(). Persist changes to an existing project."""
+    _persist(p)
+
+
+def get_active() -> "Project | None":
+    """Return the active project from session state, or None."""
+    import streamlit as st  # lazy
+
+    pid = st.session_state.get("active_project_id")
+    if not pid:
+        return None
+    return get(pid)
+
+
+def set_active(project_id: str) -> None:
+    """Set the active project ID in Streamlit session state."""
+    import streamlit as st  # lazy
+
+    st.session_state["active_project_id"] = project_id
+
+
+def get_recent_files(user_id: str = "local", limit: int = 5) -> list[dict[str, Any]]:
+    """Return recent file uploads for a user as list of dicts.
+
+    Each dict has: dataset_name, dataset_path, project_name, project_id.
+    Only projects with a dataset_path are included.
+    """
+    projects = list_all(user_id=user_id)
+    result: list[dict[str, Any]] = []
+    for p in projects:
+        if p.dataset_path:
+            result.append(
+                {
+                    "dataset_name": p.dataset_name or p.dataset_path,
+                    "dataset_path": p.dataset_path,
+                    "project_name": p.name,
+                    "project_id": p.id,
+                }
+            )
+        if len(result) >= limit:
+            break
+    return result
 
 
 def clear_active() -> None:
