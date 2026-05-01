@@ -64,18 +64,13 @@ def render(domain_key: str, df) -> None:
     rows_html = ""
     for s in signals:
         pct = int(s["conf"] * 100)
-        color = (
-            "var(--green)" if s["weight"] == "strong"
-            else "var(--amber)" if s["weight"] == "moderate"
-            else "var(--text-muted)"
-        )
         rows_html += (
-            f'<div class="cf-signal-row">'
-            f'  <span class="cf-signal-col">{s["col"]}</span>'
-            f'  <div class="cf-signal-bar-wrap">'
-            f'    <div class="cf-signal-bar" style="width:{pct}%;background:{color}"></div>'
+            f'<div class="cf-why-signal">'
+            f'  <span class="cf-why-signal-col">{s["col"]}</span>'
+            f'  <div class="cf-why-signal-bar">'
+            f'    <div class="cf-why-signal-fill" style="width:{pct}%"></div>'
             f'  </div>'
-            f'  <span class="cf-signal-label">{s["weight"]}</span>'
+            f'  <span class="cf-why-signal-pct">{pct}%</span>'
             f'</div>'
         )
 
