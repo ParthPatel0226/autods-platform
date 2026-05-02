@@ -225,8 +225,10 @@ async def root() -> dict[str, str]:
 
 
 # ---------------------------------------------------------------------------
-# Routers (added in later phases)
+# Routers
 # ---------------------------------------------------------------------------
-# from api.routes import projects, upload, eda, features, modeling
-# app.include_router(projects.router, prefix="/projects", tags=["projects"])
-# app.include_router(upload.router,   prefix="/upload",   tags=["upload"])
+from api.routes import auth, projects, upload  # noqa: E402
+
+app.include_router(auth.router,     prefix="/auth",     tags=["auth"])
+app.include_router(projects.router, prefix="/projects", tags=["projects"])
+app.include_router(upload.router,   prefix="/upload",   tags=["upload"])
