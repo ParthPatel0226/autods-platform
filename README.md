@@ -49,25 +49,36 @@ Follow-up conversational interface: "Show me churn by region", "Run a chi-square
 
 ---
 
-## 🚀 Quick Start
+## Running locally
 
+The project runs as three services. Open three terminals.
+
+### Terminal 1 — Backend API
 ```bash
-# Clone the repo
-git clone https://github.com/your-username/autods-platform.git
-cd autods-platform
+cd api
+pip install -r requirements.txt
+uvicorn main:app --reload --port 8000
+```
+API docs: http://localhost:8000/docs
 
-# Install dependencies
-make setup
+### Terminal 2 — Frontend
+```bash
+cd frontend
+npm install
+npm run dev
+```
+App: http://localhost:3000
 
-# Set your API key
-cp .env.example .env
-# Edit .env and add your ANTHROPIC_API_KEY
-
-# Launch the dashboard
-make run
+### Terminal 3 — Legacy Streamlit (will be removed)
+```bash
+streamlit run dashboard/app.py
 ```
 
-Open `http://localhost:8501` in your browser.
+## Deployment
+
+- API → Render (Dockerfile in api/)
+- Frontend → Vercel (root: frontend/)
+- Landing page → Vercel (root: landing/, already deployed)
 
 ---
 
