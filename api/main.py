@@ -218,19 +218,30 @@ async def root() -> dict[str, str]:
 
 # ---------------------------------------------------------------------------
 # Routers
+#
+# API versioning convention:
+#   All business-logic routes live under /v1.  Infrastructure endpoints
+#   (/health, /, /serving/*) stay at the root and are never versioned.
+#   When a breaking change requires /v2, create a second APIRouter with
+#   prefix="/v2" and include it alongside v1_router below.
 # ---------------------------------------------------------------------------
+from fastapi import APIRouter  # noqa: E402 — must follow app creation
 from api.routes import auth, chat, configure, download, eda, explainability, feature_engineering, jobs, meta, modeling, predict, projects, upload  # noqa: E402
 
-app.include_router(auth.router,                prefix="/auth",      tags=["auth"])
-app.include_router(projects.router,            prefix="/projects",  tags=["projects"])
-app.include_router(upload.router,              prefix="/upload",    tags=["upload"])
-app.include_router(configure.router,           prefix="/configure", tags=["configure"])
-app.include_router(eda.router,                 prefix="/eda",       tags=["eda"])
-app.include_router(feature_engineering.router, prefix="/fe",        tags=["feature-engineering"])
-app.include_router(modeling.router,            prefix="/modeling",  tags=["modeling"])
-app.include_router(explainability.router,      prefix="/explain",   tags=["explainability"])
-app.include_router(predict.router,             prefix="/predict",   tags=["predict"])
-app.include_router(chat.router,                prefix="/chat",      tags=["chat"])
-app.include_router(download.router,            prefix="/download",  tags=["download"])
-app.include_router(jobs.router,                prefix="/jobs",      tags=["jobs"])
-app.include_router(meta.router,                prefix="/meta",      tags=["meta"])
+v1_router = APIRouter(prefix="/v1")
+
+v1_router.include_router(auth.router,                prefix="/auth",      tags=["auth"])
+v1_router.include_router(projects.router,            prefix="/projects",  tags=["projects"])
+v1_router.include_router(upload.router,              prefix="/upload",    tags=["upload"])
+v1_router.include_router(configure.router,           prefix="/configure", tags=["configure"])
+v1_router.include_router(eda.router,                 prefix="/eda",       tags=["eda"])
+v1_router.include_router(feature_engineering.router, prefix="/fe",        tags=["feature-engineering"])
+v1_router.include_router(modeling.router,            prefix="/modeling",  tags=["modeling"])
+v1_router.include_router(explainability.router,      prefix="/explain",   tags=["explainability"])
+v1_router.include_router(predict.router,             prefix="/predict",   tags=["predict"])
+v1_router.include_router(chat.router,                prefix="/chat",      tags=["chat"])
+v1_router.include_router(download.router,            prefix="/download",  tags=["download"])
+v1_router.include_router(jobs.router,                prefix="/jobs",      tags=["jobs"])
+v1_router.include_router(meta.router,                prefix="/meta",      tags=["meta"])
+
+app.include_router(v1_router)

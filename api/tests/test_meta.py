@@ -1,10 +1,12 @@
 """Tests for /meta routes."""
 from __future__ import annotations
 
+V1 = "/v1"
+
 
 def test_list_tools_returns_nonempty(auth_client):
     """GET /meta/tools should return a list of tool entries."""
-    resp = auth_client.get("/meta/tools")
+    resp = auth_client.get(f"{V1}/meta/tools")
     # 200 = tool registry loaded; 500 = backend unavailable (also informative)
     assert resp.status_code != 404, "Tools endpoint not registered"
     if resp.status_code == 200:
@@ -16,7 +18,7 @@ def test_list_tools_returns_nonempty(auth_client):
 
 def test_pipeline_log_returns_list(auth_client, project_id):
     """GET /meta/pipeline-log/{project_id} should return a paginated list."""
-    resp = auth_client.get(f"/meta/pipeline-log/{project_id}")
+    resp = auth_client.get(f"{V1}/meta/pipeline-log/{project_id}")
     # 200 = log retrieved (possibly empty); 404 = project not found in state
     assert resp.status_code not in (405,), "Route mismatch"
     if resp.status_code == 200:

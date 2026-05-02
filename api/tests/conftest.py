@@ -1,6 +1,10 @@
 """Shared pytest fixtures for api/ tests."""
 from __future__ import annotations
 
+# All versioned routes live under this prefix.  Infrastructure routes
+# (/health, /) remain at the root and should NOT use this prefix.
+V1 = "/v1"
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -50,9 +54,9 @@ def sample_csv() -> bytes:
 @pytest.fixture
 def project_id(auth_client):
     """Create a project, yield its project_id, delete it afterward."""
-    resp = auth_client.post("/projects/", json={"name": "pytest-project"})
+    resp = auth_client.post(f"{V1}/projects/", json={"name": "pytest-project"})
     assert resp.status_code == 201, f"Could not create project: {resp.text}"
     pid = resp.json()["project_id"]
     yield pid
     # cleanup — best-effort
-    auth_client.delete(f"/projects/{pid}")
+    auth_client.delete(f"{V1}/projects/{pid}")
