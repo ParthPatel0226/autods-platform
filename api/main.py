@@ -163,11 +163,26 @@ try:
 
     @app.exception_handler(AutoDSError)
     async def autods_exception_handler(request: Request, exc: AutoDSError) -> JSONResponse:
-        status_code = 500
+        # 1. Check the explicit type-to-status map first.
+        status_code = None
         for exc_type, code in _EXC_TO_STATUS.items():
             if isinstance(exc, exc_type):
                 status_code = code
                 break
+
+        # 2. Fall back to message-based routing for AutoDSError instances that
+        #    use descriptive messages as stand-ins for missing exception subclasses.
+        #    TODO: remove this block once ResourceNotFoundError and AuthorizationError
+        #    are added to core/exceptions.py and state_service.py is updated.
+        if status_code is None:
+            msg = str(exc).lower()
+            if "not found" in msg:
+                status_code = 404
+            elif "access denied" in msg:
+                status_code = 403
+            else:
+                status_code = 400
+
         logger.warning("AutoDSError [%s] %s: %s", status_code, type(exc).__name__, exc)
         return JSONResponse(
             status_code=status_code,
