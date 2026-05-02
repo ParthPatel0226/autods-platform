@@ -1,0 +1,4388 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "AutoDS API",
+    "description": "Backend API for the AutoDS autonomous data science platform.",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": [
+          "meta"
+        ],
+        "summary": "Health",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Health Health Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/": {
+      "get": {
+        "tags": [
+          "meta"
+        ],
+        "summary": "Root",
+        "operationId": "root__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Response Root  Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/signup": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Create account",
+        "description": "Create a new user account and return an access token.",
+        "operationId": "signup_auth_signup_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignupRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Log in",
+        "description": "Authenticate and return an access token.",
+        "operationId": "login_auth_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Current user",
+        "description": "Return the currently authenticated user's identity.",
+        "operationId": "me_auth_me_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/projects/": {
+      "get": {
+        "tags": [
+          "projects"
+        ],
+        "summary": "List Projects",
+        "description": "List all projects owned by the current user.",
+        "operationId": "list_projects_projects__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ProjectListItem"
+                  },
+                  "type": "array",
+                  "title": "Response List Projects Projects  Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "projects"
+        ],
+        "summary": "Create Project",
+        "description": "Create a new project (analysis session).",
+        "operationId": "create_project_projects__post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateProjectRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Project"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/projects/{project_id}": {
+      "get": {
+        "tags": [
+          "projects"
+        ],
+        "summary": "Get Project",
+        "description": "Return full state for a project.",
+        "operationId": "get_project_projects__project_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Project"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "projects"
+        ],
+        "summary": "Update Project",
+        "description": "Patch project metadata (name, description).",
+        "operationId": "update_project_projects__project_id__patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProjectRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Project"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "projects"
+        ],
+        "summary": "Delete Project",
+        "description": "Permanently delete a project and all its state.",
+        "operationId": "delete_project_projects__project_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/projects/{project_id}/activate": {
+      "post": {
+        "tags": [
+          "projects"
+        ],
+        "summary": "Activate Project",
+        "description": "Mark a project as the active session (sets workflow_status=active).",
+        "operationId": "activate_project_projects__project_id__activate_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Activate Project Projects  Project Id  Activate Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/upload/file": {
+      "post": {
+        "tags": [
+          "upload"
+        ],
+        "summary": "Upload File",
+        "description": "Upload a file and load it into the session source cache.",
+        "operationId": "upload_file_upload_file_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Project to attach this source to",
+              "title": "Project Id"
+            },
+            "description": "Project to attach this source to"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_file_upload_file_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadFileResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/upload/samples": {
+      "get": {
+        "tags": [
+          "upload"
+        ],
+        "summary": "List Samples",
+        "description": "List all built-in sample datasets (no auth required).",
+        "operationId": "list_samples_upload_samples_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SampleDatasetInfo"
+                  },
+                  "title": "Response List Samples Upload Samples Get"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "upload"
+        ],
+        "summary": "Load Sample",
+        "description": "Load a built-in sample dataset into the session source cache.",
+        "operationId": "load_sample_upload_samples_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Project to attach this source to",
+              "title": "Project Id"
+            },
+            "description": "Project to attach this source to"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SampleDatasetRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadFileResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/upload/connector": {
+      "post": {
+        "tags": [
+          "upload"
+        ],
+        "summary": "Load Connector",
+        "description": "Load data via a named connector (database, API, cloud, etc.).",
+        "operationId": "load_connector_upload_connector_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Project to attach this source to",
+              "title": "Project Id"
+            },
+            "description": "Project to attach this source to"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConnectorUploadRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadFileResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/upload/join/suggest": {
+      "post": {
+        "tags": [
+          "upload"
+        ],
+        "summary": "Suggest Join",
+        "description": "Suggest join keys for two cached sources.",
+        "operationId": "suggest_join_upload_join_suggest_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/_JoinSuggestRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuggestJoinResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/upload/join/apply": {
+      "post": {
+        "tags": [
+          "upload"
+        ],
+        "summary": "Apply Join",
+        "description": "Execute a join between two cached sources and cache the result.",
+        "operationId": "apply_join_upload_join_apply_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Project that owns these sources",
+              "title": "Project Id"
+            },
+            "description": "Project that owns these sources"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JoinPlan"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplyJoinResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/upload/preview/{source_id}": {
+      "get": {
+        "tags": [
+          "upload"
+        ],
+        "summary": "Preview Source",
+        "description": "Return the first N rows of a cached source as JSON records.",
+        "operationId": "preview_source_upload_preview__source_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "source_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Source Id"
+            }
+          },
+          {
+            "name": "project_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Project that owns this source",
+              "title": "Project Id"
+            },
+            "description": "Project that owns this source"
+          },
+          {
+            "name": "n",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 1000,
+              "minimum": 1,
+              "default": 50,
+              "title": "N"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Preview Source Upload Preview  Source Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/configure/detect-domain": {
+      "post": {
+        "tags": [
+          "configure"
+        ],
+        "summary": "Auto-detect domain from uploaded data",
+        "description": "Run domain detection on the project's loaded data sources.",
+        "operationId": "detect_domain_configure_detect_domain_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainDetectionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/configure/set-target": {
+      "post": {
+        "tags": [
+          "configure"
+        ],
+        "summary": "Set target column, problem type, user mode, and goal",
+        "description": "Apply domain, target, problem type, user mode, and goal to the project.",
+        "operationId": "set_target_configure_set_target_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfigureRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Project"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/configure/start-pipeline": {
+      "post": {
+        "tags": [
+          "configure"
+        ],
+        "summary": "Mark configuration complete and advance to first pipeline step",
+        "description": "Advance the project to the EDA step and set workflow_status=active.",
+        "operationId": "start_pipeline_configure_start_pipeline_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StartPipelineResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/eda/generate-questions": {
+      "post": {
+        "tags": [
+          "eda"
+        ],
+        "summary": "Generate domain-aware EDA questions for the project",
+        "description": "Return interactive EDA questions based on domain and data profile.",
+        "operationId": "generate_questions_eda_generate_questions_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EDAQuestion"
+                  },
+                  "title": "Response Generate Questions Eda Generate Questions Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/eda/answer": {
+      "post": {
+        "tags": [
+          "eda"
+        ],
+        "summary": "Submit answers to EDA questions",
+        "description": "Store user answers to EDA questions in project state.",
+        "operationId": "answer_questions_eda_answer_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EDAAnswerRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Answer Questions Eda Answer Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/eda/run": {
+      "post": {
+        "tags": [
+          "eda"
+        ],
+        "summary": "Start EDA analysis in the background",
+        "description": "Launch EDA execution as a background task and return the job_id.",
+        "operationId": "run_eda_eda_run_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EDARunRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Run Eda Eda Run Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/eda/results/{project_id}": {
+      "get": {
+        "tags": [
+          "eda"
+        ],
+        "summary": "Retrieve completed EDA results",
+        "description": "Return EDA analysis results once the background job completes.",
+        "operationId": "get_results_eda_results__project_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EDAResults"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/fe/suggest": {
+      "post": {
+        "tags": [
+          "feature-engineering"
+        ],
+        "summary": "Get per-column feature engineering suggestions",
+        "description": "Return domain-aware FE suggestions for each column in the project.",
+        "operationId": "suggest_decisions_fe_suggest_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FESuggestResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/fe/apply": {
+      "post": {
+        "tags": [
+          "feature-engineering"
+        ],
+        "summary": "Apply feature engineering decisions in the background",
+        "description": "Store FE decisions and launch feature engineering as a background job.",
+        "operationId": "apply_decisions_fe_apply_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FEApplyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Apply Decisions Fe Apply Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/fe/results/{project_id}": {
+      "get": {
+        "tags": [
+          "feature-engineering"
+        ],
+        "summary": "Retrieve completed feature engineering results",
+        "description": "Return FE results once the background job completes.",
+        "operationId": "get_results_fe_results__project_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FEResults"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/modeling/configure": {
+      "post": {
+        "tags": [
+          "modeling"
+        ],
+        "summary": "Configure modeling: algorithms, metric, validation strategy",
+        "description": "Merge user model configuration into project state and return an ETA estimate.",
+        "operationId": "configure_modeling_modeling_configure_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true,
+                "title": "Body"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Configure Modeling Modeling Configure Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/modeling/train": {
+      "post": {
+        "tags": [
+          "modeling"
+        ],
+        "summary": "Start model training in the background",
+        "description": "Schedule model training as a background job and return the job_id.",
+        "operationId": "train_models_modeling_train_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TrainRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Train Models Modeling Train Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/modeling/leaderboard/{project_id}": {
+      "get": {
+        "tags": [
+          "modeling"
+        ],
+        "summary": "Retrieve model leaderboard for a project",
+        "description": "Return all trained model results ranked by primary metric.",
+        "operationId": "get_leaderboard_modeling_leaderboard__project_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Leaderboard"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/modeling/select-best": {
+      "post": {
+        "tags": [
+          "modeling"
+        ],
+        "summary": "Override best-model selection for a project",
+        "description": "Persist a user-chosen model as the project best model.",
+        "operationId": "select_best_modeling_select_best_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SelectBestRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Select Best Modeling Select Best Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/explain/shap": {
+      "post": {
+        "tags": [
+          "explainability"
+        ],
+        "summary": "Compute SHAP values (sync \u226450 rows, async >50 rows)",
+        "description": "Return SHAP values synchronously for small samples; launch background job for large ones.",
+        "operationId": "compute_shap_explain_shap_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SHAPRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/explain/whatif": {
+      "post": {
+        "tags": [
+          "explainability"
+        ],
+        "summary": "Run a what-if analysis by modifying feature values",
+        "description": "Apply feature modifications to a base row and compare predictions.",
+        "operationId": "whatif_explain_whatif_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WhatIfRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WhatIfResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/explain/fairness": {
+      "post": {
+        "tags": [
+          "explainability"
+        ],
+        "summary": "Run fairness audit on the best model",
+        "description": "Compute disparate-impact and group-fairness metrics for protected attributes.",
+        "operationId": "fairness_audit_explain_fairness_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FairnessRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FairnessReport"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/explain/model-card/{project_id}": {
+      "get": {
+        "tags": [
+          "explainability"
+        ],
+        "summary": "Retrieve or generate model card for a project",
+        "description": "Return the standardised model card (Google model card format) for the project.",
+        "operationId": "get_model_card_explain_model_card__project_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelCardResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/predict/single": {
+      "post": {
+        "tags": [
+          "predict"
+        ],
+        "summary": "Predict a single row using the project's best model",
+        "description": "Load best model and return prediction + optional SHAP values for one row.",
+        "operationId": "predict_single_predict_single_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PredictRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PredictResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/predict/batch": {
+      "post": {
+        "tags": [
+          "predict"
+        ],
+        "summary": "Start batch prediction in the background",
+        "description": "Schedule batch inference as a background job; returns job_id and row count.",
+        "operationId": "predict_batch_predict_batch_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BatchPredictRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BatchPredictResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/chat/message": {
+      "post": {
+        "tags": [
+          "chat"
+        ],
+        "summary": "Send a follow-up message in the project conversation",
+        "description": "Dispatch message to the follow-up agent and return the assistant reply.",
+        "operationId": "send_message_chat_message_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatSendRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/chat/history/{project_id}": {
+      "get": {
+        "tags": [
+          "chat"
+        ],
+        "summary": "Retrieve full chat history for a project",
+        "description": "Return all chat messages exchanged in the project session.",
+        "operationId": "get_history_chat_history__project_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatHistory"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "chat"
+        ],
+        "summary": "Clear chat history for a project",
+        "description": "Wipe all chat messages from the project session.",
+        "operationId": "clear_history_chat_history__project_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Clear History Chat History  Project Id  Delete"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/download/report": {
+      "post": {
+        "tags": [
+          "download"
+        ],
+        "summary": "Enqueue a report generation job",
+        "description": "Schedule report generation as a background job and return the job_id.",
+        "operationId": "generate_report_download_report_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportJobResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/download/file/{report_id}": {
+      "get": {
+        "tags": [
+          "download"
+        ],
+        "summary": "Stream a generated report file",
+        "description": "Return the generated report file as a binary download.",
+        "operationId": "download_file_download_file__report_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "report_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Report Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/jobs/{job_id}": {
+      "get": {
+        "tags": [
+          "jobs"
+        ],
+        "summary": "Get job status",
+        "description": "Return current status and progress for a background job.",
+        "operationId": "get_job_status_jobs__job_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Job Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobStatus"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "jobs"
+        ],
+        "summary": "Cancel a job",
+        "description": "Request cancellation of a pending or running job.",
+        "operationId": "cancel_job_jobs__job_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Job Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Cancel Job Jobs  Job Id  Delete"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/jobs/{job_id}/result": {
+      "get": {
+        "tags": [
+          "jobs"
+        ],
+        "summary": "Get job result",
+        "description": "Return the result payload for a completed job.",
+        "operationId": "get_job_result_jobs__job_id__result_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Job Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/jobs/{job_id}/stream": {
+      "get": {
+        "tags": [
+          "jobs"
+        ],
+        "summary": "Stream job progress via SSE",
+        "description": "Open a Server-Sent Events stream that emits JobProgressEvent updates until the job reaches a terminal state.",
+        "operationId": "stream_job_jobs__job_id__stream_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Job Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/meta/tools": {
+      "get": {
+        "tags": [
+          "meta"
+        ],
+        "summary": "List registered tools",
+        "description": "Return all registered tools with optional category/domain filter.",
+        "operationId": "list_tools_meta_tools_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by registry category",
+              "title": "Category"
+            },
+            "description": "Filter by registry category"
+          },
+          {
+            "name": "domain",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by domain name",
+              "title": "Domain"
+            },
+            "description": "Filter by domain name"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/meta/tools/{tool_name}": {
+      "get": {
+        "tags": [
+          "meta"
+        ],
+        "summary": "Get a single tool entry by registry key",
+        "description": "Return full metadata for a tool by its registry key.",
+        "operationId": "get_tool_meta_tools__tool_name__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "tool_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tool Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/meta/pipeline-log/{project_id}": {
+      "get": {
+        "tags": [
+          "meta"
+        ],
+        "summary": "Get paginated pipeline log for a project",
+        "description": "Return paginated pipeline log entries for a project (newest first).",
+        "operationId": "get_pipeline_log_meta_pipeline_log__project_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 1000,
+              "minimum": 1,
+              "description": "Max entries to return",
+              "default": 200,
+              "title": "Limit"
+            },
+            "description": "Max entries to return"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Number of entries to skip",
+              "default": 0,
+              "title": "Offset"
+            },
+            "description": "Number of entries to skip"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PipelineLogResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/meta/costs/{project_id}": {
+      "get": {
+        "tags": [
+          "meta"
+        ],
+        "summary": "Get API cost summary for a project",
+        "description": "Return API call count, token count, and per-step cost breakdown.",
+        "operationId": "get_cost_summary_meta_costs__project_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CostSummary"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/meta/domains": {
+      "get": {
+        "tags": [
+          "meta"
+        ],
+        "summary": "List all domain configurations",
+        "description": "Return all domain configurations from domain_configs.yaml.",
+        "operationId": "get_domain_configs_meta_domains_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainConfigList"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/meta/agent-prompts": {
+      "get": {
+        "tags": [
+          "meta"
+        ],
+        "summary": "Get all agent prompts (admin)",
+        "description": "Return all agent prompts from agent_prompts.yaml.\n\nAdmin-only in production. Currently accepts any authenticated user.\nTODO: add role/email check once a roles system is in place.",
+        "operationId": "get_agent_prompts_meta_agent_prompts_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentPromptsResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AgentPromptsResponse": {
+        "properties": {
+          "prompts": {
+            "additionalProperties": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "object",
+            "title": "Prompts"
+          }
+        },
+        "type": "object",
+        "required": [
+          "prompts"
+        ],
+        "title": "AgentPromptsResponse",
+        "description": "Contents of configs/agent_prompts.yaml keyed by agent name."
+      },
+      "ApplyJoinResponse": {
+        "properties": {
+          "joined_source_id": {
+            "type": "string",
+            "title": "Joined Source Id"
+          },
+          "n_rows": {
+            "type": "integer",
+            "title": "N Rows"
+          },
+          "n_cols": {
+            "type": "integer",
+            "title": "N Cols"
+          },
+          "columns": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Columns"
+          }
+        },
+        "type": "object",
+        "required": [
+          "joined_source_id",
+          "n_rows",
+          "n_cols",
+          "columns"
+        ],
+        "title": "ApplyJoinResponse"
+      },
+      "BatchPredictRequest": {
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "title": "Project Id"
+          },
+          "file_id": {
+            "type": "string",
+            "title": "File Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "project_id",
+          "file_id"
+        ],
+        "title": "BatchPredictRequest"
+      },
+      "BatchPredictResponse": {
+        "properties": {
+          "job_id": {
+            "type": "string",
+            "title": "Job Id"
+          },
+          "n_rows": {
+            "type": "integer",
+            "title": "N Rows"
+          }
+        },
+        "type": "object",
+        "required": [
+          "job_id",
+          "n_rows"
+        ],
+        "title": "BatchPredictResponse"
+      },
+      "Body_upload_file_upload_file_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "format": "binary",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_upload_file_upload_file_post"
+      },
+      "ChatHistory": {
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "title": "Project Id"
+          },
+          "messages": {
+            "items": {
+              "$ref": "#/components/schemas/ChatMessage"
+            },
+            "type": "array",
+            "title": "Messages"
+          }
+        },
+        "type": "object",
+        "required": [
+          "project_id",
+          "messages"
+        ],
+        "title": "ChatHistory"
+      },
+      "ChatMessage": {
+        "properties": {
+          "role": {
+            "type": "string",
+            "title": "Role"
+          },
+          "content": {
+            "type": "string",
+            "title": "Content"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Timestamp"
+          }
+        },
+        "type": "object",
+        "required": [
+          "role",
+          "content",
+          "timestamp"
+        ],
+        "title": "ChatMessage"
+      },
+      "ChatResponse": {
+        "properties": {
+          "reply": {
+            "type": "string",
+            "title": "Reply"
+          },
+          "suggested_actions": {
+            "items": {
+              "$ref": "#/components/schemas/SuggestedAction"
+            },
+            "type": "array",
+            "title": "Suggested Actions",
+            "default": []
+          },
+          "references": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "References",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "reply"
+        ],
+        "title": "ChatResponse"
+      },
+      "ChatSendRequest": {
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "title": "Project Id"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "project_id",
+          "message"
+        ],
+        "title": "ChatSendRequest"
+      },
+      "ConfidenceInterval": {
+        "properties": {
+          "lower": {
+            "type": "number",
+            "title": "Lower"
+          },
+          "upper": {
+            "type": "number",
+            "title": "Upper"
+          }
+        },
+        "type": "object",
+        "required": [
+          "lower",
+          "upper"
+        ],
+        "title": "ConfidenceInterval"
+      },
+      "ConfigureRequest": {
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "title": "Project Id"
+          },
+          "domain": {
+            "type": "string",
+            "title": "Domain"
+          },
+          "target_column": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Column"
+          },
+          "problem_type": {
+            "type": "string",
+            "title": "Problem Type"
+          },
+          "user_mode": {
+            "type": "string",
+            "title": "User Mode",
+            "default": "auto"
+          },
+          "user_goal": {
+            "type": "string",
+            "title": "User Goal"
+          }
+        },
+        "type": "object",
+        "required": [
+          "project_id",
+          "domain",
+          "problem_type",
+          "user_goal"
+        ],
+        "title": "ConfigureRequest"
+      },
+      "ConnectorUploadRequest": {
+        "properties": {
+          "connector_type": {
+            "type": "string",
+            "title": "Connector Type"
+          },
+          "config": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Config"
+          }
+        },
+        "type": "object",
+        "required": [
+          "connector_type",
+          "config"
+        ],
+        "title": "ConnectorUploadRequest"
+      },
+      "CostSummary": {
+        "properties": {
+          "api_call_count": {
+            "type": "integer",
+            "title": "Api Call Count"
+          },
+          "api_token_count": {
+            "type": "integer",
+            "title": "Api Token Count"
+          },
+          "step_breakdown": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Step Breakdown"
+          },
+          "current_step": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Step"
+          },
+          "completed_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Completed Steps",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "api_call_count",
+          "api_token_count",
+          "step_breakdown"
+        ],
+        "title": "CostSummary"
+      },
+      "CreateProjectRequest": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "CreateProjectRequest"
+      },
+      "DomainAlternative": {
+        "properties": {
+          "domain": {
+            "type": "string",
+            "title": "Domain"
+          },
+          "confidence": {
+            "type": "number",
+            "title": "Confidence"
+          }
+        },
+        "type": "object",
+        "required": [
+          "domain",
+          "confidence"
+        ],
+        "title": "DomainAlternative"
+      },
+      "DomainConfig": {
+        "properties": {
+          "domain_name": {
+            "type": "string",
+            "title": "Domain Name"
+          },
+          "display_name": {
+            "type": "string",
+            "title": "Display Name"
+          },
+          "icon": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Icon"
+          },
+          "primary_metrics": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "type": "object",
+            "title": "Primary Metrics",
+            "default": {}
+          },
+          "eda_questions": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Eda Questions",
+            "default": []
+          },
+          "feature_questions": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Feature Questions",
+            "default": []
+          },
+          "model_questions": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Model Questions",
+            "default": []
+          },
+          "fairness": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fairness"
+          },
+          "compliance_notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Compliance Notes",
+            "default": []
+          },
+          "report_style": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Report Style"
+          }
+        },
+        "type": "object",
+        "required": [
+          "domain_name",
+          "display_name"
+        ],
+        "title": "DomainConfig"
+      },
+      "DomainConfigList": {
+        "properties": {
+          "domains": {
+            "items": {
+              "$ref": "#/components/schemas/DomainConfig"
+            },
+            "type": "array",
+            "title": "Domains"
+          }
+        },
+        "type": "object",
+        "required": [
+          "domains"
+        ],
+        "title": "DomainConfigList"
+      },
+      "DomainDetectionResponse": {
+        "properties": {
+          "detected_domain": {
+            "type": "string",
+            "title": "Detected Domain"
+          },
+          "confidence": {
+            "type": "number",
+            "title": "Confidence"
+          },
+          "evidence": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Evidence"
+          },
+          "alternatives": {
+            "items": {
+              "$ref": "#/components/schemas/DomainAlternative"
+            },
+            "type": "array",
+            "title": "Alternatives"
+          }
+        },
+        "type": "object",
+        "required": [
+          "detected_domain",
+          "confidence",
+          "evidence",
+          "alternatives"
+        ],
+        "title": "DomainDetectionResponse"
+      },
+      "EDAAnswerRequest": {
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "title": "Project Id"
+          },
+          "answers": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Answers"
+          }
+        },
+        "type": "object",
+        "required": [
+          "project_id",
+          "answers"
+        ],
+        "title": "EDAAnswerRequest"
+      },
+      "EDAQuestion": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "step": {
+            "type": "string",
+            "title": "Step",
+            "default": "eda"
+          },
+          "question": {
+            "type": "string",
+            "title": "Question"
+          },
+          "type": {
+            "type": "string",
+            "title": "Type"
+          },
+          "options": {
+            "items": {
+              "$ref": "#/components/schemas/EDAQuestionOption"
+            },
+            "type": "array",
+            "title": "Options",
+            "default": []
+          },
+          "recommendation_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recommendation Reason"
+          },
+          "domain_specific": {
+            "type": "boolean",
+            "title": "Domain Specific",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "question",
+          "type"
+        ],
+        "title": "EDAQuestion"
+      },
+      "EDAQuestionOption": {
+        "properties": {
+          "value": {
+            "type": "string",
+            "title": "Value"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "recommended": {
+            "type": "boolean",
+            "title": "Recommended",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "value",
+          "label"
+        ],
+        "title": "EDAQuestionOption"
+      },
+      "EDAResults": {
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "title": "Project Id"
+          },
+          "charts": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Charts"
+          },
+          "insights": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Insights"
+          },
+          "statistical_tests": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Statistical Tests"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          }
+        },
+        "type": "object",
+        "required": [
+          "project_id",
+          "charts",
+          "insights",
+          "statistical_tests",
+          "summary"
+        ],
+        "title": "EDAResults"
+      },
+      "EDARunRequest": {
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "title": "Project Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "project_id"
+        ],
+        "title": "EDARunRequest"
+      },
+      "FEApplyRequest": {
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "title": "Project Id"
+          },
+          "decisions": {
+            "additionalProperties": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "object",
+            "title": "Decisions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "project_id",
+          "decisions"
+        ],
+        "title": "FEApplyRequest"
+      },
+      "FEResults": {
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "title": "Project Id"
+          },
+          "final_features": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Final Features"
+          },
+          "dropped": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Dropped"
+          },
+          "transformations": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Transformations"
+          }
+        },
+        "type": "object",
+        "required": [
+          "project_id",
+          "final_features",
+          "dropped",
+          "transformations"
+        ],
+        "title": "FEResults"
+      },
+      "FESuggestResponse": {
+        "properties": {
+          "suggestions": {
+            "items": {
+              "$ref": "#/components/schemas/FESuggestion"
+            },
+            "type": "array",
+            "title": "Suggestions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "suggestions"
+        ],
+        "title": "FESuggestResponse"
+      },
+      "FESuggestion": {
+        "properties": {
+          "column": {
+            "type": "string",
+            "title": "Column"
+          },
+          "decisions": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Decisions"
+          },
+          "recommendation_reason": {
+            "type": "string",
+            "title": "Recommendation Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "column",
+          "decisions",
+          "recommendation_reason"
+        ],
+        "title": "FESuggestion"
+      },
+      "FairnessReport": {
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "title": "Project Id"
+          },
+          "metrics": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metrics"
+          },
+          "disparities": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Disparities"
+          },
+          "recommendations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Recommendations"
+          }
+        },
+        "type": "object",
+        "required": [
+          "project_id",
+          "metrics",
+          "disparities",
+          "recommendations"
+        ],
+        "title": "FairnessReport"
+      },
+      "FairnessRequest": {
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "title": "Project Id"
+          },
+          "protected_attributes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Protected Attributes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "project_id",
+          "protected_attributes"
+        ],
+        "title": "FairnessRequest"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "JobResult": {
+        "properties": {
+          "job_id": {
+            "type": "string",
+            "title": "Job Id"
+          },
+          "result": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Result"
+          }
+        },
+        "type": "object",
+        "required": [
+          "job_id",
+          "result"
+        ],
+        "title": "JobResult"
+      },
+      "JobStatus": {
+        "properties": {
+          "job_id": {
+            "type": "string",
+            "title": "Job Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "progress": {
+            "type": "number",
+            "title": "Progress",
+            "default": 0.0
+          },
+          "current_step": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Step"
+          },
+          "started_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Started At"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          }
+        },
+        "type": "object",
+        "required": [
+          "job_id",
+          "status",
+          "started_at"
+        ],
+        "title": "JobStatus"
+      },
+      "JoinKey": {
+        "properties": {
+          "left_column": {
+            "type": "string",
+            "title": "Left Column"
+          },
+          "right_column": {
+            "type": "string",
+            "title": "Right Column"
+          }
+        },
+        "type": "object",
+        "required": [
+          "left_column",
+          "right_column"
+        ],
+        "title": "JoinKey"
+      },
+      "JoinPlan": {
+        "properties": {
+          "left_source_id": {
+            "type": "string",
+            "title": "Left Source Id"
+          },
+          "right_source_id": {
+            "type": "string",
+            "title": "Right Source Id"
+          },
+          "join_keys": {
+            "items": {
+              "$ref": "#/components/schemas/JoinKey"
+            },
+            "type": "array",
+            "title": "Join Keys"
+          },
+          "join_type": {
+            "type": "string",
+            "enum": [
+              "inner",
+              "left",
+              "right",
+              "outer"
+            ],
+            "title": "Join Type",
+            "default": "inner"
+          }
+        },
+        "type": "object",
+        "required": [
+          "left_source_id",
+          "right_source_id",
+          "join_keys"
+        ],
+        "title": "JoinPlan"
+      },
+      "Leaderboard": {
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "title": "Project Id"
+          },
+          "entries": {
+            "items": {
+              "$ref": "#/components/schemas/ModelEntry"
+            },
+            "type": "array",
+            "title": "Entries"
+          },
+          "best_model": {
+            "type": "string",
+            "title": "Best Model"
+          }
+        },
+        "type": "object",
+        "required": [
+          "project_id",
+          "entries",
+          "best_model"
+        ],
+        "title": "Leaderboard"
+      },
+      "LoginRequest": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 6,
+            "title": "Password"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "password"
+        ],
+        "title": "LoginRequest"
+      },
+      "ModelCardResponse": {
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "title": "Project Id"
+          },
+          "model_card": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Model Card"
+          }
+        },
+        "type": "object",
+        "required": [
+          "project_id",
+          "model_card"
+        ],
+        "title": "ModelCardResponse"
+      },
+      "ModelEntry": {
+        "properties": {
+          "model_name": {
+            "type": "string",
+            "title": "Model Name"
+          },
+          "metrics": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Metrics"
+          },
+          "train_time": {
+            "type": "number",
+            "title": "Train Time"
+          },
+          "rank": {
+            "type": "integer",
+            "title": "Rank"
+          },
+          "mlflow_run_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mlflow Run Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "model_name",
+          "metrics",
+          "train_time",
+          "rank"
+        ],
+        "title": "ModelEntry"
+      },
+      "ModelingConfig": {
+        "properties": {
+          "algorithms": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Algorithms"
+          },
+          "cv_folds": {
+            "type": "integer",
+            "maximum": 20.0,
+            "minimum": 2.0,
+            "title": "Cv Folds",
+            "default": 5
+          },
+          "search_strategy": {
+            "type": "string",
+            "title": "Search Strategy",
+            "default": "auto"
+          },
+          "primary_metric": {
+            "type": "string",
+            "title": "Primary Metric"
+          },
+          "time_budget_seconds": {
+            "type": "integer",
+            "minimum": 30.0,
+            "title": "Time Budget Seconds",
+            "default": 300
+          },
+          "custom_instructions": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Custom Instructions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "algorithms",
+          "primary_metric"
+        ],
+        "title": "ModelingConfig"
+      },
+      "PipelineLogResponse": {
+        "properties": {
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          },
+          "entries": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Entries"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total",
+          "offset",
+          "limit",
+          "entries"
+        ],
+        "title": "PipelineLogResponse"
+      },
+      "PredictRequest": {
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "title": "Project Id"
+          },
+          "features": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Features"
+          }
+        },
+        "type": "object",
+        "required": [
+          "project_id",
+          "features"
+        ],
+        "title": "PredictRequest"
+      },
+      "PredictResponse": {
+        "properties": {
+          "prediction": {
+            "title": "Prediction"
+          },
+          "probability": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Probability"
+          },
+          "confidence_interval": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ConfidenceInterval"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "shap": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "number"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Shap"
+          }
+        },
+        "type": "object",
+        "required": [
+          "prediction"
+        ],
+        "title": "PredictResponse"
+      },
+      "Project": {
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "title": "Project Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "user_mode": {
+            "type": "string",
+            "title": "User Mode",
+            "default": "auto"
+          },
+          "detected_domain": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detected Domain"
+          },
+          "target_column": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Column"
+          },
+          "problem_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Problem Type"
+          },
+          "current_step": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Step"
+          },
+          "completed_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Completed Steps",
+            "default": []
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "project_id",
+          "name",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "Project"
+      },
+      "ProjectListItem": {
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "title": "Project Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "detected_domain": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detected Domain"
+          },
+          "problem_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Problem Type"
+          },
+          "current_step": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Step"
+          },
+          "workflow_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Workflow Status"
+          },
+          "row_count": {
+            "type": "integer",
+            "title": "Row Count",
+            "default": 0
+          },
+          "best_model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Best Model"
+          },
+          "saved_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Saved At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "project_id",
+          "name"
+        ],
+        "title": "ProjectListItem",
+        "description": "Lightweight summary for the sidebar / project-picker."
+      },
+      "ReportJobResponse": {
+        "properties": {
+          "job_id": {
+            "type": "string",
+            "title": "Job Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "job_id"
+        ],
+        "title": "ReportJobResponse"
+      },
+      "ReportRequest": {
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "title": "Project Id"
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "html",
+              "pdf",
+              "notebook",
+              "executive_summary"
+            ],
+            "title": "Format"
+          }
+        },
+        "type": "object",
+        "required": [
+          "project_id",
+          "format"
+        ],
+        "title": "ReportRequest"
+      },
+      "SHAPRequest": {
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "title": "Project Id"
+          },
+          "sample_size": {
+            "type": "integer",
+            "maximum": 10000.0,
+            "minimum": 1.0,
+            "title": "Sample Size",
+            "default": 100
+          }
+        },
+        "type": "object",
+        "required": [
+          "project_id"
+        ],
+        "title": "SHAPRequest"
+      },
+      "SampleDatasetInfo": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "display_name": {
+            "type": "string",
+            "title": "Display Name"
+          },
+          "domain": {
+            "type": "string",
+            "title": "Domain"
+          },
+          "n_rows": {
+            "type": "integer",
+            "title": "N Rows"
+          },
+          "n_cols": {
+            "type": "integer",
+            "title": "N Cols"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "display_name",
+          "domain",
+          "n_rows",
+          "n_cols",
+          "description"
+        ],
+        "title": "SampleDatasetInfo"
+      },
+      "SampleDatasetRequest": {
+        "properties": {
+          "dataset_name": {
+            "type": "string",
+            "title": "Dataset Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "dataset_name"
+        ],
+        "title": "SampleDatasetRequest"
+      },
+      "SelectBestRequest": {
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "title": "Project Id"
+          },
+          "model_name": {
+            "type": "string",
+            "title": "Model Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "project_id",
+          "model_name"
+        ],
+        "title": "SelectBestRequest"
+      },
+      "SignupRequest": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 6,
+            "title": "Password"
+          },
+          "full_name": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Full Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "password",
+          "full_name"
+        ],
+        "title": "SignupRequest"
+      },
+      "StartPipelineResponse": {
+        "properties": {
+          "job_id": {
+            "type": "string",
+            "title": "Job Id"
+          },
+          "current_step": {
+            "type": "string",
+            "title": "Current Step",
+            "default": "eda"
+          }
+        },
+        "type": "object",
+        "required": [
+          "job_id"
+        ],
+        "title": "StartPipelineResponse"
+      },
+      "SuggestJoinResponse": {
+        "properties": {
+          "plan": {
+            "$ref": "#/components/schemas/JoinPlan"
+          },
+          "confidence": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Confidence"
+          },
+          "reasoning": {
+            "type": "string",
+            "title": "Reasoning"
+          }
+        },
+        "type": "object",
+        "required": [
+          "plan",
+          "confidence",
+          "reasoning"
+        ],
+        "title": "SuggestJoinResponse"
+      },
+      "SuggestedAction": {
+        "properties": {
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "action": {
+            "type": "string",
+            "title": "Action"
+          },
+          "params": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Params"
+          }
+        },
+        "type": "object",
+        "required": [
+          "label",
+          "action"
+        ],
+        "title": "SuggestedAction"
+      },
+      "TokenResponse": {
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "title": "Access Token"
+          },
+          "token_type": {
+            "type": "string",
+            "title": "Token Type",
+            "default": "bearer"
+          },
+          "expires_in": {
+            "type": "integer",
+            "title": "Expires In",
+            "description": "Seconds until expiry"
+          }
+        },
+        "type": "object",
+        "required": [
+          "access_token",
+          "expires_in"
+        ],
+        "title": "TokenResponse"
+      },
+      "TrainRequest": {
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "title": "Project Id"
+          },
+          "config": {
+            "$ref": "#/components/schemas/ModelingConfig"
+          }
+        },
+        "type": "object",
+        "required": [
+          "project_id",
+          "config"
+        ],
+        "title": "TrainRequest"
+      },
+      "UpdateProjectRequest": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          }
+        },
+        "type": "object",
+        "title": "UpdateProjectRequest"
+      },
+      "UploadFileResponse": {
+        "properties": {
+          "source_id": {
+            "type": "string",
+            "title": "Source Id"
+          },
+          "preview": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Preview"
+          },
+          "schema": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Schema"
+          },
+          "n_rows": {
+            "type": "integer",
+            "title": "N Rows"
+          },
+          "n_cols": {
+            "type": "integer",
+            "title": "N Cols"
+          },
+          "detected_format": {
+            "type": "string",
+            "title": "Detected Format"
+          }
+        },
+        "type": "object",
+        "required": [
+          "source_id",
+          "preview",
+          "schema",
+          "n_rows",
+          "n_cols",
+          "detected_format"
+        ],
+        "title": "UploadFileResponse"
+      },
+      "User": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "title": "User Id"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email"
+          },
+          "full_name": {
+            "type": "string",
+            "title": "Full Name"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id",
+          "email",
+          "full_name",
+          "created_at"
+        ],
+        "title": "User"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "WhatIfRequest": {
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "title": "Project Id"
+          },
+          "base_row": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Base Row"
+          },
+          "modifications": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Modifications"
+          }
+        },
+        "type": "object",
+        "required": [
+          "project_id",
+          "base_row",
+          "modifications"
+        ],
+        "title": "WhatIfRequest"
+      },
+      "WhatIfResponse": {
+        "properties": {
+          "original_prediction": {
+            "title": "Original Prediction"
+          },
+          "new_prediction": {
+            "title": "New Prediction"
+          },
+          "delta": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delta"
+          },
+          "feature_contributions": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Feature Contributions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "original_prediction",
+          "new_prediction",
+          "feature_contributions"
+        ],
+        "title": "WhatIfResponse"
+      },
+      "_JoinSuggestRequest": {
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "title": "Project Id"
+          },
+          "left_source_id": {
+            "type": "string",
+            "title": "Left Source Id"
+          },
+          "right_source_id": {
+            "type": "string",
+            "title": "Right Source Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "project_id",
+          "left_source_id",
+          "right_source_id"
+        ],
+        "title": "_JoinSuggestRequest"
+      }
+    },
+    "securitySchemes": {
+      "HTTPBearer": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    }
+  }
+}
