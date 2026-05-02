@@ -65,7 +65,6 @@ def render(columns: list[str] | None = None) -> None:
                 f'{g["icon"]} {g["label"]}',
                 key=f"cf_chip_btn_{g['key']}",
                 use_container_width=True,
-                label_visibility="collapsed",
             ):
                 st.session_state["cf_problem_type"] = g["problem_type"]
                 st.session_state["cf_goal"] = g["goal"]

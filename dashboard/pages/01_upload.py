@@ -47,13 +47,9 @@ else:
 
     project = project_service.get_active()
     if project is None:
-        st.info(
-            "**Upload & Data Ingestion** — Connect files, databases, cloud storage, or APIs. "
-            "Open a project from the home page to get started."
-        )
-        if st.button("← Go to home"):
-            st.switch_page("app.py")
-        st.stop()
+        project = project_service.create(name="My Analysis")
+        project_service.set_active(project.id)
+        project = project_service.get_active()
 
     # ---- callback: when any source successfully loads data ----
     def _handle_data_loaded(df, meta: dict) -> None:

@@ -1,798 +1,231 @@
-"""Page 03 -- Interactive Exploratory Data Analysis.
+"""EDA Interactive — two-phase: questions → results dashboard.
 
-Displays workflow progress, EDA questions (Guided / Expert), analysis results
-with charts and insights, and an AI-generated summary.
-
-Premium dark luxury UI with glass morphism cards and gradient accents.
+Auto mode shows compact recommendations instead of full questions.
+Results phase has insights, target callout, featured heatmap, charts grid,
+stats table, quality flags, generalized chat composer, filters bar, action bar.
 """
-
 from __future__ import annotations
-
-import logging
-from typing import Any
-
-import pandas as pd
+import time
 import streamlit as st
 
+from dashboard.components import auth_service, project_service
 from dashboard.components.shared_css import inject_shared_css
-from core.constants import MODE_AUTO, MODE_EXPERT, MODE_GUIDED
-
-logger = logging.getLogger(__name__)
-
-
-# ---------------------------------------------------------------------------
-# Design tokens
-# ---------------------------------------------------------------------------
-
-_DARK_LUXURY_CSS = """
-<style>
-/* --- Page header with gradient text --- */
-.eda-page-header {
-    padding: 32px 0 24px 0;
-}
-.eda-page-header h1 {
-    font-size: 2.25rem;
-    font-weight: 700;
-    background: var(--gradient-primary);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    margin: 0;
-    letter-spacing: -0.02em;
-}
-.eda-page-header .subtitle {
-    color: var(--text-secondary);
-    font-size: 0.95rem;
-    margin-top: 4px;
-}
-
-/* --- Section headers --- */
-.section-header {
-    font-size: 0.7rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--text-muted);
-    margin-bottom: 16px;
-    padding-bottom: 8px;
-    position: relative;
-}
-.section-header::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 48px;
-    height: 2px;
-    background: var(--gradient-primary);
-    border-radius: 1px;
-}
-
-/* --- Glass card --- */
-.glass-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-md);
-    padding: 24px;
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    box-shadow: var(--shadow-card);
-    transition: var(--transition-all);
-    margin-bottom: 16px;
-}
-.glass-card:hover {
-    border-color: var(--border-active);
-    box-shadow: var(--shadow-glow);
-}
-
-/* --- Question card --- */
-.question-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-md);
-    padding: 24px;
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    box-shadow: var(--shadow-card);
-    transition: var(--transition-all);
-    margin-bottom: 16px;
-    position: relative;
-}
-.question-card:hover {
-    border-color: var(--border-active);
-    box-shadow: var(--shadow-glow);
-}
-
-/* --- Number badge --- */
-.number-badge {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 28px;
-    height: 28px;
-    border-radius: 8px;
-    background: var(--gradient-primary);
-    color: #fff;
-    font-size: 0.75rem;
-    font-weight: 700;
-    margin-right: 12px;
-    flex-shrink: 0;
-}
-
-.question-title {
-    color: var(--text-primary);
-    font-size: 1rem;
-    font-weight: 600;
-    display: inline;
-    vertical-align: middle;
-}
-
-.question-reason {
-    color: var(--text-muted);
-    font-size: 0.8rem;
-    margin-top: 8px;
-    padding-left: 40px;
-    font-style: italic;
-}
-
-/* --- AI summary card --- */
-.ai-summary-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border-subtle);
-    border-left: 3px solid var(--accent-primary);
-    border-radius: var(--radius-md);
-    padding: 24px;
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    box-shadow: var(--shadow-card);
-    margin-bottom: 16px;
-}
-.ai-summary-card .summary-label {
-    font-size: 0.7rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--accent-primary);
-    margin-bottom: 8px;
-}
-.ai-summary-card .summary-text {
-    color: var(--text-primary);
-    font-size: 0.95rem;
-    line-height: 1.65;
-}
-
-/* --- Metric card --- */
-.metric-glass-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-md);
-    padding: 20px;
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    box-shadow: var(--shadow-card);
-    text-align: center;
-    transition: var(--transition-all);
-}
-.metric-glass-card:hover {
-    border-color: var(--border-active);
-    box-shadow: var(--shadow-glow);
-}
-.metric-value {
-    font-size: 1.75rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin-bottom: 4px;
-}
-.metric-label {
-    font-size: 0.7rem;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--text-muted);
-}
-
-/* --- Status dots --- */
-.status-dot {
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    margin-right: 6px;
-    vertical-align: middle;
-}
-.status-dot.success { background-color: var(--accent-success); }
-.status-dot.warning { background-color: var(--accent-warning); }
-.status-dot.info { background-color: var(--accent-secondary); }
-
-/* --- Chart container --- */
-.chart-glass-container {
-    background: var(--bg-card);
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-md);
-    padding: 24px;
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    box-shadow: var(--shadow-card);
-    margin-bottom: 16px;
-}
-.chart-glass-container .chart-title {
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin-bottom: 16px;
-}
-
-/* --- Insight item --- */
-.insight-item {
-    color: var(--text-secondary);
-    font-size: 0.9rem;
-    padding: 8px 0 8px 16px;
-    border-left: 2px solid var(--accent-primary-light);
-    margin-bottom: 8px;
-    line-height: 1.5;
-}
-
-/* --- Stat results glass --- */
-.stat-result-glass {
-    background: var(--bg-elevated);
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-md);
-    padding: 16px;
-    margin-bottom: 8px;
-}
-
-/* --- Navigation buttons --- */
-.nav-row {
-    display: flex;
-    gap: 16px;
-    padding-top: 24px;
-}
-
-/* --- Info placeholder --- */
-.info-placeholder {
-    background: var(--bg-elevated);
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-md);
-    padding: 24px;
-    text-align: center;
-    color: var(--text-muted);
-    font-size: 0.9rem;
-}
-
-/* --- Divider override --- */
-.eda-divider {
-    border: none;
-    border-top: 1px solid var(--border-subtle);
-    margin: 32px 0;
-}
-
-/* --- Streamlit input overrides --- */
-.stSelectbox > div > div,
-.stMultiSelect > div > div,
-.stTextInput > div > div {
-    background-color: var(--bg-elevated) !important;
-    border-color: var(--border-subtle) !important;
-    color: var(--text-primary) !important;
-}
-</style>
-"""
-
-
-# ---------------------------------------------------------------------------
-# Guard
-# ---------------------------------------------------------------------------
-
-def _guard() -> None:
-    if "uploaded_data" not in st.session_state:
-        st.info(
-            "Upload and configure your dataset first to start exploratory analysis. "
-            "This page will show interactive charts, statistical tests, and "
-            "AI-generated insights."
-        )
-        st.stop()
-
-
-# ---------------------------------------------------------------------------
-# Section renderers
-# ---------------------------------------------------------------------------
-
-def _render_progress() -> None:
-    """Show pipeline progress bar in the sidebar."""
-    from dashboard.components.workflow_progress import render_mini_progress
-
-    state = {
-        "completed_steps": st.session_state.get("completed_steps", []),
-        "current_step": st.session_state.get("current_step", "eda"),
-        "workflow_status": st.session_state.get("workflow_status", "running"),
-    }
-    with st.sidebar:
-        render_mini_progress(state)
-
-
-def _render_summary() -> None:
-    """Show the AI-generated EDA summary if available."""
-    summary = st.session_state.get("eda_summary", "")
-    if summary:
-        st.markdown(
-            f"""
-            <div class="ai-summary-card">
-                <div class="summary-label">AI Analysis Summary</div>
-                <div class="summary-text">{summary}</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-
-def _render_quality_metrics() -> None:
-    """Show data-quality metric cards in glass style."""
-    df: pd.DataFrame = st.session_state["uploaded_data"]
-    total_cells = df.shape[0] * df.shape[1]
-    missing_cells = int(df.isna().sum().sum())
-    completeness = 1.0 - (missing_cells / total_cells) if total_cells > 0 else 1.0
-    duplicate_rows = int(df.duplicated().sum())
-
-    st.markdown('<div class="section-header">Data Quality Overview</div>', unsafe_allow_html=True)
-
-    cols = st.columns(5)
-    metrics = [
-        (f"{completeness:.1%}", "Completeness"),
-        (f"{missing_cells:,}", "Missing Cells"),
-        (f"{duplicate_rows:,}", "Duplicate Rows"),
-        (f"{df.shape[1]:,}", "Columns"),
-        (f"{df.shape[0]:,}", "Rows"),
-    ]
-    for col, (value, label) in zip(cols, metrics):
-        with col:
-            st.markdown(
-                f"""
-                <div class="metric-glass-card">
-                    <div class="metric-value">{value}</div>
-                    <div class="metric-label">{label}</div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-
-
-def _render_questions() -> None:
-    """Render EDA questions for Guided / Expert modes."""
-    from dashboard.components.question_renderer import render_question_group
-
-    mode = st.session_state.get("user_mode", MODE_GUIDED)
-    if mode == MODE_AUTO:
-        st.markdown(
-            '<div class="info-placeholder">'
-            '<span class="status-dot info"></span>'
-            'Auto mode -- the system selects analyses automatically.'
-            '</div>',
-            unsafe_allow_html=True,
-        )
-        return
-
-    questions = st.session_state.get("eda_questions", [])
-    if not questions:
-        questions = _generate_default_questions()
-        st.session_state["eda_questions"] = questions
-
-    st.markdown('<div class="section-header">Analysis Options</div>', unsafe_allow_html=True)
-
-    if mode == MODE_EXPERT:
-        st.markdown(
-            '<p style="color: var(--text-muted); font-size: 0.8rem;">'
-            'Expert mode -- you have full control over every analysis.</p>',
-            unsafe_allow_html=True,
-        )
-    else:
-        st.markdown(
-            '<p style="color: var(--text-muted); font-size: 0.8rem;">'
-            'Guided mode -- AI recommendations are highlighted.</p>',
-            unsafe_allow_html=True,
-        )
-
-    # Render each question in a glass card with number badge
-    for idx, q in enumerate(questions, 1):
-        reason = q.get("recommendation_reason", "")
-        st.markdown(
-            f"""
-            <div class="question-card">
-                <div>
-                    <span class="number-badge">{idx}</span>
-                    <span class="question-title">{q.get("question", "")}</span>
-                </div>
-                {"<div class='question-reason'>" + reason + "</div>" if reason else ""}
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-    responses = render_question_group(questions, key_prefix="eda")
-
-    # Manual text field per question for custom specifications
-    st.markdown(
-        '<p style="color: var(--text-muted); font-size: 0.78rem; margin-top: 12px;">'
-        'Add custom instructions for any question (optional):</p>',
-        unsafe_allow_html=True,
-    )
-    custom_inputs: dict[str, str] = {}
-    for q in questions:
-        q_label = q.get("question", q["id"])
-        val = st.text_input(
-            q_label,
-            value="",
-            key=f"eda_custom_{q['id']}",
-            placeholder=f"Custom input for: {q_label}",
-            label_visibility="collapsed",
-        )
-        if val.strip():
-            custom_inputs[q["id"]] = val.strip()
-    if custom_inputs:
-        responses["_custom"] = custom_inputs
-
-    if st.button("Run Selected Analyses", key="eda_run_btn", type="primary"):
-        st.session_state["eda_user_responses"] = responses
-        st.session_state["eda_analyses_submitted"] = True
-        _execute_analyses(responses)
-        st.rerun()
-
-
-def _generate_default_questions() -> list[dict[str, Any]]:
-    """Build a default set of EDA questions when none come from the agent."""
-    df: pd.DataFrame = st.session_state["uploaded_data"]
-    numeric_cols = list(df.select_dtypes(include="number").columns)
-    has_target = st.session_state.get("target_column") is not None
-
-    questions: list[dict[str, Any]] = [
-        {
-            "id": "eda_goal",
-            "question": "What is your primary analysis goal?",
-            "type": "single_select",
-            "options": [
-                {"value": "understand_target", "label": "Understand what drives the target", "recommended": has_target},
-                {"value": "relationships", "label": "Explore feature relationships", "recommended": not has_target},
-                {"value": "quality", "label": "Deep data quality investigation"},
-                {"value": "segments", "label": "Find natural segments / clusters"},
-                {"value": "comprehensive", "label": "Comprehensive analysis (all of the above)"},
-            ],
-            "recommendation_reason": (
-                "Analysing target drivers is most actionable when a target is defined."
-                if has_target
-                else "Exploring relationships helps surface patterns in unsupervised settings."
-            ),
-        },
-        {
-            "id": "eda_charts",
-            "question": "Which visualisations would you like?",
-            "type": "multi_select",
-            "options": [
-                {"value": "distributions", "label": "Distribution plots", "recommended": True},
-                {"value": "correlations", "label": "Correlation heatmap", "recommended": len(numeric_cols) > 1},
-                {"value": "boxplots", "label": "Box plots (outlier detection)", "recommended": True},
-                {"value": "scatter_matrix", "label": "Scatter matrix"},
-                {"value": "missing_heatmap", "label": "Missing-value heatmap"},
-                {"value": "target_analysis", "label": "Target variable analysis", "recommended": has_target},
-            ],
-            "recommendation_reason": "Distributions and box plots are the most informative starting point.",
-        },
-        {
-            "id": "eda_stat_tests",
-            "question": "Which statistical tests should be run?",
-            "type": "multi_select",
-            "options": [
-                {"value": "normality", "label": "Normality tests (Shapiro-Wilk)", "recommended": True},
-                {"value": "correlation_test", "label": "Correlation significance tests", "recommended": True},
-                {"value": "group_comparison", "label": "Group comparison tests (t-test / ANOVA)"},
-                {"value": "chi_square", "label": "Chi-square independence tests"},
-                {"value": "multicollinearity", "label": "VIF / multicollinearity check"},
-            ],
-            "recommendation_reason": "Normality and correlation tests guide later modelling decisions.",
-        },
-    ]
-    return questions
-
-
-def _execute_analyses(responses: dict[str, Any]) -> None:
-    """Execute selected EDA analyses using tool functions and store results."""
-    df: pd.DataFrame = st.session_state["uploaded_data"]
-    numeric_cols = list(df.select_dtypes(include="number").columns)
-    categorical_cols = list(df.select_dtypes(include=["object", "category"]).columns)
-    target = st.session_state.get("target_column")
-
-    results: dict[str, Any] = {}
-    charts: list[dict[str, Any]] = []
-    insights: list[str] = []
-
-    # --- Visualisations ---
-    selected_charts = responses.get("eda_charts", [])
-    if isinstance(selected_charts, str):
-        selected_charts = [selected_charts]
-
-    try:
-        from agents.tools.viz_tools import (
-            histogram,
-            box_plot,
-            correlation_heatmap,
-            pair_plot,
-        )
-
-        if "distributions" in selected_charts:
-            for col in numeric_cols[:8]:
-                try:
-                    chart = histogram(df, col)
-                    charts.append(chart)
-                except Exception as exc:
-                    logger.warning("histogram %s failed: %s", col, exc)
-            insights.append(f"Generated distribution plots for {min(len(numeric_cols), 8)} numeric columns.")
-
-        if "correlations" in selected_charts and len(numeric_cols) > 1:
-            try:
-                chart = correlation_heatmap(df, numeric_cols[:20])
-                charts.append(chart)
-                insights.append("Correlation heatmap generated for numeric features.")
-            except Exception as exc:
-                logger.warning("correlation_heatmap failed: %s", exc)
-
-        if "boxplots" in selected_charts:
-            for col in numeric_cols[:8]:
-                try:
-                    grp = target if target and target != col and target in df.columns else None
-                    chart = box_plot(df, col, group_by=grp)
-                    charts.append(chart)
-                except Exception as exc:
-                    logger.warning("box_plot %s failed: %s", col, exc)
-            insights.append(f"Box plots generated for {min(len(numeric_cols), 8)} columns.")
-
-        if "scatter_matrix" in selected_charts and len(numeric_cols) >= 2:
-            try:
-                chart = pair_plot(df, numeric_cols[:5])
-                charts.append(chart)
-                insights.append("Scatter matrix generated for top 5 numeric features.")
-            except Exception as exc:
-                logger.warning("pair_plot failed: %s", exc)
-
-        if "missing_heatmap" in selected_charts:
-            missing_pct = df.isna().mean()
-            cols_with_missing = missing_pct[missing_pct > 0]
-            if len(cols_with_missing) > 0:
-                insights.append(
-                    f"{len(cols_with_missing)} columns have missing values. "
-                    f"Highest: {cols_with_missing.idxmax()} ({cols_with_missing.max():.1%})."
-                )
-            else:
-                insights.append("No missing values detected in the dataset.")
-
-        if "target_analysis" in selected_charts and target and target in df.columns:
-            try:
-                chart = histogram(df, target)
-                charts.append(chart)
-                insights.append(f"Target variable '{target}' distribution plotted.")
-            except Exception as exc:
-                logger.warning("target histogram failed: %s", exc)
-
-    except ImportError:
-        logger.warning("viz_tools import failed, skipping charts")
-
-    # --- Statistical tests ---
-    selected_tests = responses.get("eda_stat_tests", [])
-    if isinstance(selected_tests, str):
-        selected_tests = [selected_tests]
-
-    try:
-        from agents.tools.stats_tools import (
-            shapiro_wilk,
-            correlation_pearson,
-            correlation_matrix,
-            anova_oneway,
-            chi_square_test,
-            vif_analysis,
-        )
-
-        if "normality" in selected_tests:
-            for col in numeric_cols[:10]:
-                try:
-                    result = shapiro_wilk(df, col)
-                    results[f"shapiro_wilk_{col}"] = result
-                except Exception as exc:
-                    logger.warning("shapiro_wilk %s failed: %s", col, exc)
-            insights.append(f"Shapiro-Wilk normality tests run on {min(len(numeric_cols), 10)} columns.")
-
-        if "correlation_test" in selected_tests and len(numeric_cols) >= 2:
-            try:
-                result = correlation_matrix(df, numeric_cols[:15])
-                results["correlation_matrix"] = result
-                insights.append("Correlation matrix computed with significance tests.")
-            except Exception as exc:
-                logger.warning("correlation_matrix failed: %s", exc)
-
-        if "group_comparison" in selected_tests and target and target in df.columns:
-            series = df[target]
-            if series.nunique() <= 10:
-                for col in numeric_cols[:5]:
-                    if col == target:
-                        continue
-                    try:
-                        result = anova_oneway(df, col, target)
-                        results[f"anova_{col}_by_{target}"] = result
-                    except Exception as exc:
-                        logger.warning("anova %s failed: %s", col, exc)
-                insights.append("Group comparison tests (ANOVA) executed.")
-
-        if "chi_square" in selected_tests and len(categorical_cols) >= 2:
-            pairs_tested = 0
-            for i, c1 in enumerate(categorical_cols[:5]):
-                for c2 in categorical_cols[i + 1 : 6]:
-                    try:
-                        result = chi_square_test(df, c1, c2)
-                        results[f"chi2_{c1}_vs_{c2}"] = result
-                        pairs_tested += 1
-                    except Exception as exc:
-                        logger.warning("chi_square %s vs %s failed: %s", c1, c2, exc)
-            if pairs_tested:
-                insights.append(f"Chi-square independence tests on {pairs_tested} categorical pairs.")
-
-        if "multicollinearity" in selected_tests and len(numeric_cols) >= 2:
-            try:
-                result = vif_analysis(df, numeric_cols[:15])
-                results["vif"] = result
-                insights.append("VIF multicollinearity analysis completed.")
-            except Exception as exc:
-                logger.warning("vif_analysis failed: %s", exc)
-
-    except ImportError:
-        logger.warning("stats_tools import failed, skipping tests")
-
-    if not insights:
-        insights.append("No analyses were selected or all selected analyses were skipped.")
-
-    st.session_state["eda_results"] = results
-    st.session_state["eda_charts"] = charts
-    st.session_state["eda_insights"] = insights
-    st.session_state["eda_summary"] = (
-        f"EDA complete. {len(charts)} charts generated, {len(results)} statistical tests run. "
-        + " ".join(insights[:3])
-    )
-
-
-def _render_charts() -> None:
-    """Display EDA charts stored in session state."""
-    from dashboard.components.chart_container import render_chart
-
-    charts: list[dict[str, Any]] = st.session_state.get("eda_charts", [])
-    if not charts:
-        return
-
-    st.markdown('<div class="section-header">Visualisations</div>', unsafe_allow_html=True)
-    for i, chart_spec in enumerate(charts):
-        fig = chart_spec.get("figure")
-        title = chart_spec.get("title", f"Chart {i + 1}")
-        if fig is not None:
-            st.markdown(
-                f"""
-                <div class="chart-glass-container">
-                    <div class="chart-title">{title}</div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-            render_chart(fig, title=title, key=f"eda_chart_{i}")
-
-
-def _render_insights() -> None:
-    """Show bullet-point insights from EDA."""
-    insights: list[str] = st.session_state.get("eda_insights", [])
-    if not insights:
-        return
-
-    st.markdown('<div class="section-header">Key Insights</div>', unsafe_allow_html=True)
-    for insight in insights:
-        st.markdown(
-            f'<div class="insight-item">{insight}</div>',
-            unsafe_allow_html=True,
-        )
-
-
-def _render_stat_results() -> None:
-    """Show statistical test results in expandable tables."""
-    results: dict[str, Any] = st.session_state.get("eda_results", {})
-    if not results:
-        return
-
-    st.markdown('<div class="section-header">Statistical Test Results</div>', unsafe_allow_html=True)
-    for test_name, result in results.items():
-        with st.expander(test_name.replace("_", " ").title()):
-            if isinstance(result, dict):
-                rows = [{"Statistic": k, "Value": str(v)} for k, v in result.items()]
-                st.table(rows)
-            elif isinstance(result, pd.DataFrame):
-                st.dataframe(result, use_container_width=True)
-            else:
-                st.write(result)
-
-
-def _render_auto_placeholder() -> None:
-    """Placeholder for auto-mode where analyses run without user input."""
-    mode = st.session_state.get("user_mode", MODE_GUIDED)
-    submitted = st.session_state.get("eda_analyses_submitted", False)
-
-    if mode == MODE_AUTO or submitted:
-        has_results = bool(st.session_state.get("eda_results")) or bool(st.session_state.get("eda_charts"))
-        if not has_results:
-            st.markdown(
-                """
-                <div class="info-placeholder">
-                    <span class="status-dot info"></span>
-                    Analyses are ready to execute. Connect the EDA agent to see
-                    live results here. In the meantime, the pipeline will populate
-                    charts, insights, and statistical tests in this section.
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-
-
-# ---------------------------------------------------------------------------
-# Page
-# ---------------------------------------------------------------------------
-
-def _page() -> None:
-    _guard()
-    st.set_page_config(page_title="Exploratory Analysis", layout="wide") if not hasattr(st, "_is_running_with_streamlit") else None
-
-    # Inject shared theme + page-specific CSS
-    inject_shared_css()
-    st.markdown(_DARK_LUXURY_CSS, unsafe_allow_html=True)
-
-    # Page header
-    st.markdown(
-        """
-        <div class="eda-page-header">
-            <h1>Exploratory Analysis</h1>
-            <div class="subtitle">Interactive data exploration with AI-powered insights</div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    _render_progress()
-
-    # Summary at top
-    _render_summary()
-
-    # Quality metrics
-    _render_quality_metrics()
-
-    st.markdown('<hr class="eda-divider">', unsafe_allow_html=True)
-
-    # Questions (Guided / Expert) or auto notice
-    _render_questions()
-
-    st.markdown('<hr class="eda-divider">', unsafe_allow_html=True)
-
-    # Results sections
-    _render_auto_placeholder()
-    _render_charts()
-    _render_insights()
-    _render_stat_results()
-
-    # Navigation
-    st.markdown('<hr class="eda-divider">', unsafe_allow_html=True)
-    col_back, col_next = st.columns(2)
-    with col_back:
-        if st.button("Back to Configure", use_container_width=True):
-            st.switch_page("pages/02_configure.py")
-    with col_next:
-        if st.button("Proceed to Feature Engineering", type="primary", use_container_width=True):
-            st.switch_page("pages/04_feature_engineering.py")
-
+from dashboard.components.sidebar_nav import render as render_sidebar
+
+from dashboard.components.ed_phase_router import (
+    get_phase, set_phase, auto_set_initial_phase, render_phase_toggle,
+)
+from dashboard.components.ed_questions_panel import render as render_questions
+from dashboard.components.ed_auto_recommendations import render as render_auto
+from dashboard.components.ed_insights_summary import render as render_insights
+from dashboard.components.ed_target_callout import render as render_target
+from dashboard.components.ed_featured_chart import render as render_featured
+from dashboard.components.ed_charts_grid import render as render_charts
+from dashboard.components.ed_stats_findings import render as render_stats
+from dashboard.components.ed_quality_flags import render as render_flags
+from dashboard.components.ed_chat_composer import render as render_chat
+from dashboard.components.ed_filters_bar import render as render_filters
+from dashboard.components.ed_action_bar import render as render_actions
 
 
 def _is_streamlit_running() -> bool:
-    """Return True only when executing inside a Streamlit runtime."""
     try:
-        from streamlit.runtime.scriptrunner import get_script_run_ctx
-        return get_script_run_ctx() is not None
+        from streamlit.runtime import get_instance
+        return get_instance() is not None
     except Exception:
         return False
 
 
-if _is_streamlit_running():
-    _page()
+if not _is_streamlit_running():
+    pass
+else:
+    st.set_page_config(
+        page_title="AutoDS — EDA",
+        page_icon="📊",
+        layout="wide",
+        initial_sidebar_state="expanded",
+    )
+
+    inject_shared_css()
+
+    # ---- gates ----
+    if not auth_service.is_authenticated():
+        st.switch_page("pages/00_login.py")
+        st.stop()
+
+    render_sidebar()
+
+    project = project_service.get_active()
+    if project is None:
+        st.warning("Open a project from the home page to continue.")
+        if st.button("← Go to home"):
+            st.switch_page("app.py")
+        st.stop()
+
+    df = st.session_state.get("df")
+    if df is None or df.empty:
+        st.warning("No dataset loaded. Return to Upload.")
+        if st.button("← Back to Upload"):
+            st.switch_page("pages/01_upload.py")
+        st.stop()
+
+    auto_set_initial_phase()
+    current_phase = get_phase()
+
+    # ---- topbar ----
+    top_cols = st.columns([6, 2, 1])
+    with top_cols[0]:
+        st.markdown(
+            f'<div class="ed-crumbs">'
+            f'  <span>{project.name}</span>'
+            f'  <span class="sep">/</span>'
+            f'  <span class="cur">EDA</span>'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
+    with top_cols[1]:
+        render_phase_toggle()
+
+    # ---- hero ----
+    if current_phase == "questions":
+        title_html = 'Configure your <em>analysis questions.</em>'
+        subtitle = "Pick the goals, visualizations, and statistical tests you want. AutoDS will run them all in one go and show you the results."
+    else:
+        n_insights = len(st.session_state.get("eda_insights", []))
+        n_charts = len(st.session_state.get("eda_charts", []))
+        n_stats = len(st.session_state.get("eda_stats", []))
+        title_html = 'Your <em>EDA results.</em>'
+        subtitle = f"{n_insights} insights, {n_charts} charts, {n_stats} statistical tests. Filter, drill in, or ask a follow-up."
+
+    st.markdown(
+        f'<section class="ed-hero">'
+        f'  <div class="ed-eyebrow">📊 Step 3 of 7 — Exploratory Data Analysis</div>'
+        f'  <h1>{title_html}</h1>'
+        f'  <p>{subtitle}</p>'
+        f'</section>',
+        unsafe_allow_html=True,
+    )
+
+    # ---- callbacks ----
+
+    def _run_analysis_from_questions(answers: list[dict]) -> None:
+        _execute_eda_run({"answers": answers})
+
+    def _run_analysis_from_auto(spec: dict) -> None:
+        _execute_eda_run({"auto_spec": spec})
+
+    def _execute_eda_run(payload: dict) -> None:
+        p = project_service.get_active()
+        started = time.time()
+
+        with st.spinner("Running analysis — generating charts, statistical tests, and insights..."):
+            try:
+                from agents.eda_agent import run_analyses
+                state = {
+                    "df_ref": "main",
+                    "domain": p.confirmed_domain or p.detected_domain,
+                    "target_column": p.target_column,
+                    "problem_type": p.problem_type,
+                    "analysis_mode": p.analysis_mode,
+                    "goal": p.goal,
+                    "excluded_columns": p.excluded_columns,
+                    "user_answers": payload,
+                }
+                results = run_analyses(state)
+
+                st.session_state["eda_results"] = results
+                st.session_state["eda_charts"] = results.get("charts", [])
+                st.session_state["eda_stats"] = results.get("stats", [])
+                st.session_state["eda_insights"] = results.get("insights", [])
+                st.session_state["eda_quality_flags"] = results.get("quality_flags", {})
+
+                elapsed = int(time.time() - started)
+                m, s = divmod(elapsed, 60)
+                st.session_state["ed_run_runtime_str"] = f"{m} min {s:02d} s" if m else f"{s} s"
+                st.session_state["ed_run_cost_str"] = results.get("llm_cost_str", "—")
+
+            except Exception as e:
+                st.error(f"Analysis failed: {e}. Check that the EDA agent is configured.")
+                return
+
+        n_c = len(st.session_state.get("eda_charts", []))
+        n_s = len(st.session_state.get("eda_stats", []))
+        n_i = len(st.session_state.get("eda_insights", []))
+
+        p.step_status["eda"] = "done"
+        p.step_status["features"] = "active"
+        p.eda_completed = True
+        p.eda_summary = f"{n_i} insights · {n_c} charts · {n_s} tests"
+        project_service.update(p)
+        set_phase("results")
+        st.rerun()
+
+    def _handle_followup(prompt: str) -> None:
+        p = project_service.get_active()
+        try:
+            from agents.eda_agent import add_followup_analysis
+            state = {
+                "df_ref": "main",
+                "domain": p.confirmed_domain or p.detected_domain,
+                "target_column": p.target_column,
+                "problem_type": p.problem_type,
+                "previous_results": st.session_state.get("eda_results"),
+            }
+            new_outputs = add_followup_analysis(state, prompt)
+
+            if "charts" in new_outputs:
+                st.session_state["eda_charts"] = new_outputs["charts"] + st.session_state.get("eda_charts", [])
+            if "stats" in new_outputs:
+                st.session_state["eda_stats"] = new_outputs["stats"] + st.session_state.get("eda_stats", [])
+            if "insights" in new_outputs:
+                st.session_state["eda_insights"] = new_outputs["insights"] + st.session_state.get("eda_insights", [])
+
+        except (ImportError, AttributeError):
+            try:
+                from agents.followup_agent import handle as followup_handle
+                followup_handle(prompt, st.session_state.get("eda_results", {}))
+                st.success(f"Added: {prompt}")
+            except Exception as e:
+                st.warning(f"Follow-up not yet wired: {e}")
+        except Exception as e:
+            st.error(f"Follow-up failed: {e}")
+
+    def _handle_continue() -> None:
+        st.switch_page("pages/04_feature_engineering.py")
+
+    def _handle_reconfigure() -> None:
+        set_phase("questions")
+        st.rerun()
+
+    def _handle_export() -> None:
+        try:
+            from agents.report_agent import generate_eda_report
+            path = generate_eda_report(st.session_state.get("eda_results", {}))
+            st.success(f"EDA report exported to {path}")
+        except Exception as e:
+            st.warning(f"Export not wired yet: {e}")
+
+    # ---- phase rendering ----
+    st.markdown('<div class="ed-phase-wrap">', unsafe_allow_html=True)
+
+    if current_phase == "questions":
+        if (project.analysis_mode or "guided") == "auto":
+            render_auto(on_run=_run_analysis_from_auto)
+        else:
+            render_questions(on_run=_run_analysis_from_questions)
+    else:
+        render_insights()
+        render_target()
+        render_featured()
+        render_charts()
+        render_stats()
+        render_flags()
+        render_chat(on_submit=_handle_followup)
+        render_filters()
+        render_actions(
+            on_continue=_handle_continue,
+            on_reconfigure=_handle_reconfigure,
+            on_export=_handle_export,
+        )
+
+    st.markdown('</div>', unsafe_allow_html=True)

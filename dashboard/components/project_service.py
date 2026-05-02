@@ -54,6 +54,8 @@ class Project:
     )
     excluded_columns: list[str] = field(default_factory=list)
     goal: Optional[str] = None
+    eda_completed: bool = False
+    eda_summary: Optional[str] = None
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
