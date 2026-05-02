@@ -227,7 +227,7 @@ async def root() -> dict[str, str]:
 # ---------------------------------------------------------------------------
 # Routers
 # ---------------------------------------------------------------------------
-from api.routes import auth, chat, configure, download, eda, explainability, feature_engineering, jobs, modeling, predict, projects, upload  # noqa: E402
+from api.routes import auth, chat, configure, download, eda, explainability, feature_engineering, jobs, meta, modeling, predict, projects, upload  # noqa: E402
 
 app.include_router(auth.router,                prefix="/auth",      tags=["auth"])
 app.include_router(projects.router,            prefix="/projects",  tags=["projects"])
@@ -241,3 +241,4 @@ app.include_router(predict.router,             prefix="/predict",   tags=["predi
 app.include_router(chat.router,                prefix="/chat",      tags=["chat"])
 app.include_router(download.router,            prefix="/download",  tags=["download"])
 app.include_router(jobs.router,                prefix="/jobs",      tags=["jobs"])
+app.include_router(meta.router,                prefix="/meta",      tags=["meta"])
