@@ -11,23 +11,14 @@ from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from api.config import get_settings
+from api.logging_setup import configure_logging, setup_request_logging
 
 # ---------------------------------------------------------------------------
 # Logging
 # ---------------------------------------------------------------------------
 
 settings = get_settings()
-
-# Try to use logging_audit config if available; fall back to basicConfig.
-try:
-    from logging_audit.structured_logger import configure_logging  # type: ignore[import]
-
-    configure_logging(level=settings.LOG_LEVEL)
-except ImportError:
-    logging.basicConfig(
-        level=settings.LOG_LEVEL,
-        format="%(asctime)s %(levelname)s %(name)s — %(message)s",
-    )
+configure_logging()
 
 logger = logging.getLogger(__name__)
 
@@ -78,6 +69,7 @@ class _BodySizeLimitMiddleware(BaseHTTPMiddleware):
 
 
 app.add_middleware(_BodySizeLimitMiddleware)
+setup_request_logging(app)
 
 # ---------------------------------------------------------------------------
 # Centralised exception handler

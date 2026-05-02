@@ -53,7 +53,7 @@ async def get_current_user(
 
     # --- Dev bypass path ---
     if settings.JWT_SECRET == _DEV_SECRET:
-        return {"user_id": "dev-user", "email": "dev@local"}
+        return {"user_id": "dev-user", "email": "dev@example.com"}
 
     # --- Internal JWT path ---
     try:

@@ -1,0 +1,46 @@
+**/__pycache__
+**/*.pyc
+**/*.pyo
+**/*.pyd
+**/.pytest_cache
+**/.mypy_cache
+**/.ruff_cache
+**/.DS_Store
+.git
+.gitignore
+.env
+*.env
+
+# Frontend / dashboard / landing — not needed in the API image
+dashboard/
+landing/
+landing-site/
+frontend/
+*.md
+
+# Node / JS build artifacts
+node_modules/
+.next/
+dist/
+build/
+
+# Test artifacts
+api/tests/
+tests/
+*.coverage
+.coverage
+htmlcov/
+coverage.xml
+
+# ML run artifacts (large, not needed at build time)
+mlruns/
+logs/
+sessions/
+data/
+outputs/
+evaluation/benchmarks/benchmark_datasets/
+evaluation/test_datasets/
+
+# Docs
+docs/
+scripts/
