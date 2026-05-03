@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Inter_Tight, JetBrains_Mono, Instrument_Serif } from "next/font/google";
 import "./globals.css";
-import { Providers } from "@/components/providers";
+import { Providers } from "./providers";
 
 const interTight = Inter_Tight({
   variable: "--font-body-var",
