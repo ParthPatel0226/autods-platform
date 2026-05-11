@@ -77,3 +77,4 @@ tests/benchmarks/benchmark_datasets/*.parquet
 # Windows reserved filenames accidentally created
 nul
 NUL
+.claude/ 
