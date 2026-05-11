@@ -9,6 +9,8 @@ import type { FESuggestion, FEResults } from "@/lib/api/types";
 import type { ApprovalDecision } from "@/components/pipeline/approval-widget";
 import { ApprovalWidget } from "@/components/pipeline/approval-widget";
 import { JobProgress } from "@/components/pipeline/job-progress";
+import { PageSkeleton } from "@/components/shared/page-skeleton";
+import { EmptyState } from "@/components/shared/empty-state";
 import { cn } from "@/lib/utils";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -195,16 +197,13 @@ export default function FeaturesPage() {
       {pageState === "suggest" && (
         <>
           {loadingSuggest ? (
-            <div className="flex items-center justify-center py-20">
-              <span className="h-6 w-6 rounded-full border-2 border-white border-t-transparent animate-spin" />
-            </div>
+            <PageSkeleton rows={3} />
           ) : suggestions.length === 0 ? (
-            <div className="rounded-2xl border border-white/8 bg-white/2 p-6 backdrop-blur-sm">
-              <p className="text-sm text-muted-foreground text-center py-8">
-                No feature engineering suggestions available. Proceed to
-                modeling.
-              </p>
-            </div>
+            <EmptyState
+              icon={Layers}
+              title="No suggestions available"
+              description="No feature engineering transformations were recommended. Proceed to modeling."
+            />
           ) : (
             <ApprovalWidget
               title="Approve: Feature Engineering"

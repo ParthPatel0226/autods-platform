@@ -338,7 +338,7 @@ export default function ConfigurePage() {
           Analysis Mode
         </h2>
 
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {MODES.map((m) => {
             const selected = mode === m.value;
             return (
@@ -382,7 +382,7 @@ export default function ConfigurePage() {
           Target &amp; Problem Type
         </h2>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Target column */}
           <div className="flex flex-col gap-2">
             <label className="text-xs text-muted-foreground">Target Column</label>

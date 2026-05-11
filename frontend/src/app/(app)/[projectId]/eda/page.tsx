@@ -3,11 +3,14 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { HelpCircle } from "lucide-react";
 import { edaApi } from "@/lib/api/endpoints";
 import type { EDAQuestion, EDAResults } from "@/lib/api/types";
 import { QuestionRenderer } from "@/components/pipeline/question-renderer";
 import { ChartCard } from "@/components/pipeline/chart-card";
 import { JobProgress } from "@/components/pipeline/job-progress";
+import { PageSkeleton } from "@/components/shared/page-skeleton";
+import { EmptyState } from "@/components/shared/empty-state";
 import { cn } from "@/lib/utils";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -107,15 +110,13 @@ export default function EdaPage() {
       {pageState === "questions" && (
         <>
           {loadingQuestions ? (
-            <div className="flex items-center justify-center py-20">
-              <span className="h-6 w-6 rounded-full border-2 border-white border-t-transparent animate-spin" />
-            </div>
+            <PageSkeleton rows={3} />
           ) : questions.length === 0 ? (
-            <div className="rounded-2xl border border-white/8 bg-white/2 p-6 backdrop-blur-sm">
-              <p className="text-sm text-muted-foreground text-center py-8">
-                No questions available for this project. Proceed to run analysis.
-              </p>
-            </div>
+            <EmptyState
+              icon={HelpCircle}
+              title="No questions available"
+              description="Proceed to run the EDA analysis with default settings."
+            />
           ) : (
             <div className="flex flex-col gap-4">
               {questions.map((q) => (

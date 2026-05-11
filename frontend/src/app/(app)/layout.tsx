@@ -8,6 +8,8 @@ import { useAppStore } from "@/lib/store";
 import { projectsApi } from "@/lib/api/endpoints";
 import { Header } from "@/components/shared/header";
 import { DesktopSidebar, MobileSidebar } from "@/components/shared/sidebar";
+import { PageTransition } from "@/components/shared/page-transition";
+import { ErrorBoundary } from "@/components/shared/error-boundary";
 
 // ─── App Shell Layout ─────────────────────────────────────────────────────────
 
@@ -83,7 +85,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           leftSlot={<MobileSidebar {...sidebarProps} />}
         />
         <main className="flex-1 overflow-y-auto">
-          {children}
+          <ErrorBoundary>
+            <PageTransition>
+              {children}
+            </PageTransition>
+          </ErrorBoundary>
         </main>
       </div>
     </div>

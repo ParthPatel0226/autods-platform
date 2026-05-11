@@ -27,6 +27,7 @@ import { chatApi } from "@/lib/api/endpoints";
 import type { ChatResponse, SuggestedAction } from "@/lib/api/types";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { PageSkeleton } from "@/components/shared/page-skeleton";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -318,11 +319,8 @@ export default function ChatPage() {
       {/* Message list */}
       <div className="flex-1 overflow-y-auto px-6 py-6">
         {historyLoading ? (
-          <div className="flex h-full items-center justify-center">
-            <div className="flex flex-col items-center gap-3">
-              <div className="h-8 w-8 rounded-full border-2 border-accent-violet border-t-transparent animate-spin" />
-              <p className="text-sm text-muted-foreground">Loading history…</p>
-            </div>
+          <div className="px-6 py-6">
+            <PageSkeleton rows={3} />
           </div>
         ) : messages.length === 0 && !loading ? (
           /* Empty state */
