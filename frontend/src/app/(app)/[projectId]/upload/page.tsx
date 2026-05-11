@@ -124,6 +124,7 @@ export default function UploadPage() {
         form.append("project_id", projectId);
         const res = await uploadApi.file(form);
         setPrimarySource({ source_id: res.source_id, label: file.name, response: res });
+        sessionStorage.setItem(`autods_schema_${projectId}`, JSON.stringify(res.schema));
         queryClient.invalidateQueries({ queryKey: ["projects", projectId] });
         toast.success(`Uploaded ${file.name}`);
       } catch {
@@ -146,6 +147,7 @@ export default function UploadPage() {
           label: ds?.display_name ?? name,
           response: res,
         });
+        sessionStorage.setItem(`autods_schema_${projectId}`, JSON.stringify(res.schema));
         queryClient.invalidateQueries({ queryKey: ["projects", projectId] });
         toast.success(`Loaded ${ds?.display_name ?? name}`);
       } catch {
@@ -169,6 +171,7 @@ export default function UploadPage() {
         label: connectorType,
         response: res,
       });
+      sessionStorage.setItem(`autods_schema_${projectId}`, JSON.stringify(res.schema));
       queryClient.invalidateQueries({ queryKey: ["projects", projectId] });
       toast.success("Source connected");
     } catch {
