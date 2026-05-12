@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
@@ -12,19 +13,21 @@ import { authApi } from "@/lib/api/endpoints";
 
 export default function LoginPage() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault();
-    console.log("Login called", email);
     setIsLoading(true);
     try {
-      const { access_token } = await authApi.login({ email, password });
-      localStorage.setItem("autods_token", access_token);
+      const data = await authApi.login({ email, password });
+      localStorage.setItem("autods_token", data.access_token);
       // Soft session cookie for middleware
       document.cookie = "autods_session=1; path=/; samesite=lax; max-age=86400";
+      // Clear stale auth cache so (app)/layout auth guard sees isLoading=true on mount
+      queryClient.removeQueries({ queryKey: ["auth", "me"] });
       router.push("/projects");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Login failed");

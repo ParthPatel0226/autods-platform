@@ -203,7 +203,7 @@ export const jobsApi = {
     onEvent: (ev: JobProgressEvent) => void,
     onError?: (e: Event) => void,
   ): EventSource => {
-    const base = process.env.NEXT_PUBLIC_API_URL ?? "/api/v1";
+    const base = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/v1";
     const token =
       typeof window !== "undefined"
         ? localStorage.getItem("autods_token")
