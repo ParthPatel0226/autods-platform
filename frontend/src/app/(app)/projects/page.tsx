@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, BarChart3, Layers, Brain, Clock } from "lucide-react";
+import { toast } from "sonner";
 import { projectsApi } from "@/lib/api/endpoints";
 import { useAppStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
@@ -40,6 +41,7 @@ function NewProjectDialog({
   onOpenChange: (v: boolean) => void;
 }) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { setCurrentProject } = useAppStore();
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
@@ -48,10 +50,13 @@ function NewProjectDialog({
     if (!name.trim()) return;
     setLoading(true);
     try {
-      sessionStorage.setItem("autods_new_project_name", name.trim());
-      setCurrentProject(null);
+      const project = await projectsApi.create({ name: name.trim() });
+      await queryClient.invalidateQueries({ queryKey: ["projects"] });
+      setCurrentProject(project.project_id);
       onOpenChange(false);
-      router.push("/upload");
+      router.push(`/${project.project_id}/upload`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to create project");
     } finally {
       setLoading(false);
     }

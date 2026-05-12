@@ -17,8 +17,9 @@ export default function SignupPage() {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    console.log("Signup called", email);
     setIsLoading(true);
     try {
       const { access_token } = await authApi.signup({
@@ -93,7 +94,8 @@ export default function SignupPage() {
         </div>
 
         <Button
-          type="submit"
+          type="button"
+          onClick={handleSubmit}
           disabled={isLoading}
           className="btn-glow w-full h-10 bg-primary hover:bg-primary/90 text-primary-foreground"
         >

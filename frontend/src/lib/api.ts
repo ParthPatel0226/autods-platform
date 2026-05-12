@@ -18,10 +18,7 @@ async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> 
   const res = await fetch(`${BASE_URL}${path}`, { ...options, headers });
 
   if (res.status === 401) {
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("autods_token");
-      window.location.href = "/login";
-    }
+    // Don't hard-redirect here — let useAuth() handle token cleanup and redirect
     throw new Error("Unauthorized");
   }
 
