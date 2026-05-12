@@ -34,7 +34,7 @@ export function Header({ projectName, leftSlot }: HeaderProps) {
       <div className="flex items-center gap-3">
         {leftSlot}
         <Link
-          href="/"
+          href="/projects"
           className="font-display italic text-xl font-semibold glow-text leading-none"
         >
           AutoDS
