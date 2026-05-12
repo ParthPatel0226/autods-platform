@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, Settings, Menu } from "lucide-react";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useAppStore } from "@/lib/store";
 import { projectsApi, metaApi } from "@/lib/api/endpoints";
@@ -73,6 +74,7 @@ function NewProjectDialog({
   onOpenChange: (v: boolean) => void;
 }) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { setCurrentProject } = useAppStore();
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
@@ -81,12 +83,13 @@ function NewProjectDialog({
     if (!name.trim()) return;
     setLoading(true);
     try {
-      // Navigate to upload step; real creation happens after file upload
-      // Store name temporarily so the upload page can pre-fill it
-      sessionStorage.setItem("autods_new_project_name", name.trim());
-      setCurrentProject(null);
+      const project = await projectsApi.create({ name: name.trim() });
+      await queryClient.invalidateQueries({ queryKey: ["projects"] });
+      setCurrentProject(project.project_id);
       onOpenChange(false);
-      router.push("/upload");
+      router.push(`/${project.project_id}/upload`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to create project");
     } finally {
       setLoading(false);
     }
@@ -141,7 +144,9 @@ function SidebarContent({ projectId, currentStep, completedSteps }: SidebarProps
       return;
     }
     setCurrentProject(value);
-    router.push(`/${value}/upload`);
+    const project = projects.find((p) => p.project_id === value);
+    const step = project?.current_step ?? "upload";
+    router.push(`/${value}/${step}`);
   }
 
   return (
