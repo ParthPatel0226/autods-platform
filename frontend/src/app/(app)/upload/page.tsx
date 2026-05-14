@@ -59,8 +59,7 @@ export default function UploadPage() {
       // 2. Upload the file
       const form = new FormData();
       form.append("file", file);
-      form.append("project_id", project.project_id);
-      await uploadApi.file(form);
+      await uploadApi.file(project.project_id, form);
 
       // 3. Sync Zustand + invalidate project list
       setCurrentProject(project.project_id);

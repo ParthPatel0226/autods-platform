@@ -94,7 +94,7 @@ export default function FeaturesPage() {
   useEffect(() => {
     async function fetchSuggestions() {
       try {
-        const data = await feApi.suggest({ project_id: projectId });
+        const data = await feApi.suggest(projectId);
         setSuggestions(data.suggestions ?? []);
       } catch (err) {
         toast.error("Failed to load feature engineering suggestions");

@@ -37,7 +37,7 @@ export default function EdaPage() {
   useEffect(() => {
     async function fetchQuestions() {
       try {
-        const data = await edaApi.generateQuestions({ project_id: projectId });
+        const data = await edaApi.generateQuestions(projectId);
         const qs = data.questions ?? [];
         setQuestions(qs);
         // Seed answers with recommended values where available

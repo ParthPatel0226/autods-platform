@@ -183,12 +183,7 @@ export default function ConfigurePage() {
 
     // Detect domain
     configureApi
-      .detectDomain({
-        project_id: projectId,
-        domain: "",
-        problem_type: "classification",
-        user_goal: "",
-      })
+      .detectDomain(projectId)
       .then((res) => {
         setDetection(res);
         setDomain(res.detected_domain);
@@ -232,7 +227,7 @@ export default function ConfigurePage() {
         user_goal: goal === "custom" ? customGoal : goal,
       };
       await configureApi.setTarget(body);
-      await configureApi.startPipeline(body);
+      await configureApi.startPipeline(projectId);
       queryClient.invalidateQueries({ queryKey: ["projects", projectId] });
       router.push(`/${projectId}/eda`);
     } catch (err) {

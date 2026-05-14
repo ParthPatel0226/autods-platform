@@ -85,37 +85,37 @@ export const projectsApi = {
 // ─── Upload ──────────────────────────────────────────────────────────────────
 
 export const uploadApi = {
-  file: (form: FormData) =>
-    api.upload<UploadFileResponse>("/upload/file", form),
+  file: (projectId: string, form: FormData) =>
+    api.upload<UploadFileResponse>(`/upload/file?project_id=${encodeURIComponent(projectId)}`, form),
   listSamples: () => api.get<SampleDatasetInfo[]>("/upload/samples"),
-  loadSample: (body: SampleDatasetRequest) =>
-    api.post<UploadFileResponse>("/upload/samples", body),
-  connector: (body: ConnectorUploadRequest) =>
-    api.post<UploadFileResponse>("/upload/connector", body),
+  loadSample: (projectId: string, body: SampleDatasetRequest) =>
+    api.post<UploadFileResponse>(`/upload/samples?project_id=${encodeURIComponent(projectId)}`, body),
+  connector: (projectId: string, body: ConnectorUploadRequest) =>
+    api.post<UploadFileResponse>(`/upload/connector?project_id=${encodeURIComponent(projectId)}`, body),
   suggestJoin: (body: _JoinSuggestRequest) =>
     api.post<SuggestJoinResponse>("/upload/join/suggest", body),
-  applyJoin: (body: JoinPlan) =>
-    api.post<ApplyJoinResponse>("/upload/join/apply", body),
-  preview: (sourceId: string) =>
-    api.get<Record<string, unknown>>(`/upload/preview/${sourceId}`),
+  applyJoin: (projectId: string, body: JoinPlan) =>
+    api.post<ApplyJoinResponse>(`/upload/join/apply?project_id=${encodeURIComponent(projectId)}`, body),
+  preview: (projectId: string, sourceId: string) =>
+    api.get<Record<string, unknown>>(`/upload/preview/${sourceId}?project_id=${encodeURIComponent(projectId)}`),
 };
 
 // ─── Configure ───────────────────────────────────────────────────────────────
 
 export const configureApi = {
-  detectDomain: (body: ConfigureRequest) =>
-    api.post<DomainDetectionResponse>("/configure/detect-domain", body),
+  detectDomain: (projectId: string) =>
+    api.post<DomainDetectionResponse>(`/configure/detect-domain?project_id=${encodeURIComponent(projectId)}`),
   setTarget: (body: ConfigureRequest) =>
     api.post<Record<string, unknown>>("/configure/set-target", body),
-  startPipeline: (body: ConfigureRequest) =>
-    api.post<StartPipelineResponse>("/configure/start-pipeline", body),
+  startPipeline: (projectId: string) =>
+    api.post<StartPipelineResponse>(`/configure/start-pipeline?project_id=${encodeURIComponent(projectId)}`),
 };
 
 // ─── EDA ─────────────────────────────────────────────────────────────────────
 
 export const edaApi = {
-  generateQuestions: (body: { project_id: string }) =>
-    api.post<{ questions: EDAQuestion[] }>("/eda/generate-questions", body),
+  generateQuestions: (projectId: string) =>
+    api.post<{ questions: EDAQuestion[] }>(`/eda/generate-questions?project_id=${encodeURIComponent(projectId)}`),
   answerQuestions: (body: EDAAnswerRequest) =>
     api.post<Record<string, unknown>>("/eda/answer", body),
   run: (body: EDARunRequest) =>
@@ -127,8 +127,8 @@ export const edaApi = {
 // ─── Feature Engineering ─────────────────────────────────────────────────────
 
 export const feApi = {
-  suggest: (body: { project_id: string }) =>
-    api.post<FESuggestResponse>("/fe/suggest", body),
+  suggest: (projectId: string) =>
+    api.post<FESuggestResponse>(`/fe/suggest?project_id=${encodeURIComponent(projectId)}`),
   apply: (body: FEApplyRequest) =>
     api.post<Record<string, unknown>>("/fe/apply", body),
   results: (projectId: string) =>
@@ -138,8 +138,8 @@ export const feApi = {
 // ─── Modeling ────────────────────────────────────────────────────────────────
 
 export const modelingApi = {
-  configure: (body: ModelingConfig) =>
-    api.post<Record<string, unknown>>("/modeling/configure", body),
+  configure: (projectId: string, body: ModelingConfig) =>
+    api.post<Record<string, unknown>>(`/modeling/configure?project_id=${encodeURIComponent(projectId)}`, body),
   train: (body: TrainRequest) =>
     api.post<Record<string, unknown>>("/modeling/train", body),
   leaderboard: (projectId: string) =>

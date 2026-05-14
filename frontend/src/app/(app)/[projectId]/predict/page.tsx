@@ -320,7 +320,7 @@ function BatchPredictionSection({ projectId }: { projectId: string }) {
       try {
         const form = new FormData();
         form.append("file", file);
-        const res = await uploadApi.file(form);
+        const res = await uploadApi.file(projectId, form);
         setFileId(res.source_id);
         setNRows(res.n_rows);
         toast.success(`Uploaded ${file.name} — ${res.n_rows} rows`);

@@ -121,8 +121,7 @@ export default function UploadPage() {
       try {
         const form = new FormData();
         form.append("file", file);
-        form.append("project_id", projectId);
-        const res = await uploadApi.file(form);
+        const res = await uploadApi.file(projectId, form);
         setPrimarySource({ source_id: res.source_id, label: file.name, response: res });
         sessionStorage.setItem(`autods_schema_${projectId}`, JSON.stringify(res.schema));
         queryClient.invalidateQueries({ queryKey: ["projects", projectId] });
@@ -140,7 +139,7 @@ export default function UploadPage() {
     async (name: string) => {
       setLoadingSampleName(name);
       try {
-        const res = await uploadApi.loadSample({ dataset_name: name });
+        const res = await uploadApi.loadSample(projectId, { dataset_name: name });
         const ds = samples.find((s) => s.name === name);
         setPrimarySource({
           source_id: res.source_id,
@@ -162,7 +161,7 @@ export default function UploadPage() {
   const handleConnectorSubmit = useCallback(async () => {
     setConnectingSource(true);
     try {
-      const res = await uploadApi.connector({
+      const res = await uploadApi.connector(projectId, {
         connector_type: connectorType,
         config: {},
       });
@@ -187,8 +186,7 @@ export default function UploadPage() {
       try {
         const form = new FormData();
         form.append("file", file);
-        form.append("project_id", projectId);
-        const res = await uploadApi.file(form);
+        const res = await uploadApi.file(projectId, form);
         setSecondarySource({ source_id: res.source_id, label: file.name, response: res });
         setJoinPlan(null);
         toast.success(`Uploaded ${file.name}`);
@@ -223,7 +221,7 @@ export default function UploadPage() {
     if (!joinPlan) return;
     setApplyingJoin(true);
     try {
-      const res = await uploadApi.applyJoin(joinPlan);
+      const res = await uploadApi.applyJoin(projectId, joinPlan);
       // Replace primary source with joined result
       setPrimarySource((prev) =>
         prev
