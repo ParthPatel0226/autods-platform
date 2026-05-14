@@ -9,6 +9,7 @@ from pydantic import BaseModel
 class DomainAlternative(BaseModel):
     domain: str
     confidence: float
+    reason: str = ""
 
 
 class DomainDetectionResponse(BaseModel):
@@ -16,6 +17,7 @@ class DomainDetectionResponse(BaseModel):
     confidence: float
     evidence: list[str]
     alternatives: list[DomainAlternative]
+    project_id: str = ""
 
 
 class ConfigureRequest(BaseModel):
@@ -30,3 +32,4 @@ class ConfigureRequest(BaseModel):
 class StartPipelineResponse(BaseModel):
     job_id: str
     current_step: str = "eda"
+    message: str = ""

@@ -7,9 +7,9 @@ import {
   useCallback,
   KeyboardEvent,
 } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { format } from "date-fns";
-import { Send, Trash2, Bot, User, Sparkles } from "lucide-react";
+import { ArrowLeft, Send, Trash2, Bot, User, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -171,6 +171,7 @@ function MessageBubble({
 
 export default function ChatPage() {
   const { projectId } = useParams<{ projectId: string }>();
+  const router = useRouter();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -271,6 +272,13 @@ export default function ChatPage() {
       {/* Header */}
       <div className="flex flex-shrink-0 items-center justify-between border-b border-white/8 px-6 py-4">
         <div>
+          <button
+            onClick={() => router.push(`/${projectId}/predict`)}
+            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors mb-1"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            Back to Predict
+          </button>
           <h1 className="font-display italic text-2xl font-bold text-foreground">
             Ask Anything
           </h1>

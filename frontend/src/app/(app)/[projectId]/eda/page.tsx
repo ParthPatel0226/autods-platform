@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { HelpCircle } from "lucide-react";
+import { ArrowLeft, HelpCircle } from "lucide-react";
 import { edaApi } from "@/lib/api/endpoints";
 import type { EDAQuestion, EDAResults } from "@/lib/api/types";
 import { QuestionRenderer } from "@/components/pipeline/question-renderer";
@@ -95,6 +95,15 @@ export default function EdaPage() {
 
   return (
     <div className="container max-w-4xl mx-auto px-4 py-10 flex flex-col gap-8">
+      {/* Back navigation */}
+      <button
+        onClick={() => router.push(`/${projectId}/configure`)}
+        className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors self-start -mb-4"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Back to Configure
+      </button>
+
       {/* Header */}
       <div className="flex flex-col gap-1">
         <h1 className="text-2xl font-semibold text-foreground">

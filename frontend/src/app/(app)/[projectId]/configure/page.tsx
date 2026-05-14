@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowRight } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -216,6 +216,7 @@ export default function ConfigurePage() {
   );
 
   const handleStartPipeline = useCallback(async () => {
+    console.log("[CONFIGURE] Start Pipeline clicked");
     setSubmitting(true);
     try {
       const body: ConfigureRequest = {
@@ -226,11 +227,15 @@ export default function ConfigurePage() {
         user_mode: mode,
         user_goal: goal === "custom" ? customGoal : goal,
       };
+      console.log("[CONFIGURE] setTarget body:", body);
       await configureApi.setTarget(body);
+      console.log("[CONFIGURE] setTarget succeeded, calling startPipeline");
       await configureApi.startPipeline(projectId);
+      console.log("[CONFIGURE] startPipeline succeeded, navigating to EDA");
       queryClient.invalidateQueries({ queryKey: ["projects", projectId] });
       router.push(`/${projectId}/eda`);
     } catch (err) {
+      console.error("[CONFIGURE] Pipeline start failed:", err);
       toast.error(err instanceof Error ? err.message : "Failed to start pipeline");
     } finally {
       setSubmitting(false);
@@ -242,6 +247,15 @@ export default function ConfigurePage() {
 
   return (
     <div className="container max-w-4xl mx-auto px-4 py-10 flex flex-col gap-8">
+      {/* Back navigation */}
+      <button
+        onClick={() => router.push("/upload")}
+        className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors self-start -mb-4"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Back to Upload
+      </button>
+
       {/* Heading */}
       <div>
         <h1 className="text-2xl font-display font-semibold tracking-tight">

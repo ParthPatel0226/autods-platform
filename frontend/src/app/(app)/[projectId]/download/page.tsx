@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import {
   FileText,
   FileDown,
@@ -10,6 +10,7 @@ import {
   Download,
   Loader2,
   AlertCircle,
+  ArrowLeft,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { JobProgress } from "@/components/pipeline/job-progress";
@@ -200,6 +201,7 @@ function ReportCard({
 
 export default function DownloadPage() {
   const { projectId } = useParams<{ projectId: string }>();
+  const router = useRouter();
 
   const [htmlState, setHtmlState] = useState<CardState>(INITIAL_CARD);
   const [pdfState, setPdfState] = useState<CardState>(INITIAL_CARD);
@@ -283,6 +285,13 @@ export default function DownloadPage() {
     <div className="flex h-full flex-col overflow-hidden">
       {/* Header */}
       <div className="flex-shrink-0 border-b border-white/8 px-6 py-4">
+        <button
+          onClick={() => router.push(`/${projectId}/chat`)}
+          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors mb-1"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" />
+          Back to Chat
+        </button>
         <h1 className="font-display italic text-2xl font-bold text-foreground">
           Download Reports
         </h1>
