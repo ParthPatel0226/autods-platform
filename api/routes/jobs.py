@@ -25,13 +25,16 @@ router = APIRouter()
 # Helpers
 # ---------------------------------------------------------------------------
 
-def _get_or_404(job_id: str, user_id: str) -> dict:
-    """Fetch job dict; raise 404 if missing, 403 if owned by another user."""
-    job = job_store.get_job(job_id)
-    if not job:
+def _get_or_404(job_id: str, user_id: str) -> JobStatus:
+    """Fetch JobStatus; raise 404 if missing, 403 if owned by another user."""
+    owner = job_store.get_job_owner(job_id)
+    if owner is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Job {job_id!r} not found")
-    if job.get("user_id") and job["user_id"] != user_id:
+    if owner != user_id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+    job = job_store.get_job(job_id)
+    if job is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Job {job_id!r} not found")
     return job
 
 
@@ -62,15 +65,7 @@ async def get_job_status(
             detail=f"Failed to retrieve job: {exc}",
         ) from exc
 
-    return JobStatus(
-        job_id=job["job_id"],
-        status=job.get("status", "pending"),
-        progress=job.get("progress", 0.0),
-        current_step=job.get("current_step"),
-        started_at=job["started_at"],
-        finished_at=job.get("finished_at"),
-        error=job.get("error"),
-    )
+    return job
 
 
 @router.get(

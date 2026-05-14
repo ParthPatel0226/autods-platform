@@ -95,6 +95,15 @@ def get_job(job_id: str) -> Optional[JobStatus]:
     )
 
 
+def get_job_owner(job_id: str) -> Optional[str]:
+    """Return the user_id that owns *job_id*, or None if unknown."""
+    with _lock:
+        raw = _jobs.get(job_id)
+    if raw is None:
+        return None
+    return raw.get("user_id")
+
+
 def update_job(job_id: str, **fields) -> None:
     """Update job fields and publish a JobProgressEvent to the SSE queue.
 
