@@ -132,7 +132,7 @@ function SidebarContent({ projectId, currentStep, completedSteps }: SidebarProps
   const { setCurrentProject } = useAppStore();
   const [newProjectOpen, setNewProjectOpen] = useState(false);
 
-  const { data: projects = [] } = useQuery({
+  const { data: projects = [], isLoading: projectsLoading } = useQuery({
     queryKey: ["projects"],
     queryFn: () => projectsApi.list(),
   });
@@ -157,14 +157,20 @@ function SidebarContent({ projectId, currentStep, completedSteps }: SidebarProps
           Project
         </p>
         <Select
-          value={projectId ?? ""}
+          value={
+            // Only pass value when projects list contains it,
+            // otherwise Base UI renders the raw UUID as display text
+            projectId && projects.some((p) => p.project_id === projectId)
+              ? projectId
+              : ""
+          }
           onValueChange={handleProjectChange}
         >
           <SelectTrigger
             className="w-full bg-white/5 border-white/10 text-sm"
             size="default"
           >
-            <SelectValue placeholder="Select a project…" />
+            <SelectValue placeholder={projectsLoading ? "Loading…" : "Select a project…"} />
           </SelectTrigger>
           <SelectContent align="start" alignItemWithTrigger={false}>
             {projects.map((p) => (
