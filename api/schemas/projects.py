@@ -16,8 +16,8 @@ class Project(BaseModel):
     problem_type: Optional[str] = None
     current_step: Optional[str] = None
     completed_steps: list[str] = []
-    created_at: datetime
-    updated_at: datetime
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
 
 class CreateProjectRequest(BaseModel):

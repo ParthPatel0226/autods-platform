@@ -33,18 +33,21 @@ router = APIRouter()
 # ---------------------------------------------------------------------------
 
 def _state_to_project(state: dict) -> Project:
+    from datetime import datetime, timezone
+
     meta: dict = state.get("_meta") or {}
+    now = datetime.now(timezone.utc)
     return Project(
         project_id=state.get("session_id", ""),
         name=state.get("project_name", ""),
-        user_mode=state.get("user_mode"),
+        user_mode=state.get("user_mode", "auto"),
         detected_domain=state.get("detected_domain"),
         target_column=state.get("target_column"),
         problem_type=state.get("problem_type"),
         current_step=state.get("current_step"),
         completed_steps=list(state.get("completed_steps") or []),
-        created_at=state.get("created_at"),
-        updated_at=meta.get("saved_at"),
+        created_at=state.get("created_at") or now,
+        updated_at=meta.get("saved_at") or now,
     )
 
 
