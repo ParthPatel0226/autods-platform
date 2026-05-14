@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, BarChart3, Layers, Brain, Clock } from "lucide-react";
+import { Plus, BarChart3, Layers, Brain, Clock, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { projectsApi } from "@/lib/api/endpoints";
 import { useAppStore } from "@/lib/store";
@@ -15,6 +15,17 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import type { ProjectListItem } from "@/lib/api/types";
@@ -92,6 +103,7 @@ function NewProjectDialog({
 
 function ProjectCard({ project }: { project: ProjectListItem }) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { setCurrentProject } = useAppStore();
 
   const domain = project.detected_domain ?? "generic";
@@ -106,17 +118,58 @@ function ProjectCard({ project }: { project: ProjectListItem }) {
     router.push(`/${project.project_id}/${step}`);
   }
 
+  async function handleDelete() {
+    try {
+      await projectsApi.delete(project.project_id);
+      await queryClient.invalidateQueries({ queryKey: ["projects"] });
+      toast.success("Project deleted");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to delete project");
+    }
+  }
+
   return (
-    <button
-      onClick={handleOpen}
+    <div
       className={cn(
-        "group text-left w-full rounded-xl border border-white/8 bg-white/3",
+        "group relative text-left w-full rounded-xl border border-white/8 bg-white/3",
         "p-5 flex flex-col gap-3 transition-all duration-200",
-        "hover:bg-white/6 hover:border-white/15 hover:shadow-lg",
+        "hover:bg-white/6 hover:border-white/15 hover:shadow-lg cursor-pointer",
       )}
+      onClick={handleOpen}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => e.key === "Enter" && handleOpen()}
     >
+      {/* Delete button */}
+      <AlertDialog>
+        <AlertDialogTrigger
+          onClick={(e: React.MouseEvent) => e.stopPropagation()}
+          className="absolute top-3 right-3 p-1.5 rounded-md text-muted-foreground/50 opacity-0 group-hover:opacity-100 transition-all hover:text-destructive hover:bg-destructive/10"
+          aria-label="Delete project"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </AlertDialogTrigger>
+        <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete project</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete &ldquo;{project.name}&rdquo; and all its data. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* Top row */}
-      <div className="flex items-start justify-between gap-2">
+      <div className="flex items-start justify-between gap-2 pr-6">
         <h3 className="font-semibold text-foreground truncate text-sm leading-snug">
           {project.name}
         </h3>
@@ -166,7 +219,7 @@ function ProjectCard({ project }: { project: ProjectListItem }) {
           </span>
         )}
       </div>
-    </button>
+    </div>
   );
 }
 

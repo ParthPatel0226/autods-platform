@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Settings, LogOut } from "lucide-react";
+import { useAppStore } from "@/lib/store";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -22,7 +24,14 @@ interface HeaderProps {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function Header({ projectName, leftSlot }: HeaderProps) {
+  const router = useRouter();
   const { user, logout } = useAuth();
+  const { setCurrentProject } = useAppStore();
+
+  function handleLogoClick() {
+    setCurrentProject(null);
+    router.push("/projects");
+  }
 
   const initials = user?.email
     ? user.email.charAt(0).toUpperCase()
@@ -33,12 +42,12 @@ export function Header({ projectName, leftSlot }: HeaderProps) {
       {/* Left: mobile menu trigger + brand + optional breadcrumb */}
       <div className="flex items-center gap-3">
         {leftSlot}
-        <Link
-          href="/projects"
-          className="font-display italic text-xl font-semibold glow-text leading-none"
+        <button
+          onClick={handleLogoClick}
+          className="font-display italic text-xl font-semibold glow-text leading-none hover:opacity-80 transition-opacity"
         >
           AutoDS
-        </Link>
+        </button>
         {projectName && (
           <>
             <span className="text-white/20 text-sm select-none">/</span>

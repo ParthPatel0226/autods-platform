@@ -137,6 +137,8 @@ function SidebarContent({ projectId, currentStep, completedSteps }: SidebarProps
     queryFn: () => projectsApi.list(),
   });
 
+  const selectedProject = projects.find((p) => p.project_id === projectId);
+
   function handleProjectChange(value: string | null) {
     if (!value) return;
     if (value === "__new__") {
@@ -157,20 +159,20 @@ function SidebarContent({ projectId, currentStep, completedSteps }: SidebarProps
           Project
         </p>
         <Select
-          value={
-            // Only pass value when projects list contains it,
-            // otherwise Base UI renders the raw UUID as display text
-            projectId && projects.some((p) => p.project_id === projectId)
-              ? projectId
-              : ""
-          }
+          value={selectedProject ? projectId! : ""}
           onValueChange={handleProjectChange}
         >
           <SelectTrigger
             className="w-full bg-white/5 border-white/10 text-sm"
             size="default"
           >
-            <SelectValue placeholder={projectsLoading ? "Loading…" : "Select a project…"} />
+            <span className="truncate">
+              {selectedProject
+                ? selectedProject.name
+                : projectsLoading
+                  ? "Loading…"
+                  : "Select a project…"}
+            </span>
           </SelectTrigger>
           <SelectContent align="start" alignItemWithTrigger={false}>
             {projects.map((p) => (
